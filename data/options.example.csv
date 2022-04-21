@@ -1,0 +1,3 @@
+﻿Trade date,Account,Type,Ticker,Batch,Expiry,Price then,Strike,Close price,Trade price,Commission,Delta,IV
+2022-04-21,Account 1,Call,AAPL,AAPL1,2022-05-20,170.42,177.5,,2.54,0.3,0.298,31.1%
+2022-04-21,Account 2,Put,GOOG,,2022-05-20,2536.61,2400,,55,1.05,-0.290,37.4%

@@ -1,0 +1,21 @@
+.table {
+  margin: 2rem 1rem;
+  padding-right: 3rem;
+  border-collapse: collapse;
+  font-size: 0.8em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.th {
+  padding: 2px 5px;
+  font-size: 0.8em;
+}
+
+.td {
+  padding: var(--cell-padding);
+}
+
+.trades {
+  border: 1px solid lightgrey;
+}
