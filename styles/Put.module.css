@@ -19,3 +19,7 @@
 .trades {
   border: 1px solid lightgrey;
 }
+
+.right {
+  text-align: right;
+}
