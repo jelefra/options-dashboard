@@ -129,7 +129,7 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
 
             const account = row[ACCOUNT];
             const ticker = row[TICKER];
-            const { size, currency } = tickers[ticker];
+            const { size, currency, colour } = tickers[ticker];
             const tradeDate = dayjs(row[TRADE_DATE], CSV_DATE_FORMAT);
             const expiryDateBeginning = dayjs(row[EXPIRY_DATE], CSV_DATE_FORMAT);
             const expiryDate = expiryDateBeginning.add(1, 'day');
@@ -185,6 +185,7 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
                   <td
                     className={cx(styles.td, styles.trades, {
                       [styles[align]]: !!align,
+                      [colour]: name === TICKER,
                     })}
                     key={index}
                   >
