@@ -7,6 +7,7 @@ dayjs.extend(customParseFormat);
 
 import tradeData from '../data/options.csv';
 import tickers from '../data/tickers';
+import accountColours from '../data/accountColours';
 
 import styles from '../styles/Put.module.css';
 
@@ -128,6 +129,7 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
               (orderedRowValues.find(({ name }) => name === column).value = value);
 
             const account = row[ACCOUNT];
+            const accountColour = accountColours[account];
             const ticker = row[TICKER];
             const { size, currency, colour } = tickers[ticker];
             const tradeDate = dayjs(row[TRADE_DATE], CSV_DATE_FORMAT);
@@ -186,6 +188,7 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
                     className={cx(styles.td, styles.trades, {
                       [styles[align]]: !!align,
                       [colour]: name === TICKER,
+                      [accountColour]: name === ACCOUNT,
                     })}
                     key={index}
                   >
