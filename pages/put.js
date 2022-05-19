@@ -206,6 +206,7 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
                       [styles[align]]: !!align,
                       [colour]: name === TICKER,
                       [accountColour]: name === ACCOUNT,
+                      [styles.contrast]: rowIndex % 2 && index > 1,
                     })}
                     key={index}
                   >
