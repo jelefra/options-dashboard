@@ -77,6 +77,7 @@ export async function getServerSideProps() {
 export default function Home({ tradeData, currentTickerPrices, rates }) {
   const displayDateFormat = 'D MMM';
   const date = (x) => x.format(displayDateFormat);
+  const pctZero = (x) => `${(100 * x).toFixed(0)}%`;
   const pctOne = (x) => `${(100 * x).toFixed(1)}%`;
   const decimalTwo = (x) => x.toFixed(2);
   const thousands = (x) => x && x.toLocaleString().split('.')[0];
@@ -104,6 +105,15 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
     { name: RETURN_GBP, format: thousands, align: 'right' },
     { name: RETURN_GBP_DIFF, format: thousands, align: 'right' },
   ];
+
+  const totals = {
+    [CASH_EQUIVALENT_GBP]: { value: 0 },
+    [RETURN_GBP]: { value: 0 },
+    [RETURN_GBP_DIFF]: { value: 0 },
+    [STATUS]: { value: 0, format: pctZero },
+  };
+
+  const countOfTrades = tradeData.filter(currentPuts).length;
 
   return (
     <table className={styles.table}>
@@ -181,6 +191,13 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
             set(TRADE_DATE, tradeDate);
             set(TRADE_PRICE, tradePrice);
 
+            totals[CASH_EQUIVALENT_GBP].value += cashEquivalentGBP;
+            totals[RETURN_GBP].value += effectiveNetReturnGBP;
+            totals[RETURN_GBP_DIFF].value += returnGBPDiff;
+            if (status === ASSIGNABLE) {
+              totals[STATUS].value += 1 / countOfTrades;
+            }
+
             return (
               <tr key={rowIndex}>
                 {orderedRowValues.map(({ name, value, format = (v) => v, align }, index) => (
@@ -198,6 +215,20 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
               </tr>
             );
           })}
+        <tr>
+          {headings.map(({ name, format, align }, index) => (
+            <td
+              className={cx(styles.td, {
+                [styles[align]]: !!align,
+              })}
+              key={index}
+            >
+              {totals[name] &&
+                totals[name].value &&
+                (totals[name].format || format)(totals[name].value)}
+            </td>
+          ))}
+        </tr>
       </tbody>
     </table>
   );
