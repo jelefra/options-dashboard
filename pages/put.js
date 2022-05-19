@@ -20,11 +20,22 @@ const TRADE_DATE = 'Trade date';
 const TRADE_PRICE = 'Trade price';
 const TYPE = 'Type';
 
+const ASSIGNMENT_PCT = 'Assignment %';
+const ASSIGNABLE = 'Assignable';
+const CASH_EQUIVALENT_GBP = 'Cash equiv GBP';
 const DTE_CURRENT = 'Current DTE';
 const DTE_TOTAL = 'DTE';
+const RETURN_30D_PCT = 'Return 30D %';
+const RETURN_GBP = 'Return GBP';
+const RETURN_GBP_DIFF = 'Difference';
+const PRICE_INCREASE = 'Price increase';
 const PUT = 'Put';
+const STATUS = 'Status';
+const STOCK_PRICE_CURRENT = 'Current';
 const STOCK_PRICE_HIGH = 'High';
+const STOCK_PRICE_HIGH_PCT = 'High %';
 const STOCK_PRICE_LOW = 'Low';
+const STOCK_PRICE_LOW_PCT = 'Low %';
 
 const CSV_DATE_FORMAT = 'DD/MM/YYYY';
 
@@ -34,15 +45,40 @@ const currentPuts = (trade) => {
 };
 
 export async function getServerSideProps() {
+  const tickersToQuery = [
+    ...new Set(tradeData.filter(currentPuts).map(({ [TICKER]: ticker }) => ticker)),
+  ];
+
+  const currentTickerPricesMap = await Promise.all(
+    tickersToQuery.map(async (ticker) => {
+      const endpoint = `https://cloud.iexapis.com/v1/stock/${
+        tickers[ticker].actual || ticker
+      }/quote?token=${process.env.IEX_TOKEN}`;
+      const { latestPrice } = await fetch(endpoint).then((response) => response.json());
+      return { ticker, latestPrice };
+    })
+  );
+
+  const currentTickerPrices = currentTickerPricesMap.reduce((acc, cv) => {
+    const { ticker, latestPrice } = cv;
+    acc[ticker] = latestPrice;
+    return acc;
+  }, {});
+
+  const endpoint = 'https://api.exchangerate.host/latest?base=GBP';
+  const { rates } = await fetch(endpoint).then((response) => response.json());
+
   return {
-    props: { tradeData },
+    props: { tradeData, currentTickerPrices, rates },
   };
 }
 
-export default function Home({ tradeData }) {
+export default function Home({ tradeData, currentTickerPrices, rates }) {
   const displayDateFormat = 'D MMM';
   const date = (x) => x.format(displayDateFormat);
+  const pctOne = (x) => `${(100 * x).toFixed(1)}%`;
   const decimalTwo = (x) => x.toFixed(2);
+  const thousands = (x) => x && x.toLocaleString().split('.')[0];
 
   const headings = [
     { name: ACCOUNT },
@@ -54,8 +90,18 @@ export default function Home({ tradeData }) {
     { name: TRADE_PRICE, format: decimalTwo },
     { name: STOCK_PRICE_AT_TIME_OF_TRADE, format: decimalTwo },
     { name: STRIKE, format: decimalTwo },
+    { name: STOCK_PRICE_CURRENT, format: decimalTwo },
+    { name: STATUS },
     { name: STOCK_PRICE_LOW, format: decimalTwo },
+    { name: STOCK_PRICE_LOW_PCT, format: pctOne },
+    { name: ASSIGNMENT_PCT, format: pctOne },
     { name: STOCK_PRICE_HIGH, format: decimalTwo },
+    { name: STOCK_PRICE_HIGH_PCT, format: pctOne },
+    { name: PRICE_INCREASE, format: thousands },
+    { name: RETURN_30D_PCT, format: pctOne },
+    { name: CASH_EQUIVALENT_GBP, format: thousands },
+    { name: RETURN_GBP, format: thousands },
+    { name: RETURN_GBP_DIFF, format: thousands },
   ];
 
   return (
@@ -83,7 +129,7 @@ export default function Home({ tradeData }) {
 
             const account = row[ACCOUNT];
             const ticker = row[TICKER];
-            const { size } = tickers[ticker];
+            const { size, currency } = tickers[ticker];
             const tradeDate = dayjs(row[TRADE_DATE], CSV_DATE_FORMAT);
             const expiryDateBeginning = dayjs(row[EXPIRY_DATE], CSV_DATE_FORMAT);
             const expiryDate = expiryDateBeginning.add(1, 'day');
@@ -93,17 +139,42 @@ export default function Home({ tradeData }) {
             const strike = row[STRIKE];
             const commission = row[COMMISSION];
             const priceThen = row[STOCK_PRICE_AT_TIME_OF_TRADE];
+            const currentStockPrice = currentTickerPrices[ticker];
             const stockPriceLow = strike - tradePrice - commission / size;
             const stockPriceHigh = priceThen + tradePrice - commission / size;
+            const netReturn = size * tradePrice - commission;
+            const cashEquivalent = size * strike;
+            const convertToGBP = (amount) => amount / rates[currency];
+            const cashEquivalentGBP = convertToGBP(cashEquivalent);
+            const priceIncrease =
+              currentStockPrice > stockPriceHigh ? (currentStockPrice - stockPriceHigh) * size : '';
+            const status = strike > currentStockPrice ? ASSIGNABLE : '';
+            const effectiveNetReturn = netReturn - Math.max(0, strike - currentStockPrice) * size;
+            const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
+            const netReturnGBP = convertToGBP(netReturn);
+            const effectiveNetReturn30DPct =
+              Math.pow(Math.pow(1 + effectiveNetReturnPct, 1 / (dteTotal + 1)), 30) - 1;
+            const effectiveNetReturnGBP = convertToGBP(effectiveNetReturn);
+            const returnGBPDiff = effectiveNetReturnGBP - netReturnGBP;
 
             set(ACCOUNT, account);
+            set(ASSIGNMENT_PCT, strike / currentStockPrice - 1);
+            set(CASH_EQUIVALENT_GBP, cashEquivalentGBP);
             set(DTE_CURRENT, expiryDate.diff(today, 'day'));
             set(DTE_TOTAL, dteTotal);
+            set(RETURN_30D_PCT, effectiveNetReturn30DPct);
+            set(RETURN_GBP, effectiveNetReturnGBP);
+            set(RETURN_GBP_DIFF, returnGBPDiff);
             set(EXPIRY_DATE, expiryDateBeginning);
+            set(PRICE_INCREASE, priceIncrease);
+            set(STATUS, status);
             set(STRIKE, strike);
             set(STOCK_PRICE_AT_TIME_OF_TRADE, priceThen);
+            set(STOCK_PRICE_CURRENT, currentStockPrice);
             set(STOCK_PRICE_LOW, stockPriceLow);
+            set(STOCK_PRICE_LOW_PCT, stockPriceLow / currentStockPrice - 1);
             set(STOCK_PRICE_HIGH, stockPriceHigh);
+            set(STOCK_PRICE_HIGH_PCT, stockPriceHigh / currentStockPrice - 1);
             set(TICKER, ticker);
             set(TRADE_DATE, tradeDate);
             set(TRADE_PRICE, tradePrice);
