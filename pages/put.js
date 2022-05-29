@@ -10,6 +10,7 @@ import tickers from '../data/tickers';
 import accountColours from '../data/accountColours';
 
 import isCurrentPut from '../utils/isCurrentPut';
+import getForexRates from '../utils/getForexRates';
 import getTickerPrices from '../utils/getTickerPrices';
 
 import styles from '../styles/Table.module.css';
@@ -47,9 +48,7 @@ export async function getServerSideProps() {
   ];
 
   const currentTickerPrices = await getTickerPrices(tickersToQuery);
-
-  const endpoint = 'https://api.exchangerate.host/latest?base=GBP';
-  const { rates } = await fetch(endpoint).then((response) => response.json());
+  const rates = await getForexRates();
 
   return {
     props: { trades, currentTickerPrices, rates },
