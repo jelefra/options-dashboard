@@ -10,6 +10,7 @@ import tickers from '../data/tickers';
 import accountColours from '../data/accountColours';
 
 import isCurrentPut from '../utils/isCurrentPut';
+import getTickerPrices from '../utils/getTickerPrices';
 
 import styles from '../styles/Table.module.css';
 
@@ -45,21 +46,7 @@ export async function getServerSideProps() {
     ...new Set(trades.filter(isCurrentPut).map(({ [TICKER]: ticker }) => ticker)),
   ];
 
-  const currentTickerPricesMap = await Promise.all(
-    tickersToQuery.map(async (ticker) => {
-      const endpoint = `https://cloud.iexapis.com/v1/stock/${
-        tickers[ticker].actual || ticker
-      }/quote?token=${process.env.IEX_TOKEN}`;
-      const { latestPrice } = await fetch(endpoint).then((response) => response.json());
-      return { ticker, latestPrice };
-    })
-  );
-
-  const currentTickerPrices = currentTickerPricesMap.reduce((acc, cv) => {
-    const { ticker, latestPrice } = cv;
-    acc[ticker] = latestPrice;
-    return acc;
-  }, {});
+  const currentTickerPrices = await getTickerPrices(tickersToQuery);
 
   const endpoint = 'https://api.exchangerate.host/latest?base=GBP';
   const { rates } = await fetch(endpoint).then((response) => response.json());
