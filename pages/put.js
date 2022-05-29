@@ -9,6 +9,8 @@ import trades from '../data/options.csv';
 import tickers from '../data/tickers';
 import accountColours from '../data/accountColours';
 
+import isCurrentPut from '../utils/isCurrentPut';
+
 import styles from '../styles/Table.module.css';
 
 const ACCOUNT = 'Account';
@@ -19,7 +21,6 @@ const STRIKE = 'Strike';
 const TICKER = 'Ticker';
 const TRADE_DATE = 'Trade date';
 const TRADE_PRICE = 'Trade price';
-const TYPE = 'Type';
 
 const ASSIGNMENT_PCT = 'Assignment %';
 const ASSIGNABLE = 'Assignable';
@@ -30,7 +31,6 @@ const RETURN_30D_PCT = 'Return 30D %';
 const RETURN_GBP = 'Return GBP';
 const RETURN_GBP_DIFF = 'Difference';
 const PRICE_INCREASE = 'Price increase';
-const PUT = 'Put';
 const STATUS = 'Status';
 const STOCK_PRICE_CURRENT = 'Current';
 const STOCK_PRICE_HIGH = 'High';
@@ -40,14 +40,9 @@ const STOCK_PRICE_LOW_PCT = 'Low %';
 
 const CSV_DATE_FORMAT = 'DD/MM/YYYY';
 
-const currentPuts = (trade) => {
-  const { [TYPE]: type, [EXPIRY_DATE]: expiryDate } = trade;
-  return type === PUT && dayjs(expiryDate, CSV_DATE_FORMAT).isSameOrAfter(dayjs(), 'day');
-};
-
 export async function getServerSideProps() {
   const tickersToQuery = [
-    ...new Set(trades.filter(currentPuts).map(({ [TICKER]: ticker }) => ticker)),
+    ...new Set(trades.filter(isCurrentPut).map(({ [TICKER]: ticker }) => ticker)),
   ];
 
   const currentTickerPricesMap = await Promise.all(
@@ -113,7 +108,7 @@ export default function Home({ trades, currentTickerPrices, rates }) {
     [STATUS]: { value: 0, format: pctZero },
   };
 
-  const countOfTrades = trades.filter(currentPuts).length;
+  const countOfTrades = trades.filter(isCurrentPut).length;
 
   return (
     <table className={styles.table}>
@@ -128,7 +123,7 @@ export default function Home({ trades, currentTickerPrices, rates }) {
       </thead>
       <tbody>
         {trades
-          .filter(currentPuts)
+          .filter(isCurrentPut)
           .sort((a, b) => a[TICKER].localeCompare(b[TICKER]))
           .sort((a, b) => a[ACCOUNT].localeCompare(b[ACCOUNT]))
           .map((row, rowIndex) => {
