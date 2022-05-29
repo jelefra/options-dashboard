@@ -5,11 +5,11 @@ dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
-import tradeData from '../data/options.csv';
+import trades from '../data/options.csv';
 import tickers from '../data/tickers';
 import accountColours from '../data/accountColours';
 
-import styles from '../styles/Put.module.css';
+import styles from '../styles/Table.module.css';
 
 const ACCOUNT = 'Account';
 const COMMISSION = 'Commission';
@@ -47,7 +47,7 @@ const currentPuts = (trade) => {
 
 export async function getServerSideProps() {
   const tickersToQuery = [
-    ...new Set(tradeData.filter(currentPuts).map(({ [TICKER]: ticker }) => ticker)),
+    ...new Set(trades.filter(currentPuts).map(({ [TICKER]: ticker }) => ticker)),
   ];
 
   const currentTickerPricesMap = await Promise.all(
@@ -70,11 +70,11 @@ export async function getServerSideProps() {
   const { rates } = await fetch(endpoint).then((response) => response.json());
 
   return {
-    props: { tradeData, currentTickerPrices, rates },
+    props: { trades, currentTickerPrices, rates },
   };
 }
 
-export default function Home({ tradeData, currentTickerPrices, rates }) {
+export default function Home({ trades, currentTickerPrices, rates }) {
   const displayDateFormat = 'D MMM';
   const date = (x) => x.format(displayDateFormat);
   const pctZero = (x) => `${(100 * x).toFixed(0)}%`;
@@ -113,7 +113,7 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
     [STATUS]: { value: 0, format: pctZero },
   };
 
-  const countOfTrades = tradeData.filter(currentPuts).length;
+  const countOfTrades = trades.filter(currentPuts).length;
 
   return (
     <table className={styles.table}>
@@ -127,7 +127,7 @@ export default function Home({ tradeData, currentTickerPrices, rates }) {
         </tr>
       </thead>
       <tbody>
-        {tradeData
+        {trades
           .filter(currentPuts)
           .sort((a, b) => a[TICKER].localeCompare(b[TICKER]))
           .sort((a, b) => a[ACCOUNT].localeCompare(b[ACCOUNT]))
