@@ -5,6 +5,9 @@ dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
+import getTickerPrices from '../utils/getTickerPrices';
+import getCallTickersToQuery from '../utils/getCallTickersToQuery';
+
 import trades from '../data/options.csv';
 import tickers from '../data/tickers';
 
@@ -22,6 +25,7 @@ const TRADE_DATE = 'Trade date';
 const TRADE_PRICE = 'Trade price';
 const TYPE = 'Type';
 
+const ASSIGNABLE = 'Assignable';
 const ASSIGNMENT_PCT = 'Assignment %';
 const AVERAGE_COST = 'Avg cost';
 const CALL = 'Call';
@@ -29,6 +33,7 @@ const CASH_EQUIVALENT_GBP = 'Cash equiv GBP';
 const DAYS_TOTAL = 'Days total';
 const DTE_CURRENT = 'Current DTE';
 const DTE_TOTAL = 'DTE';
+const RETURN_PCT_CURRENT = 'Return %';
 const RETURN_PCT_IF_ASSIGNED = 'Return % if assigned';
 const RETURN_30D_PCT_IF_ASSIGNED = 'Return 30D % if assigned';
 const RETURN_30D_PCT_LAST_CALL = 'Return 30D % last call';
@@ -53,12 +58,15 @@ const getReturnPctForPeriod = (returnPct, days, newPeriod) =>
   ((1 + returnPct) ** (1 / days)) ** newPeriod - 1;
 
 export async function getServerSideProps() {
+  const tickersToQuery = getCallTickersToQuery(trades);
+  const currentTickerPrices = await getTickerPrices(tickersToQuery);
+
   return {
-    props: { trades },
+    props: { trades, currentTickerPrices },
   };
 }
 
-export default function Home({ trades }) {
+export default function Home({ trades, currentTickerPrices }) {
   const displayDateFormat = 'D MMM';
   const date = (x) => x.format(displayDateFormat);
   const pctOne = (x) => `${(100 * x).toFixed(1)}%`;
@@ -69,7 +77,7 @@ export default function Home({ trades }) {
     { name: ACCOUNT },
     { name: BATCH },
     { name: AVERAGE_COST, format: decimalTwo },
-    { name: STOCK_PRICE_CURRENT, format: decimalTwo },
+    { name: RETURN_PCT_CURRENT, format: pctOne },
     { name: RETURN_GBP_CURRENT, format: thousands },
     { name: TRADE_DATE, format: date },
     { name: EXPIRY_DATE, format: date },
@@ -77,6 +85,7 @@ export default function Home({ trades }) {
     { name: DTE_CURRENT },
     { name: TRADE_PRICE, format: decimalTwo },
     { name: STOCK_PRICE_AT_TIME_OF_TRADE, format: decimalTwo },
+    { name: STOCK_PRICE_CURRENT, format: decimalTwo },
     { name: STRIKE, format: decimalTwo },
     { name: STATUS },
     { name: ASSIGNMENT_PCT, format: pctOne },
@@ -103,6 +112,7 @@ export default function Home({ trades }) {
     const batch = batches[trade[BATCH]];
     const closePrice = trade[CLOSE_PRICE];
     const tradeDate = dayjs(trade[TRADE_DATE], CSV_DATE_FORMAT);
+    const currentStockPrice = currentTickerPrices[trade[TICKER]];
 
     if (trade[TYPE] === PUT && trade[CLOSE_PRICE] && closePrice < strike) {
       batches[trade[BATCH]] = {
@@ -111,6 +121,8 @@ export default function Home({ trades }) {
         [AVERAGE_COST]: strike - tradePrice + commission / size,
         [WHEELING]: true,
         [PUT_TRADE_DATE]: tradeDate,
+        [STOCK_PRICE_CURRENT]: currentStockPrice,
+        [TICKER]: trade[TICKER],
       };
     }
 
@@ -127,6 +139,10 @@ export default function Home({ trades }) {
         batch[EXPIRY_DATE] = expiryDate;
         batch[TRADE_PRICE] = tradePrice;
         batch[STRIKE] = strike;
+        if (currentStockPrice > strike) {
+          batch[STATUS] = ASSIGNABLE;
+        }
+        batch[ASSIGNMENT_PCT] = strike / currentStockPrice - 1;
         batch[DTE_CURRENT] = expiryDate.add(1, 'day').diff(NOW, 'day');
         batch[DTE_TOTAL] = expiryDate.diff(tradeDate, 'day');
         const priceThen = trade[STOCK_PRICE_AT_TIME_OF_TRADE];
@@ -148,7 +164,9 @@ export default function Home({ trades }) {
           daysTotal,
           365
         );
-        batch[STOCK_PRICE_HIGH] = strike + tradePrice - commission / size;
+        const stockPriceHigh = strike + tradePrice - commission / size;
+        batch[STOCK_PRICE_HIGH] = stockPriceHigh;
+        batch[STOCK_PRICE_HIGH_PCT] = stockPriceHigh / currentStockPrice - 1;
       }
     }
   }
@@ -175,28 +193,36 @@ export default function Home({ trades }) {
             const orderedRowValues = headings.map((elem) => ({
               ...elem,
             }));
-            const set = (column) =>
-              (orderedRowValues.find(({ name }) => name === column).value = batchData[column]);
+            const set = (column, value) =>
+              (orderedRowValues.find(({ name }) => name === column).value = value);
 
-            set(ACCOUNT);
-            set(ASSIGNMENT_PCT);
-            set(AVERAGE_COST);
-            set(BATCH);
-            set(DAYS_TOTAL);
-            set(DTE_CURRENT);
-            set(DTE_TOTAL);
-            set(EXPIRY_DATE);
-            set(PRICE_INCREASE);
-            set(RETURN_1Y_PCT_IF_ASSIGNED);
-            set(RETURN_30D_PCT_IF_ASSIGNED);
-            set(RETURN_PCT_IF_ASSIGNED);
-            set(RETURN_30D_PCT_LAST_CALL);
-            set(STOCK_PRICE_AT_TIME_OF_TRADE);
-            set(STOCK_PRICE_HIGH);
-            set(STOCK_PRICE_HIGH_PCT);
-            set(STRIKE);
-            set(TRADE_DATE);
-            set(TRADE_PRICE);
+            const currentStockPrice = currentTickerPrices[batchData[TICKER]];
+            const averageCost = batchData[AVERAGE_COST];
+
+            const returnPctCurrent = currentStockPrice / averageCost - 1;
+
+            set(ACCOUNT, batchData[ACCOUNT]);
+            set(ASSIGNMENT_PCT, batchData[ASSIGNMENT_PCT]);
+            set(AVERAGE_COST, batchData[AVERAGE_COST]);
+            set(BATCH, batchData[BATCH]);
+            set(DAYS_TOTAL, batchData[DAYS_TOTAL]);
+            set(DTE_CURRENT, batchData[DTE_CURRENT]);
+            set(DTE_TOTAL, batchData[DTE_TOTAL]);
+            set(EXPIRY_DATE, batchData[EXPIRY_DATE]);
+            set(PRICE_INCREASE, batchData[PRICE_INCREASE]);
+            set(RETURN_1Y_PCT_IF_ASSIGNED, batchData[RETURN_1Y_PCT_IF_ASSIGNED]);
+            set(RETURN_30D_PCT_IF_ASSIGNED, batchData[RETURN_30D_PCT_IF_ASSIGNED]);
+            set(RETURN_30D_PCT_LAST_CALL, batchData[RETURN_30D_PCT_LAST_CALL]);
+            set(RETURN_PCT_CURRENT, returnPctCurrent);
+            set(RETURN_PCT_IF_ASSIGNED, batchData[RETURN_PCT_IF_ASSIGNED]);
+            set(STATUS, batchData[STATUS]);
+            set(STOCK_PRICE_AT_TIME_OF_TRADE, batchData[STOCK_PRICE_AT_TIME_OF_TRADE]);
+            set(STOCK_PRICE_CURRENT, batchData[STOCK_PRICE_CURRENT]);
+            set(STOCK_PRICE_HIGH, batchData[STOCK_PRICE_HIGH]);
+            set(STOCK_PRICE_HIGH_PCT, batchData[STOCK_PRICE_HIGH_PCT]);
+            set(STRIKE, batchData[STRIKE]);
+            set(TRADE_DATE, batchData[TRADE_DATE]);
+            set(TRADE_PRICE, batchData[TRADE_PRICE]);
 
             return (
               <tr key={rowIndex}>
