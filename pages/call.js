@@ -11,6 +11,7 @@ import getCallTickersToQuery from '../utils/getCallTickersToQuery';
 
 import trades from '../data/options.csv';
 import tickers from '../data/tickers';
+import accountColours from '../data/accountColours';
 
 import styles from '../styles/Table.module.css';
 
@@ -211,7 +212,7 @@ export default function Home({ trades, currentTickerPrices, rates }) {
 
             const currentStockPrice = currentTickerPrices[batchData[TICKER]];
             const averageCost = batchData[AVERAGE_COST];
-            const { size, currency } = tickers[batchData[TICKER]];
+            const { size, currency, colour } = tickers[batchData[TICKER]];
             const forexRate = rates[currency];
             const returnGBPCurrent = ((currentStockPrice - averageCost) * size) / forexRate;
 
@@ -225,7 +226,10 @@ export default function Home({ trades, currentTickerPrices, rates }) {
 
             const returnPctCurrent = currentStockPrice / averageCost - 1;
 
-            set(ACCOUNT, batchData[ACCOUNT]);
+            const account = batchData[ACCOUNT];
+            const accountColour = accountColours[account];
+
+            set(ACCOUNT, account);
             set(ASSIGNMENT_PCT, batchData[ASSIGNMENT_PCT]);
             set(ASSIGNED_STRIKE, batchData[ASSIGNED_STRIKE]);
             set(AVERAGE_COST, batchData[AVERAGE_COST]);
@@ -256,10 +260,13 @@ export default function Home({ trades, currentTickerPrices, rates }) {
 
             return (
               <tr key={rowIndex}>
-                {orderedRowValues.map(({ value, format = (v) => v, align }, index) => (
+                {orderedRowValues.map(({ name, value, format = (v) => v, align }, index) => (
                   <td
                     className={cx(styles.td, styles.trades, {
                       [styles[align]]: !!align,
+                      [colour]: name === BATCH,
+                      [accountColour]: name === ACCOUNT,
+                      [styles.contrast]: rowIndex % 2 && index > 1,
                     })}
                     key={index}
                   >
