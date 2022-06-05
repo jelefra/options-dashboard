@@ -27,10 +27,12 @@ const TRADE_PRICE = 'Trade price';
 const TYPE = 'Type';
 
 const ASSIGNABLE = 'Assignable';
+const ASSIGNED_STRIKE = 'Assigned strike';
 const ASSIGNMENT_PCT = 'Assignment %';
 const AVERAGE_COST = 'Avg cost';
 const CALL = 'Call';
 const CASH_EQUIVALENT_GBP = 'Cash equiv GBP';
+const COST_BASIS_DROP_PCT = 'Cost basis drop %';
 const DAYS_TOTAL = 'Days total';
 const DTE_CURRENT = 'Current DTE';
 const DTE_TOTAL = 'DTE';
@@ -78,7 +80,9 @@ export default function Home({ trades, currentTickerPrices, rates }) {
   const headings = [
     { name: ACCOUNT },
     { name: BATCH },
+    { name: ASSIGNED_STRIKE, format: decimalTwo },
     { name: AVERAGE_COST, format: decimalTwo },
+    { name: COST_BASIS_DROP_PCT, format: pctOne },
     { name: RETURN_PCT_CURRENT, format: pctOne },
     { name: RETURN_GBP_CURRENT, format: thousands },
     { name: TRADE_DATE, format: date },
@@ -121,6 +125,7 @@ export default function Home({ trades, currentTickerPrices, rates }) {
       batches[trade[BATCH]] = {
         [ACCOUNT]: trade[ACCOUNT],
         [BATCH]: trade[BATCH],
+        [ASSIGNED_STRIKE]: trade[STRIKE],
         [AVERAGE_COST]: strike - tradePrice + commission / size,
         [WHEELING]: true,
         [PUT_TRADE_DATE]: tradeDate,
@@ -210,6 +215,8 @@ export default function Home({ trades, currentTickerPrices, rates }) {
             const forexRate = rates[currency];
             const returnGBPCurrent = ((currentStockPrice - averageCost) * size) / forexRate;
 
+            const costBasisDrop = averageCost / batchData[ASSIGNED_STRIKE] - 1;
+
             let returnGBPIfAssigned;
             if (batchData[STRIKE]) {
               returnGBPIfAssigned =
@@ -220,9 +227,11 @@ export default function Home({ trades, currentTickerPrices, rates }) {
 
             set(ACCOUNT, batchData[ACCOUNT]);
             set(ASSIGNMENT_PCT, batchData[ASSIGNMENT_PCT]);
+            set(ASSIGNED_STRIKE, batchData[ASSIGNED_STRIKE]);
             set(AVERAGE_COST, batchData[AVERAGE_COST]);
             set(BATCH, batchData[BATCH]);
             set(CASH_EQUIVALENT_GBP, batchData[CASH_EQUIVALENT_GBP]);
+            set(COST_BASIS_DROP_PCT, costBasisDrop);
             set(DAYS_TOTAL, batchData[DAYS_TOTAL]);
             set(DTE_CURRENT, batchData[DTE_CURRENT]);
             set(DTE_TOTAL, batchData[DTE_TOTAL]);
