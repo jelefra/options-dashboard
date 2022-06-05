@@ -187,7 +187,16 @@ export default function Home({ trades, currentTickerPrices, rates }) {
 
   const orderedBatches = Object.entries(batches)
     .sort(([a], [b]) => a.localeCompare(b))
-    .sort(([, a], [, b]) => a[ACCOUNT].localeCompare(b[ACCOUNT]));
+    .sort(([, a], [, b]) => a[ACCOUNT].localeCompare(b[ACCOUNT]))
+    .sort(([, a], [, b]) => {
+      if (a[DTE_TOTAL] && b[DTE_TOTAL]) {
+        return 0;
+      } else if (a[DTE_TOTAL]) {
+        return -1;
+      } else {
+        return 1;
+      }
+    });
 
   return (
     <table className={styles.table}>
