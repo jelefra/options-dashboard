@@ -80,32 +80,32 @@ export default function Home({ trades, currentTickerPrices, rates }) {
   const headings = [
     { name: ACCOUNT },
     { name: BATCH },
-    { name: ASSIGNED_STRIKE, format: decimalTwo },
-    { name: AVERAGE_COST, format: decimalTwo },
-    { name: COST_BASIS_DROP_PCT, format: pctOne },
-    { name: RETURN_PCT_CURRENT, format: pctOne },
-    { name: RETURN_GBP_CURRENT, format: thousands },
+    { name: ASSIGNED_STRIKE, format: decimalTwo, align: 'right' },
+    { name: AVERAGE_COST, format: decimalTwo, align: 'right' },
+    { name: COST_BASIS_DROP_PCT, format: pctOne, align: 'right' },
+    { name: RETURN_PCT_CURRENT, format: pctOne, align: 'right' },
+    { name: RETURN_GBP_CURRENT, format: thousands, align: 'right' },
     { name: TRADE_DATE, format: date },
     { name: EXPIRY_DATE, format: date },
-    { name: DTE_TOTAL },
-    { name: DTE_CURRENT },
-    { name: TRADE_PRICE, format: decimalTwo },
-    { name: STOCK_PRICE_AT_TIME_OF_TRADE, format: decimalTwo },
-    { name: STOCK_PRICE_CURRENT, format: decimalTwo },
-    { name: STRIKE, format: decimalTwo },
+    { name: DTE_TOTAL, align: 'right' },
+    { name: DTE_CURRENT, align: 'right' },
+    { name: TRADE_PRICE, format: decimalTwo, align: 'right' },
+    { name: STOCK_PRICE_AT_TIME_OF_TRADE, format: decimalTwo, align: 'right' },
+    { name: STOCK_PRICE_CURRENT, format: decimalTwo, align: 'right' },
+    { name: STRIKE, format: decimalTwo, align: 'right' },
     { name: STATUS },
-    { name: ASSIGNMENT_PCT, format: pctOne },
-    { name: STOCK_PRICE_HIGH, format: decimalTwo },
-    { name: STOCK_PRICE_HIGH_PCT, format: pctOne },
-    { name: PRICE_INCREASE, format: thousands },
-    { name: RETURN_30D_PCT_LAST_CALL, format: pctOne },
-    { name: RETURN_GBP_LAST_CALL, format: thousands },
-    { name: CASH_EQUIVALENT_GBP, format: thousands },
-    { name: DAYS_TOTAL },
-    { name: RETURN_GBP_IF_ASSIGNED, format: thousands },
-    { name: RETURN_PCT_IF_ASSIGNED, format: pctOne },
-    { name: RETURN_30D_PCT_IF_ASSIGNED, format: pctOne },
-    { name: RETURN_1Y_PCT_IF_ASSIGNED, format: pctOne },
+    { name: ASSIGNMENT_PCT, format: pctOne, align: 'right' },
+    { name: STOCK_PRICE_HIGH, format: decimalTwo, align: 'right' },
+    { name: STOCK_PRICE_HIGH_PCT, format: pctOne, align: 'right' },
+    { name: PRICE_INCREASE, format: thousands, align: 'right' },
+    { name: RETURN_30D_PCT_LAST_CALL, format: pctOne, align: 'right' },
+    { name: RETURN_GBP_LAST_CALL, format: thousands, align: 'right' },
+    { name: CASH_EQUIVALENT_GBP, format: thousands, align: 'right' },
+    { name: DAYS_TOTAL, align: 'right' },
+    { name: RETURN_GBP_IF_ASSIGNED, format: thousands, align: 'right' },
+    { name: RETURN_PCT_IF_ASSIGNED, format: pctOne, align: 'right' },
+    { name: RETURN_30D_PCT_IF_ASSIGNED, format: pctOne, align: 'right' },
+    { name: RETURN_1Y_PCT_IF_ASSIGNED, format: pctOne, align: 'right' },
   ];
 
   const batches = {};
@@ -256,8 +256,13 @@ export default function Home({ trades, currentTickerPrices, rates }) {
 
             return (
               <tr key={rowIndex}>
-                {orderedRowValues.map(({ value, format = (v) => v }, index) => (
-                  <td className={cx(styles.td, styles.trades)} key={index}>
+                {orderedRowValues.map(({ value, format = (v) => v, align }, index) => (
+                  <td
+                    className={cx(styles.td, styles.trades, {
+                      [styles[align]]: !!align,
+                    })}
+                    key={index}
+                  >
                     {value && format(value)}
                   </td>
                 ))}
