@@ -6,6 +6,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 import getTickerPrices from '../utils/getTickerPrices';
+import getForexRates from '../utils/getForexRates';
 import getCallTickersToQuery from '../utils/getCallTickersToQuery';
 
 import trades from '../data/options.csv';
@@ -60,13 +61,14 @@ const getReturnPctForPeriod = (returnPct, days, newPeriod) =>
 export async function getServerSideProps() {
   const tickersToQuery = getCallTickersToQuery(trades);
   const currentTickerPrices = await getTickerPrices(tickersToQuery);
+  const rates = await getForexRates();
 
   return {
-    props: { trades, currentTickerPrices },
+    props: { trades, currentTickerPrices, rates },
   };
 }
 
-export default function Home({ trades, currentTickerPrices }) {
+export default function Home({ trades, currentTickerPrices, rates }) {
   const displayDateFormat = 'D MMM';
   const date = (x) => x.format(displayDateFormat);
   const pctOne = (x) => `${(100 * x).toFixed(1)}%`;
@@ -104,7 +106,8 @@ export default function Home({ trades, currentTickerPrices }) {
 
   const batches = {};
   for (let trade of trades) {
-    const { size } = tickers[trade[TICKER]];
+    const { size, currency } = tickers[trade[TICKER]];
+    const forexRate = rates[currency];
 
     const tradePrice = trade[TRADE_PRICE];
     const strike = trade[STRIKE];
@@ -167,6 +170,11 @@ export default function Home({ trades, currentTickerPrices }) {
         const stockPriceHigh = strike + tradePrice - commission / size;
         batch[STOCK_PRICE_HIGH] = stockPriceHigh;
         batch[STOCK_PRICE_HIGH_PCT] = stockPriceHigh / currentStockPrice - 1;
+        if (currentStockPrice > stockPriceHigh) {
+          batch[PRICE_INCREASE] = ((currentStockPrice - stockPriceHigh) * size) / forexRate;
+        }
+        batch[RETURN_GBP_LAST_CALL] = (tradePrice * size - commission) / forexRate;
+        batch[CASH_EQUIVALENT_GBP] = (priceThen * size) / forexRate;
       }
     }
   }
@@ -198,6 +206,15 @@ export default function Home({ trades, currentTickerPrices }) {
 
             const currentStockPrice = currentTickerPrices[batchData[TICKER]];
             const averageCost = batchData[AVERAGE_COST];
+            const { size, currency } = tickers[batchData[TICKER]];
+            const forexRate = rates[currency];
+            const returnGBPCurrent = ((currentStockPrice - averageCost) * size) / forexRate;
+
+            let returnGBPIfAssigned;
+            if (batchData[STRIKE]) {
+              returnGBPIfAssigned =
+                ((batchData[STRIKE] - batchData[AVERAGE_COST]) * size) / forexRate;
+            }
 
             const returnPctCurrent = currentStockPrice / averageCost - 1;
 
@@ -205,6 +222,7 @@ export default function Home({ trades, currentTickerPrices }) {
             set(ASSIGNMENT_PCT, batchData[ASSIGNMENT_PCT]);
             set(AVERAGE_COST, batchData[AVERAGE_COST]);
             set(BATCH, batchData[BATCH]);
+            set(CASH_EQUIVALENT_GBP, batchData[CASH_EQUIVALENT_GBP]);
             set(DAYS_TOTAL, batchData[DAYS_TOTAL]);
             set(DTE_CURRENT, batchData[DTE_CURRENT]);
             set(DTE_TOTAL, batchData[DTE_TOTAL]);
@@ -213,6 +231,9 @@ export default function Home({ trades, currentTickerPrices }) {
             set(RETURN_1Y_PCT_IF_ASSIGNED, batchData[RETURN_1Y_PCT_IF_ASSIGNED]);
             set(RETURN_30D_PCT_IF_ASSIGNED, batchData[RETURN_30D_PCT_IF_ASSIGNED]);
             set(RETURN_30D_PCT_LAST_CALL, batchData[RETURN_30D_PCT_LAST_CALL]);
+            set(RETURN_GBP_CURRENT, returnGBPCurrent);
+            set(RETURN_GBP_IF_ASSIGNED, returnGBPIfAssigned);
+            set(RETURN_GBP_LAST_CALL, batchData[RETURN_GBP_LAST_CALL]);
             set(RETURN_PCT_CURRENT, returnPctCurrent);
             set(RETURN_PCT_IF_ASSIGNED, batchData[RETURN_PCT_IF_ASSIGNED]);
             set(STATUS, batchData[STATUS]);
