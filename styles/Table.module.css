@@ -31,3 +31,21 @@
 .contrast {
   background-color: #F6F6F6;
 }
+
+/* Freeze the first two columns */
+.th:nth-child(-n + 2) {
+  z-index: 99;
+}
+
+.td:nth-child(-n + 2) {
+  position: sticky;
+}
+
+.th:nth-child(1), .td:nth-child(1) {
+  left: 0;
+}
+
+.th:nth-child(2), .td:nth-child(2) {
+  /* TODO Dynamically determine the first column width */
+  left: 60px;
+}
