@@ -137,10 +137,13 @@ export default function Home({ trades, currentTickerPrices, rates }) {
             const stockPriceHigh = priceThen + tradePrice - commission / size;
             const netReturn = size * tradePrice - commission;
             const cashEquivalent = size * strike;
-            const convertToGBP = (amount) => amount / rates[currency];
+            const forexRate = rates[currency];
+            const convertToGBP = (amount) => amount / forexRate;
             const cashEquivalentGBP = convertToGBP(cashEquivalent);
             const priceIncrease =
-              currentStockPrice > stockPriceHigh ? (currentStockPrice - stockPriceHigh) * size : '';
+              currentStockPrice > stockPriceHigh
+                ? ((currentStockPrice - stockPriceHigh) * size) / forexRate
+                : '';
             const status = strike > currentStockPrice ? ASSIGNABLE : '';
             const effectiveNetReturn = netReturn - Math.max(0, strike - currentStockPrice) * size;
             const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
