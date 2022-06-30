@@ -5,7 +5,7 @@ const getTickerPrices = async (tickersToQuery) => {
     tickersToQuery.map(async (ticker) => {
       const endpoint = `https://cloud.iexapis.com/v1/stock/${
         tickers[ticker].actual || ticker
-      }/quote?token=${process.env.IEX_TOKEN}`;
+      }/quote?token=${process.env.IEX_PUBLISHABLE_KEY}`;
       const { latestPrice } = await fetch(endpoint).then((response) => response.json());
       return { ticker, latestPrice };
     })

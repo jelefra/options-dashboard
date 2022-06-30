@@ -55,7 +55,7 @@ export async function getServerSideProps() {
   };
 }
 
-export default function Home({ trades, currentTickerPrices, rates }) {
+export default function Put({ trades, currentTickerPrices, rates }) {
   const displayDateFormat = 'D MMM';
   const date = (x) => x.format(displayDateFormat);
   const pctZero = (x) => `${(100 * x).toFixed(0)}%`;
