@@ -1,4 +1,4 @@
-export default {
+const tickers = {
   AAPL: {
     size: 100,
     currency: 'USD',
@@ -10,3 +10,5 @@ export default {
     colour: 'cED1C24',
   },
 };
+
+export default tickers;
