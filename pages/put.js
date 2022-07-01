@@ -12,6 +12,7 @@ import accountColours from '../data/accountColours';
 import isCurrentPut from '../utils/isCurrentPut';
 import getForexRates from '../utils/getForexRates';
 import getTickerPrices from '../utils/getTickerPrices';
+import { pctZero } from '../utils';
 
 import styles from '../styles/Table.module.css';
 
@@ -58,7 +59,6 @@ export async function getServerSideProps() {
 export default function Put({ trades, currentTickerPrices, rates }) {
   const displayDateFormat = 'D MMM';
   const date = (x) => x.format(displayDateFormat);
-  const pctZero = (x) => `${(100 * x).toFixed(0)}%`;
   const pctOne = (x) => `${(100 * x).toFixed(1)}%`;
   const decimalTwo = (x) => x.toFixed(2);
   const thousands = (x) => x && x.toLocaleString().split('.')[0];
