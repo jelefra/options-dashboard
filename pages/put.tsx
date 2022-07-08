@@ -1,3 +1,4 @@
+import { GetServerSideProps } from 'next';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -5,6 +6,7 @@ dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
+// @ts-ignore
 import trades from '../data/options.csv';
 import tickers from '../data/tickers';
 import accountColours from '../data/accountColours';
@@ -43,7 +45,7 @@ const STOCK_PRICE_LOW_PCT = 'Low %';
 
 const CSV_DATE_FORMAT = 'DD/MM/YYYY';
 
-export async function getServerSideProps() {
+export const getServerSideProps: GetServerSideProps = async () => {
   const tickersToQuery = [
     ...new Set(trades.filter(isCurrentPut).map(({ [TICKER]: ticker }) => ticker)),
   ];
@@ -54,7 +56,7 @@ export async function getServerSideProps() {
   return {
     props: { trades, currentTickerPrices, rates },
   };
-}
+};
 
 export default function Put({ trades, currentTickerPrices, rates }) {
   const displayDateFormat = 'D MMM';
@@ -115,6 +117,7 @@ export default function Put({ trades, currentTickerPrices, rates }) {
           .map((row, rowIndex) => {
             const orderedRowValues = headings.map((elem) => ({
               ...elem,
+              value: undefined,
             }));
             const set = (column, value) =>
               (orderedRowValues.find(({ name }) => name === column).value = value);

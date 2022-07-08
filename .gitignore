@@ -38,8 +38,8 @@ yarn-error.log*
 data/options.csv
 data/transactions.csv
 
-data/tickers.js
+data/tickers.ts
 styles/tickers.css
 
-data/accountColours.js
+data/accountColours.ts
 styles/accounts.css

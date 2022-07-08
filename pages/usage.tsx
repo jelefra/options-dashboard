@@ -3,10 +3,11 @@ import dynamic from 'next/dynamic';
 
 import Container from '../components/Container';
 import { pctZero } from '../utils';
+import { GetServerSideProps } from 'next';
 
 const AVAILABLE_CREDITS = 50000;
 
-export async function getServerSideProps() {
+export const getServerSideProps: GetServerSideProps = async () => {
   const endpoint = `https://cloud.iexapis.com/v1/account/usage/credits?token=${process.env.IEX_SECRET_KEY}`;
   const creditUsage = await fetch(endpoint).then((response) => response.json());
 
@@ -29,7 +30,7 @@ export async function getServerSideProps() {
   return {
     props: { dailyUsage, monthlyUsage, daysInMonth },
   };
-}
+};
 
 const UsageChart = dynamic(() => import('../components/UsageChart'), { ssr: false });
 

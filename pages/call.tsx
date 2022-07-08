@@ -1,3 +1,4 @@
+import { GetServerSideProps } from 'next';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -11,7 +12,9 @@ import getCallTickersToQuery from '../utils/getCallTickersToQuery';
 
 import { QUANTITY } from '../constants/constants';
 
+// @ts-ignore
 import trades from '../data/options.csv';
+// @ts-ignore
 import transactions from '../data/transactions.csv';
 import tickers from '../data/tickers';
 import accountColours from '../data/accountColours';
@@ -68,15 +71,16 @@ const NOW = dayjs();
 const getReturnPctForPeriod = (returnPct, days, newPeriod) =>
   ((1 + returnPct) ** (1 / days)) ** newPeriod - 1;
 
-export async function getServerSideProps() {
+export const getServerSideProps: GetServerSideProps = async () => {
   const tickersToQuery = getCallTickersToQuery(trades, transactions);
   const currentTickerPrices = await getTickerPrices(tickersToQuery);
+
   const rates = await getForexRates();
 
   return {
     props: { trades, transactions, currentTickerPrices, rates },
   };
-}
+};
 
 export default function Call({ trades, currentTickerPrices, rates }) {
   const displayDateFormat = 'D MMM';
@@ -259,10 +263,12 @@ export default function Call({ trades, currentTickerPrices, rates }) {
       </thead>
       <tbody>
         {orderedBatches
+          // @ts-ignore
           .filter(([, { wheeling }]) => wheeling)
           .map(([, batchData], rowIndex) => {
             const orderedRowValues = headings.map((elem) => ({
               ...elem,
+              value: undefined,
             }));
             const set = (column, value) =>
               (orderedRowValues.find(({ name }) => name === column).value = value);
