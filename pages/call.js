@@ -9,7 +9,10 @@ import getTickerPrices from '../utils/getTickerPrices';
 import getForexRates from '../utils/getForexRates';
 import getCallTickersToQuery from '../utils/getCallTickersToQuery';
 
+import { QUANTITY } from '../constants/constants';
+
 import trades from '../data/options.csv';
+import transactions from '../data/transactions.csv';
 import tickers from '../data/tickers';
 import accountColours from '../data/accountColours';
 
@@ -37,6 +40,12 @@ const COST_BASIS_DROP_PCT = 'Cost basis drop %';
 const DAYS_TOTAL = 'Days total';
 const DTE_CURRENT = 'Current DTE';
 const DTE_TOTAL = 'DTE';
+const PRICE_INCREASE = 'Price increase';
+const PURCHASE = 'Purchase';
+const PURCHASE_COST_NET = 'Net purchase cost';
+const PURCHASE_COST_NET_PER_SHARE = 'Net cost / share';
+const PUT = 'Put';
+const PUT_TRADE_DATE = 'Put trade date';
 const RETURN_PCT_CURRENT = 'Return %';
 const RETURN_PCT_IF_ASSIGNED = 'Return % if assigned';
 const RETURN_30D_PCT_IF_ASSIGNED = 'Return 30D % if assigned';
@@ -45,13 +54,11 @@ const RETURN_1Y_PCT_IF_ASSIGNED = 'Return 1Y % if assigned';
 const RETURN_GBP_CURRENT = 'Return GBP current';
 const RETURN_GBP_IF_ASSIGNED = 'Return GBP if assigned';
 const RETURN_GBP_LAST_CALL = 'Return GBP last call';
-const PRICE_INCREASE = 'Price increase';
-const PUT = 'Put';
-const PUT_TRADE_DATE = 'Put trade date';
 const STATUS = 'Status';
 const STOCK_PRICE_CURRENT = 'Current';
 const STOCK_PRICE_HIGH = 'High';
 const STOCK_PRICE_HIGH_PCT = 'High %';
+const TRANSACTION_DATE = 'Transaction date';
 
 const WHEELING = 'wheeling';
 
@@ -62,12 +69,12 @@ const getReturnPctForPeriod = (returnPct, days, newPeriod) =>
   ((1 + returnPct) ** (1 / days)) ** newPeriod - 1;
 
 export async function getServerSideProps() {
-  const tickersToQuery = getCallTickersToQuery(trades);
+  const tickersToQuery = getCallTickersToQuery(trades, transactions);
   const currentTickerPrices = await getTickerPrices(tickersToQuery);
   const rates = await getForexRates();
 
   return {
-    props: { trades, currentTickerPrices, rates },
+    props: { trades, transactions, currentTickerPrices, rates },
   };
 }
 
@@ -82,6 +89,7 @@ export default function Call({ trades, currentTickerPrices, rates }) {
     { name: ACCOUNT },
     { name: BATCH },
     { name: ASSIGNED_STRIKE, format: decimalTwo, align: 'right' },
+    { name: PURCHASE_COST_NET_PER_SHARE, format: decimalTwo, align: 'right' },
     { name: AVERAGE_COST, format: decimalTwo, align: 'right' },
     { name: COST_BASIS_DROP_PCT, format: pctOne, align: 'right' },
     { name: RETURN_PCT_CURRENT, format: pctOne, align: 'right' },
@@ -110,6 +118,46 @@ export default function Call({ trades, currentTickerPrices, rates }) {
   ];
 
   const batches = {};
+
+  for (let transaction of transactions) {
+    const ticker = transaction[TICKER];
+    const currentStockPrice = currentTickerPrices[ticker];
+    const batch = transaction[BATCH];
+
+    if (transaction[TYPE] === PURCHASE && batch) {
+      const netPurchaseCost = transaction['Currency amount'] + transaction[COMMISSION];
+      const quantity = transaction[QUANTITY];
+
+      const transactionBatches = batch.includes(',') ? batch.split(',') : [batch];
+
+      for (let transactionBatch of transactionBatches) {
+        if (!batches[transactionBatch]) {
+          batches[transactionBatch] = {
+            [ACCOUNT]: transaction[ACCOUNT],
+            [BATCH]: transactionBatch,
+            [PURCHASE_COST_NET]: netPurchaseCost,
+            [QUANTITY]: quantity,
+            [WHEELING]: true,
+            // TODO
+            //  Purchase date set to the first purchase date
+            //  Will underestimate gains and losses
+            //  Is it worth improving?
+            [TRANSACTION_DATE]: transaction[TRANSACTION_DATE],
+            [STOCK_PRICE_CURRENT]: currentStockPrice,
+            [TICKER]: ticker,
+          };
+        } else {
+          batches[transactionBatch][PURCHASE_COST_NET] += netPurchaseCost;
+          batches[transactionBatch][QUANTITY] += quantity;
+        }
+        const netPurchaseCostPerShare =
+          batches[transactionBatch][PURCHASE_COST_NET] / batches[transactionBatch][QUANTITY];
+        batches[transactionBatch][PURCHASE_COST_NET_PER_SHARE] = netPurchaseCostPerShare;
+        batches[transactionBatch][AVERAGE_COST] = netPurchaseCostPerShare;
+      }
+    }
+  }
+
   for (let trade of trades) {
     const { size, currency } = tickers[trade[TICKER]];
     const forexRate = rates[currency];
@@ -225,7 +273,9 @@ export default function Call({ trades, currentTickerPrices, rates }) {
             const forexRate = rates[currency];
             const returnGBPCurrent = ((currentStockPrice - averageCost) * size) / forexRate;
 
-            const costBasisDrop = averageCost / batchData[ASSIGNED_STRIKE] - 1;
+            const startingCost =
+              batchData[ASSIGNED_STRIKE] || batchData[PURCHASE_COST_NET_PER_SHARE];
+            const costBasisDrop = averageCost / startingCost - 1;
 
             let returnGBPIfAssigned;
             if (batchData[STRIKE]) {
@@ -249,6 +299,7 @@ export default function Call({ trades, currentTickerPrices, rates }) {
             set(DTE_CURRENT, batchData[DTE_CURRENT]);
             set(DTE_TOTAL, batchData[DTE_TOTAL]);
             set(EXPIRY_DATE, batchData[EXPIRY_DATE]);
+            set(PURCHASE_COST_NET_PER_SHARE, batchData[PURCHASE_COST_NET_PER_SHARE]);
             set(PRICE_INCREASE, batchData[PRICE_INCREASE]);
             set(RETURN_1Y_PCT_IF_ASSIGNED, batchData[RETURN_1Y_PCT_IF_ASSIGNED]);
             set(RETURN_30D_PCT_IF_ASSIGNED, batchData[RETURN_30D_PCT_IF_ASSIGNED]);

@@ -1,0 +1,5 @@
+﻿Transaction date,Account,Type,Ticker,Batch,Currency,Price then,Quantity,Currency amount,Commission
+07/07/2022,Account 1,Purchase,AMZN,AMZN1,USD,114.22,50,5711,1
+08/07/2022,Account 1,Purchase,AMZN,AMZN1,USD,115.44,50,5772,1
+08/07/2022,Account 2,Purchase,GOOG,,USD,2400.5,2,4801,1
+08/07/2022,Account 2,Purchase,AAPL,"AAPL1,AAPL2",USD,147.08,200,29416,1
