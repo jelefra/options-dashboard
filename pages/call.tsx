@@ -209,7 +209,8 @@ export default function Call({ trades, currentTickerPrices, rates }) {
         batch[DTE_TOTAL] = expiryDate.diff(tradeDate, 'day');
         const priceThen = trade[STOCK_PRICE_AT_TIME_OF_TRADE];
         batch[STOCK_PRICE_AT_TIME_OF_TRADE] = priceThen;
-        const daysTotal = expiryDate.diff(batch[PUT_TRADE_DATE], 'day');
+        const startingDate = batch[PUT_TRADE_DATE] || batch[TRANSACTION_DATE];
+        const daysTotal = expiryDate.diff(startingDate, 'day');
         batch[DAYS_TOTAL] = daysTotal;
         const returnPctLastCall = (tradePrice * size - commission) / (priceThen * size);
         const dteLastCall = expiryDate.diff(tradeDate, 'day');
