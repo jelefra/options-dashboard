@@ -338,7 +338,7 @@ export default function Call({ trades, currentTickerPrices, rates }) {
                     })}
                     key={index}
                   >
-                    {value && format(value)}
+                    {value !== undefined && format(value)}
                   </td>
                 ))}
               </tr>
