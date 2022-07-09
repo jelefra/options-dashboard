@@ -1,6 +1,6 @@
 import tickers from '../data/tickers';
 
-const getTickerPrices = async (tickersToQuery) => {
+const fetchTickerPrices = async (tickersToQuery) => {
   const currentTickerPricesMap = await Promise.all(
     tickersToQuery.map(async (ticker) => {
       const endpoint = `https://cloud.iexapis.com/v1/stock/${
@@ -18,4 +18,4 @@ const getTickerPrices = async (tickersToQuery) => {
   }, {});
 };
 
-export default getTickerPrices;
+export default fetchTickerPrices;

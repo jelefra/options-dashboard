@@ -1,3 +1,4 @@
+import { createClient } from 'redis';
 import { GetServerSideProps } from 'next';
 import cx from 'classnames';
 import dayjs from 'dayjs';
@@ -6,11 +7,11 @@ dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
-import getTickerPrices from '../utils/getTickerPrices';
+import get from '../utils/get';
+import fetchCallTickerPrices from '../utils/fetchCallTickerPrices';
 import getForexRates from '../utils/getForexRates';
-import getCallTickersToQuery from '../utils/getCallTickersToQuery';
 
-import { QUANTITY } from '../constants/constants';
+import { ONE_HOUR_IN_SECONDS, QUANTITY } from '../constants/constants';
 
 // @ts-ignore
 import trades from '../data/options.csv';
@@ -72,10 +73,10 @@ const getReturnPctForPeriod = (returnPct, days, newPeriod) =>
   ((1 + returnPct) ** (1 / days)) ** newPeriod - 1;
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const tickersToQuery = getCallTickersToQuery(trades, transactions);
-  const currentTickerPrices = await getTickerPrices(tickersToQuery);
-
-  const rates = await getForexRates();
+  const client = createClient();
+  await client.connect();
+  const currentTickerPrices = await get(client, fetchCallTickerPrices, 'callTickerPrices');
+  const rates = await get(client, getForexRates, 'rates', ONE_HOUR_IN_SECONDS);
 
   return {
     props: { trades, transactions, currentTickerPrices, rates },

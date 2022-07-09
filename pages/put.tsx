@@ -1,3 +1,4 @@
+import { createClient } from 'redis';
 import { GetServerSideProps } from 'next';
 import cx from 'classnames';
 import dayjs from 'dayjs';
@@ -11,10 +12,13 @@ import trades from '../data/options.csv';
 import tickers from '../data/tickers';
 import accountColours from '../data/accountColours';
 
-import isCurrentPut from '../utils/isCurrentPut';
+import get from '../utils/get';
+import fetchPutTickerPrices from '../utils/fetchPutTickerPrices';
 import getForexRates from '../utils/getForexRates';
-import getTickerPrices from '../utils/getTickerPrices';
+import isCurrentPut from '../utils/isCurrentPut';
 import { pctZero } from '../utils';
+
+import { ONE_HOUR_IN_SECONDS, TICKER } from '../constants/constants';
 
 import styles from '../styles/Table.module.css';
 
@@ -23,7 +27,6 @@ const COMMISSION = 'Commission';
 const EXPIRY_DATE = 'Expiry';
 const STOCK_PRICE_AT_TIME_OF_TRADE = 'Price then';
 const STRIKE = 'Strike';
-const TICKER = 'Ticker';
 const TRADE_DATE = 'Trade date';
 const TRADE_PRICE = 'Trade price';
 
@@ -46,12 +49,10 @@ const STOCK_PRICE_LOW_PCT = 'Low %';
 const CSV_DATE_FORMAT = 'DD/MM/YYYY';
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const tickersToQuery = [
-    ...new Set(trades.filter(isCurrentPut).map(({ [TICKER]: ticker }) => ticker)),
-  ];
-
-  const currentTickerPrices = await getTickerPrices(tickersToQuery);
-  const rates = await getForexRates();
+  const client = createClient();
+  await client.connect();
+  const currentTickerPrices = await get(client, fetchPutTickerPrices, 'putTickerPrices');
+  const rates = await get(client, getForexRates, 'rates', ONE_HOUR_IN_SECONDS);
 
   return {
     props: { trades, currentTickerPrices, rates },
