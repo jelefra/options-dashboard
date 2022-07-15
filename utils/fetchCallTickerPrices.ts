@@ -6,8 +6,8 @@ import fetchTickerPrices from './fetchTickerPrices';
 import getCallTickersToQuery from './getCallTickersToQuery';
 
 const fetchCallTickerPrices = () => {
-  const putTickersToQuery = getCallTickersToQuery(trades, transactions);
-  return fetchTickerPrices(putTickersToQuery);
+  const callTickersToQuery = getCallTickersToQuery(trades, transactions);
+  return fetchTickerPrices(callTickersToQuery);
 };
 
 export default fetchCallTickerPrices;
