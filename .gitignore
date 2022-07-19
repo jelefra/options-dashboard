@@ -41,5 +41,5 @@ data/transactions.csv
 data/tickers.ts
 styles/tickers.css
 
-data/accountColours.ts
+data/accounts.ts
 styles/accounts.css

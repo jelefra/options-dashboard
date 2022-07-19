@@ -10,72 +10,44 @@ dayjs.extend(customParseFormat);
 import get from '../utils/get';
 import fetchCallTickerPrices from '../utils/fetchCallTickerPrices';
 import getForexRates from '../utils/getForexRates';
+import {
+  calcAssignmentPct,
+  calcCashEquivalent,
+  calcCostBasisDrop,
+  calcDteCurrent,
+  calcDteTotal,
+  calcNetReturn,
+  calcPriceIncrease,
+  calcPutNetCost,
+  calcReturn,
+  calcReturnPct,
+  calcReturnPctForPeriod,
+  calcStockPriceHigh,
+  calcStockPricePct,
+  convertToGBP,
+  getCallStatus,
+} from '../utils';
+import { date, decimalTwo, pctOne, thousands } from '../utils/format';
 
-import { ONE_HOUR_IN_SECONDS, QUANTITY } from '../constants/constants';
+import { Batch, CallRow, TradeData, TransactionData } from '../types';
+
+import { CSV_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
 
 // @ts-ignore
 import trades from '../data/options.csv';
 // @ts-ignore
 import transactions from '../data/transactions.csv';
 import tickers from '../data/tickers';
-import accountColours from '../data/accountColours';
+import accounts from '../data/accounts';
 
 import styles from '../styles/Table.module.css';
 
-const ACCOUNT = 'Account';
-const BATCH = 'Batch';
-const CLOSE_PRICE = 'Close price';
-const COMMISSION = 'Commission';
-const EXPIRY_DATE = 'Expiry';
-const STOCK_PRICE_AT_TIME_OF_TRADE = 'Price then';
-const STRIKE = 'Strike';
-const TICKER = 'Ticker';
-const TRADE_DATE = 'Trade date';
-const TRADE_PRICE = 'Trade price';
-const TYPE = 'Type';
-
-const ASSIGNABLE = 'Assignable';
-const ASSIGNED_STRIKE = 'Assigned strike';
-const ASSIGNMENT_PCT = 'Assignment %';
-const AVERAGE_COST = 'Avg cost';
-const CALL = 'Call';
-const CASH_EQUIVALENT_GBP = 'Cash equiv GBP';
-const COST_BASIS_DROP_PCT = 'Cost basis drop %';
-const DAYS_TOTAL = 'Days total';
-const DTE_CURRENT = 'Current DTE';
-const DTE_TOTAL = 'DTE';
-const PRICE_INCREASE = 'Price increase';
-const PURCHASE = 'Purchase';
-const PURCHASE_COST_NET = 'Net purchase cost';
-const PURCHASE_COST_NET_PER_SHARE = 'Net cost / share';
-const PUT = 'Put';
-const PUT_TRADE_DATE = 'Put trade date';
-const RETURN_PCT_CURRENT = 'Return %';
-const RETURN_PCT_IF_ASSIGNED = 'Return % if assigned';
-const RETURN_30D_PCT_IF_ASSIGNED = 'Return 30D % if assigned';
-const RETURN_30D_PCT_LAST_CALL = 'Return 30D % last call';
-const RETURN_1Y_PCT_IF_ASSIGNED = 'Return 1Y % if assigned';
-const RETURN_GBP_CURRENT = 'Return GBP current';
-const RETURN_GBP_IF_ASSIGNED = 'Return GBP if assigned';
-const RETURN_GBP_LAST_CALL = 'Return GBP last call';
-const STATUS = 'Status';
-const STOCK_PRICE_CURRENT = 'Current';
-const STOCK_PRICE_HIGH = 'High';
-const STOCK_PRICE_HIGH_PCT = 'High %';
-const TRANSACTION_DATE = 'Transaction date';
-
-const WHEELING = 'wheeling';
-
-const CSV_DATE_FORMAT = 'DD/MM/YYYY';
 const NOW = dayjs();
-
-const getReturnPctForPeriod = (returnPct, days, newPeriod) =>
-  ((1 + returnPct) ** (1 / days)) ** newPeriod - 1;
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const client = createClient();
   await client.connect();
-  const currentTickerPrices = await get(client, fetchCallTickerPrices, 'callTickerPrices');
+  const currentTickerPrices = await get(client, fetchCallTickerPrices, 'callTickerPrices', NOW);
   const rates = await get(client, getForexRates, 'rates', ONE_HOUR_IN_SECONDS);
 
   return {
@@ -83,169 +55,159 @@ export const getServerSideProps: GetServerSideProps = async () => {
   };
 };
 
-export default function Call({ trades, currentTickerPrices, rates }) {
-  const displayDateFormat = 'D MMM';
-  const date = (x) => x.format(displayDateFormat);
-  const pctOne = (x) => `${(100 * x).toFixed(1)}%`;
-  const decimalTwo = (x) => x.toFixed(2);
-  const thousands = (x) => x && x.toLocaleString().split('.')[0];
-
-  const headings = [
-    { name: ACCOUNT },
-    { name: BATCH },
-    { name: ASSIGNED_STRIKE, format: decimalTwo, align: 'right' },
-    { name: PURCHASE_COST_NET_PER_SHARE, format: decimalTwo, align: 'right' },
-    { name: AVERAGE_COST, format: decimalTwo, align: 'right' },
-    { name: COST_BASIS_DROP_PCT, format: pctOne, align: 'right' },
-    { name: RETURN_PCT_CURRENT, format: pctOne, align: 'right' },
-    { name: RETURN_GBP_CURRENT, format: thousands, align: 'right' },
-    { name: TRADE_DATE, format: date },
-    { name: EXPIRY_DATE, format: date },
-    { name: DTE_TOTAL, align: 'right' },
-    { name: DTE_CURRENT, align: 'right' },
-    { name: TRADE_PRICE, format: decimalTwo, align: 'right' },
-    { name: STOCK_PRICE_AT_TIME_OF_TRADE, format: decimalTwo, align: 'right' },
-    { name: STOCK_PRICE_CURRENT, format: decimalTwo, align: 'right' },
-    { name: STRIKE, format: decimalTwo, align: 'right' },
-    { name: STATUS },
-    { name: ASSIGNMENT_PCT, format: pctOne, align: 'right' },
-    { name: STOCK_PRICE_HIGH, format: decimalTwo, align: 'right' },
-    { name: STOCK_PRICE_HIGH_PCT, format: pctOne, align: 'right' },
-    { name: PRICE_INCREASE, format: thousands, align: 'right' },
-    { name: RETURN_30D_PCT_LAST_CALL, format: pctOne, align: 'right' },
-    { name: RETURN_GBP_LAST_CALL, format: thousands, align: 'right' },
-    { name: CASH_EQUIVALENT_GBP, format: thousands, align: 'right' },
-    { name: DAYS_TOTAL, align: 'right' },
-    { name: RETURN_GBP_IF_ASSIGNED, format: thousands, align: 'right' },
-    { name: RETURN_PCT_IF_ASSIGNED, format: pctOne, align: 'right' },
-    { name: RETURN_30D_PCT_IF_ASSIGNED, format: pctOne, align: 'right' },
-    { name: RETURN_1Y_PCT_IF_ASSIGNED, format: pctOne, align: 'right' },
+export default function Call({
+  trades,
+  transactions,
+  currentTickerPrices,
+  rates,
+}: {
+  trades: TradeData[];
+  transactions: TransactionData[];
+  currentTickerPrices: { [key: string]: number };
+  rates: { [key: string]: number };
+}) {
+  const headings: { name: keyof CallRow; format?: Function; align?: string }[] = [
+    { name: 'account' },
+    { name: 'batchCode' },
+    { name: 'grossCost', format: decimalTwo, align: 'right' },
+    { name: 'netCost', format: decimalTwo, align: 'right' },
+    { name: 'costBasisDrop', format: pctOne, align: 'right' },
+    { name: 'returnPct', format: pctOne, align: 'right' },
+    { name: 'returnGBP', format: thousands, align: 'right' },
+    { name: 'date', format: date },
+    { name: 'expiry', format: date },
+    { name: 'dteTotal', align: 'right' },
+    { name: 'dteCurrent', align: 'right' },
+    { name: 'tradePrice', format: decimalTwo, align: 'right' },
+    { name: 'stockPrice', format: decimalTwo, align: 'right' },
+    { name: 'current', format: decimalTwo, align: 'right' },
+    { name: 'strike', format: decimalTwo, align: 'right' },
+    { name: 'status' },
+    { name: 'assignmentPct', format: pctOne, align: 'right' },
+    { name: 'high', format: decimalTwo, align: 'right' },
+    { name: 'highPct', format: pctOne, align: 'right' },
+    { name: 'priceIncreaseGBP', format: thousands, align: 'right' },
+    { name: 'return30DPctLastCall', format: pctOne, align: 'right' },
+    { name: 'returnGBPLastCall', format: thousands, align: 'right' },
+    { name: 'cashEquivalentGBP', format: thousands, align: 'right' },
+    { name: 'daysTotal', align: 'right' },
+    { name: 'returnGBPIfAssigned', format: thousands, align: 'right' },
+    { name: 'returnPctIfAssigned', format: pctOne, align: 'right' },
+    { name: 'return30DPctIfAssigned', format: pctOne, align: 'right' },
+    { name: 'return1YPctIfAssigned', format: pctOne, align: 'right' },
   ];
 
-  const batches = {};
+  const batches: { [key: string]: Batch } = {};
 
   for (let transaction of transactions) {
-    const ticker = transaction[TICKER];
-    const currentStockPrice = currentTickerPrices[ticker];
-    const batch = transaction[BATCH];
+    const { account, batchCodes: batchCodesStr, ticker, type } = transaction;
 
-    if (transaction[TYPE] === PURCHASE && batch) {
-      const netPurchaseCost = transaction['Currency amount'] + transaction[COMMISSION];
-      const quantity = transaction[QUANTITY];
+    if (type === 'Purchase' && batchCodesStr) {
+      const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
 
-      const transactionBatches = batch.includes(',') ? batch.split(',') : [batch];
+      for (let batchCode of batchCodes) {
+        const { commission, quantity, stockPrice } = transaction;
+        batches[batchCode] = batches[batchCode] || {
+          account,
+          // TODO
+          //  Acquisition date set to the first purchase date
+          //  May underestimate gains and losses
+          //  Is it worth improving?
+          acquisitionDate: dayjs(transaction.date, CSV_DATE_FORMAT),
+          grossCost: 0,
+          batchCode,
+          netCost: 0,
+          origin: 'Purchase',
+          quantity: 0,
+          ticker,
+          wheeling: true,
+        };
 
-      for (let transactionBatch of transactionBatches) {
-        if (!batches[transactionBatch]) {
-          batches[transactionBatch] = {
-            [ACCOUNT]: transaction[ACCOUNT],
-            [BATCH]: transactionBatch,
-            [PURCHASE_COST_NET]: netPurchaseCost,
-            [QUANTITY]: quantity,
-            [WHEELING]: true,
-            // TODO
-            //  Purchase date set to the first purchase date
-            //  Will underestimate gains and losses
-            //  Is it worth improving?
-            [TRANSACTION_DATE]: transaction[TRANSACTION_DATE],
-            [STOCK_PRICE_CURRENT]: currentStockPrice,
-            [TICKER]: ticker,
-          };
-        } else {
-          batches[transactionBatch][PURCHASE_COST_NET] += netPurchaseCost;
-          batches[transactionBatch][QUANTITY] += quantity;
-        }
-        const netPurchaseCostPerShare =
-          batches[transactionBatch][PURCHASE_COST_NET] / batches[transactionBatch][QUANTITY];
-        batches[transactionBatch][PURCHASE_COST_NET_PER_SHARE] = netPurchaseCostPerShare;
-        batches[transactionBatch][AVERAGE_COST] = netPurchaseCostPerShare;
+        const batch = batches[batchCode];
+
+        const oldGrossCost = batch.grossCost;
+        const oldNetCost = batch.netCost;
+        const oldQuantity = batch.quantity;
+
+        batch.grossCost =
+          (oldGrossCost * oldQuantity + stockPrice * quantity) / (oldQuantity + quantity);
+        batch.netCost =
+          (oldNetCost * oldQuantity + stockPrice * quantity + commission) /
+          (oldQuantity + quantity);
+        batch.quantity += quantity;
       }
     }
+
+    // TODO
+    // if (type === 'Sale' && batchCodes) {
+    //   ...
+    // }
   }
 
   for (let trade of trades) {
-    const { size, currency } = tickers[trade[TICKER]];
-    const forexRate = rates[currency];
+    const {
+      account,
+      batchCode,
+      closePrice,
+      commission,
+      date,
+      expiry,
+      stockPrice,
+      strike,
+      ticker,
+      tradePrice,
+      type,
+    } = trade;
 
-    const tradePrice = trade[TRADE_PRICE];
-    const strike = trade[STRIKE];
-    const commission = trade[COMMISSION];
-    const batch = batches[trade[BATCH]];
-    const closePrice = trade[CLOSE_PRICE];
-    const tradeDate = dayjs(trade[TRADE_DATE], CSV_DATE_FORMAT);
-    const currentStockPrice = currentTickerPrices[trade[TICKER]];
+    const { optionSize } = tickers[ticker];
 
-    if (trade[TYPE] === PUT && trade[CLOSE_PRICE] && closePrice < strike) {
-      batches[trade[BATCH]] = {
-        [ACCOUNT]: trade[ACCOUNT],
-        [BATCH]: trade[BATCH],
-        [ASSIGNED_STRIKE]: trade[STRIKE],
-        [AVERAGE_COST]: strike - tradePrice + commission / size,
-        [WHEELING]: true,
-        [PUT_TRADE_DATE]: tradeDate,
-        [STOCK_PRICE_CURRENT]: currentStockPrice,
-        [TICKER]: trade[TICKER],
+    if (type === 'Put' && closePrice && closePrice < strike) {
+      batches[batchCode] = {
+        account,
+        batchCode,
+        grossCost: strike,
+        netCost: calcPutNetCost(strike, tradePrice, commission, optionSize),
+        origin: 'Put',
+        acquisitionDate: dayjs(date, CSV_DATE_FORMAT),
+        quantity: optionSize,
+        ticker,
+        wheeling: true,
       };
     }
 
-    if (trade[TYPE] === CALL) {
-      batch[AVERAGE_COST] -= tradePrice - commission / size;
+    if (type === 'Call') {
+      const batch = batches[batchCode];
+      batch.netCost -= tradePrice - commission / optionSize;
 
       if (closePrice && closePrice > strike) {
-        batch[WHEELING] = false;
+        batch.wheeling = false;
       }
 
-      const expiryDate = dayjs(trade[EXPIRY_DATE], CSV_DATE_FORMAT);
+      const expiryDate = dayjs(expiry, CSV_DATE_FORMAT);
       if (expiryDate.isSameOrAfter(NOW, 'day')) {
-        batch[TRADE_DATE] = tradeDate;
-        batch[EXPIRY_DATE] = expiryDate;
-        batch[TRADE_PRICE] = tradePrice;
-        batch[STRIKE] = strike;
-        if (currentStockPrice > strike) {
-          batch[STATUS] = ASSIGNABLE;
-        }
-        batch[ASSIGNMENT_PCT] = strike / currentStockPrice - 1;
-        batch[DTE_CURRENT] = expiryDate.add(1, 'day').diff(NOW, 'day');
-        batch[DTE_TOTAL] = expiryDate.diff(tradeDate, 'day');
-        const priceThen = trade[STOCK_PRICE_AT_TIME_OF_TRADE];
-        batch[STOCK_PRICE_AT_TIME_OF_TRADE] = priceThen;
-        const startingDate = batch[PUT_TRADE_DATE] || batch[TRANSACTION_DATE];
-        const daysTotal = expiryDate.diff(startingDate, 'day');
-        batch[DAYS_TOTAL] = daysTotal;
-        const returnPctLastCall = (tradePrice * size - commission) / (priceThen * size);
-        const dteLastCall = expiryDate.diff(tradeDate, 'day');
-        batch[RETURN_30D_PCT_LAST_CALL] = getReturnPctForPeriod(returnPctLastCall, dteLastCall, 30);
-        const returnPctIfAssigned = strike / batch[AVERAGE_COST] - 1;
-        batch[RETURN_PCT_IF_ASSIGNED] = returnPctIfAssigned;
-        batch[RETURN_30D_PCT_IF_ASSIGNED] = getReturnPctForPeriod(
-          returnPctIfAssigned,
-          daysTotal,
-          30
-        );
-        batch[RETURN_1Y_PCT_IF_ASSIGNED] = getReturnPctForPeriod(
-          returnPctIfAssigned,
-          daysTotal,
-          365
-        );
-        const stockPriceHigh = strike + tradePrice - commission / size;
-        batch[STOCK_PRICE_HIGH] = stockPriceHigh;
-        batch[STOCK_PRICE_HIGH_PCT] = stockPriceHigh / currentStockPrice - 1;
-        if (currentStockPrice > stockPriceHigh) {
-          batch[PRICE_INCREASE] = ((currentStockPrice - stockPriceHigh) * size) / forexRate;
-        }
-        batch[RETURN_GBP_LAST_CALL] = (tradePrice * size - commission) / forexRate;
-        batch[CASH_EQUIVALENT_GBP] = (priceThen * size) / forexRate;
+        batch.currentCall = {
+          account,
+          batchCode,
+          commission,
+          date: dayjs(date, CSV_DATE_FORMAT),
+          expiry: expiryDate,
+          stockPrice,
+          strike,
+          ticker: batch.ticker,
+          tradePrice,
+          type: 'Call',
+        };
       }
     }
   }
 
   const orderedBatches = Object.entries(batches)
     .sort(([a], [b]) => a.localeCompare(b))
-    .sort(([, a], [, b]) => a[ACCOUNT].localeCompare(b[ACCOUNT]))
+    .sort(([, a], [, b]) => a.account.localeCompare(b.account))
     .sort(([, a], [, b]) => {
-      if (a[DTE_TOTAL] && b[DTE_TOTAL]) {
+      if (a.currentCall?.account && b.currentCall?.account) {
         return 0;
-      } else if (a[DTE_TOTAL]) {
+      } else if (a.currentCall?.account) {
         return -1;
       } else {
         return 1;
@@ -257,8 +219,8 @@ export default function Call({ trades, currentTickerPrices, rates }) {
       <thead>
         <tr>
           {headings.map(({ name }, index) => (
-            <th className={styles.th} key={index}>
-              {name}
+            <th className={cx(styles.th, styles.stickyTh)} key={index}>
+              {DISPLAY[name] || name}
             </th>
           ))}
         </tr>
@@ -268,77 +230,75 @@ export default function Call({ trades, currentTickerPrices, rates }) {
           // @ts-ignore
           .filter(([, { wheeling }]) => wheeling)
           .map(([, batchData], rowIndex) => {
-            const orderedRowValues = headings.map((elem) => ({
-              ...elem,
-              value: undefined,
+            const orderedRowValues = headings.map((heading) => ({
+              ...heading,
             }));
-            const set = (column, value) =>
-              (orderedRowValues.find(({ name }) => name === column).value = value);
 
-            const currentStockPrice = currentTickerPrices[batchData[TICKER]];
-            const averageCost = batchData[AVERAGE_COST];
-            const { size, currency, colour } = tickers[batchData[TICKER]];
+            const { account, acquisitionDate, currentCall, grossCost, netCost, ticker } = batchData;
+            const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
+            const { colour, currency, optionSize } = tickers[ticker];
             const forexRate = rates[currency];
-            const returnGBPCurrent = ((currentStockPrice - averageCost) * size) / forexRate;
+            const current = currentTickerPrices[ticker];
 
-            const startingCost =
-              batchData[ASSIGNED_STRIKE] || batchData[PURCHASE_COST_NET_PER_SHARE];
-            const costBasisDrop = averageCost / startingCost - 1;
+            const daysTotal = expiry?.diff(acquisitionDate, 'day');
+            const high = calcStockPriceHigh(strike, tradePrice, commission, optionSize);
+            const returnPctLastCall =
+              (tradePrice * optionSize - commission) / (stockPrice * optionSize);
+            const dteLastCall = expiry?.diff(date, 'day');
+            const returnPctIfAssigned = strike / netCost - 1;
 
-            let returnGBPIfAssigned;
-            if (batchData[STRIKE]) {
-              returnGBPIfAssigned =
-                ((batchData[STRIKE] - batchData[AVERAGE_COST]) * size) / forexRate;
-            }
+            const cashEquivalent = calcCashEquivalent(optionSize, stockPrice);
+            const priceIncrease = calcPriceIncrease(current, high, optionSize);
+            const returnCurrent = calcReturn(current, netCost, optionSize);
+            const returnIfAssigned = calcReturn(strike, netCost, optionSize);
+            const returnLastCall = calcNetReturn(optionSize, tradePrice, commission);
 
-            const returnPctCurrent = currentStockPrice / averageCost - 1;
+            const row: CallRow = {
+              account,
+              assignmentPct: calcAssignmentPct(strike, current),
+              batchCode: batchData.batchCode,
+              cashEquivalentGBP: convertToGBP(cashEquivalent, forexRate),
+              costBasisDrop: calcCostBasisDrop(netCost, grossCost),
+              current,
+              date,
+              daysTotal,
+              dteCurrent: calcDteCurrent(expiry, NOW),
+              dteTotal: calcDteTotal(expiry, date),
+              expiry,
+              grossCost,
+              high,
+              highPct: calcStockPricePct(high, current),
+              netCost,
+              priceIncreaseGBP: convertToGBP(priceIncrease, forexRate),
+              return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
+              return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
+              return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
+              returnGBP: convertToGBP(returnCurrent, forexRate),
+              returnGBPIfAssigned: convertToGBP(returnIfAssigned, forexRate),
+              returnGBPLastCall: convertToGBP(returnLastCall, forexRate),
+              returnPct: calcReturnPct(current, netCost),
+              returnPctIfAssigned,
+              status: getCallStatus(strike, current),
+              stockPrice: stockPrice,
+              strike: strike,
+              tradePrice,
+            };
 
-            const account = batchData[ACCOUNT];
-            const accountColour = accountColours[account];
-
-            set(ACCOUNT, account);
-            set(ASSIGNMENT_PCT, batchData[ASSIGNMENT_PCT]);
-            set(ASSIGNED_STRIKE, batchData[ASSIGNED_STRIKE]);
-            set(AVERAGE_COST, batchData[AVERAGE_COST]);
-            set(BATCH, batchData[BATCH]);
-            set(CASH_EQUIVALENT_GBP, batchData[CASH_EQUIVALENT_GBP]);
-            set(COST_BASIS_DROP_PCT, costBasisDrop);
-            set(DAYS_TOTAL, batchData[DAYS_TOTAL]);
-            set(DTE_CURRENT, batchData[DTE_CURRENT]);
-            set(DTE_TOTAL, batchData[DTE_TOTAL]);
-            set(EXPIRY_DATE, batchData[EXPIRY_DATE]);
-            set(PURCHASE_COST_NET_PER_SHARE, batchData[PURCHASE_COST_NET_PER_SHARE]);
-            set(PRICE_INCREASE, batchData[PRICE_INCREASE]);
-            set(RETURN_1Y_PCT_IF_ASSIGNED, batchData[RETURN_1Y_PCT_IF_ASSIGNED]);
-            set(RETURN_30D_PCT_IF_ASSIGNED, batchData[RETURN_30D_PCT_IF_ASSIGNED]);
-            set(RETURN_30D_PCT_LAST_CALL, batchData[RETURN_30D_PCT_LAST_CALL]);
-            set(RETURN_GBP_CURRENT, returnGBPCurrent);
-            set(RETURN_GBP_IF_ASSIGNED, returnGBPIfAssigned);
-            set(RETURN_GBP_LAST_CALL, batchData[RETURN_GBP_LAST_CALL]);
-            set(RETURN_PCT_CURRENT, returnPctCurrent);
-            set(RETURN_PCT_IF_ASSIGNED, batchData[RETURN_PCT_IF_ASSIGNED]);
-            set(STATUS, batchData[STATUS]);
-            set(STOCK_PRICE_AT_TIME_OF_TRADE, batchData[STOCK_PRICE_AT_TIME_OF_TRADE]);
-            set(STOCK_PRICE_CURRENT, batchData[STOCK_PRICE_CURRENT]);
-            set(STOCK_PRICE_HIGH, batchData[STOCK_PRICE_HIGH]);
-            set(STOCK_PRICE_HIGH_PCT, batchData[STOCK_PRICE_HIGH_PCT]);
-            set(STRIKE, batchData[STRIKE]);
-            set(TRADE_DATE, batchData[TRADE_DATE]);
-            set(TRADE_PRICE, batchData[TRADE_PRICE]);
+            const accountColour = accounts[account].colour;
 
             return (
               <tr key={rowIndex}>
-                {orderedRowValues.map(({ name, value, format = (v) => v, align }, index) => (
+                {orderedRowValues.map(({ name, format = (v) => v, align }, index) => (
                   <td
-                    className={cx(styles.td, styles.trades, {
+                    className={cx(styles.td, styles.border, {
                       [styles[align]]: !!align,
-                      [colour]: name === BATCH,
-                      [accountColour]: name === ACCOUNT,
+                      [colour]: name === 'batchCode',
+                      [accountColour]: name === 'account',
                       [styles.contrast]: rowIndex % 2 && index > 1,
                     })}
                     key={index}
                   >
-                    {value !== undefined && format(value)}
+                    {!!row[name] && format(row[name])}
                   </td>
                 ))}
               </tr>

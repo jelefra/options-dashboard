@@ -1,11 +1,24 @@
-const tickers = {
+import { Stock } from '../types';
+
+const tickers: {
+  [key: string]: Stock;
+} = {
   AAPL: {
-    size: 100,
+    ticker: 'AAPL',
+    optionSize: 100,
     currency: 'USD',
     colour: 'c1D1D1F',
   },
+  BABA: {
+    ticker: 'BABA',
+    officialTicker: '09988-HK',
+    optionSize: 500,
+    currency: 'HKD',
+    colour: 'cFE6601',
+  },
   GOOG: {
-    size: 100,
+    ticker: 'GOOG',
+    optionSize: 100,
     currency: 'USD',
     colour: 'cED1C24',
   },

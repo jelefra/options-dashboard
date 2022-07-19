@@ -1,50 +1,39 @@
-import {
-  CALL,
-  CLOSE_PRICE,
-  PURCHASE,
-  PUT,
-  QUANTITY,
-  SALE,
-  STRIKE,
-  TICKER,
-  TYPE,
-} from '../constants/constants';
 import tickers from '../data/tickers';
+import { TradeData, TransactionData } from '../types';
 
-const processTrades = (trades) => {
-  const tickersFromTrades = {};
+const processTrades = (trades: TradeData[]) => {
+  const tickersFromTrades: {
+    [key: string]: number;
+  } = {};
+
   for (let trade of trades) {
-    const type = trade[TYPE];
-    const closePrice = trade[CLOSE_PRICE];
-    const strike = trade[STRIKE];
-    const ticker = trade[TICKER];
-    const size = tickers[ticker].size;
+    const { type, closePrice, strike, ticker } = trade;
+    const size = tickers[ticker].optionSize;
 
-    if (type === PUT && closePrice && closePrice < strike) {
+    if (type === 'Put' && closePrice && closePrice < strike) {
       tickersFromTrades[ticker] = (tickersFromTrades[ticker] || 0) + size;
     }
 
-    if (type === CALL) {
-      if (closePrice && closePrice > strike) {
-        tickersFromTrades[ticker] = (tickersFromTrades[ticker] || 0) - size;
-      }
+    if (type === 'Call' && closePrice && closePrice > strike) {
+      tickersFromTrades[ticker] = (tickersFromTrades[ticker] || 0) - size;
     }
   }
   return tickersFromTrades;
 };
 
-const processTransactions = (transactions) => {
-  const tickersFromTransactions = {};
-  for (let transaction of transactions) {
-    const type = transaction[TYPE];
-    const ticker = transaction[TICKER];
-    const quantity = transaction[QUANTITY];
+const processTransactions = (transactions: TransactionData[]) => {
+  const tickersFromTransactions: {
+    [key: string]: number;
+  } = {};
 
-    if (type === PURCHASE) {
+  for (let transaction of transactions) {
+    const { quantity, ticker, type } = transaction;
+
+    if (type === 'Purchase') {
       tickersFromTransactions[ticker] = (tickersFromTransactions[ticker] || 0) + quantity;
     }
 
-    if (type === SALE) {
+    if (type === 'Sale') {
       tickersFromTransactions[ticker] = (tickersFromTransactions[ticker] || 0) - quantity;
     }
   }

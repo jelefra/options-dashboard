@@ -10,48 +10,42 @@ dayjs.extend(customParseFormat);
 // @ts-ignore
 import trades from '../data/options.csv';
 import tickers from '../data/tickers';
-import accountColours from '../data/accountColours';
+import accounts from '../data/accounts';
 
 import get from '../utils/get';
 import fetchPutTickerPrices from '../utils/fetchPutTickerPrices';
 import getForexRates from '../utils/getForexRates';
-import isCurrentPut from '../utils/isCurrentPut';
-import { pctZero } from '../utils';
+import { date, pctOne, decimalTwo, pctZero, thousands } from '../utils/format';
+import {
+  calcAssignmentPct,
+  calcCashEquivalent,
+  calcDteCurrent,
+  calcDteTotal,
+  calcEffectiveNetReturnPct,
+  calcNetReturn,
+  calcPriceIncrease,
+  calcPutDifference,
+  calcPutEffectiveNetReturn,
+  calcReturnPctForPeriod,
+  calcStockPriceLow,
+  calcStockPriceHigh,
+  calcStockPricePct,
+  convertToGBP,
+  getPutStatus,
+  isCurrentPut,
+} from '../utils';
 
-import { ONE_HOUR_IN_SECONDS, TICKER } from '../constants/constants';
+import { CSV_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
+import { PutRow, PutRowTotal, TradeData } from '../types';
 
 import styles from '../styles/Table.module.css';
 
-const ACCOUNT = 'Account';
-const COMMISSION = 'Commission';
-const EXPIRY_DATE = 'Expiry';
-const STOCK_PRICE_AT_TIME_OF_TRADE = 'Price then';
-const STRIKE = 'Strike';
-const TRADE_DATE = 'Trade date';
-const TRADE_PRICE = 'Trade price';
-
-const ASSIGNMENT_PCT = 'Assignment %';
-const ASSIGNABLE = 'Assignable';
-const CASH_EQUIVALENT_GBP = 'Cash equiv GBP';
-const DTE_CURRENT = 'Current DTE';
-const DTE_TOTAL = 'DTE';
-const RETURN_30D_PCT = 'Return 30D %';
-const RETURN_GBP = 'Return GBP';
-const RETURN_GBP_DIFF = 'Difference';
-const PRICE_INCREASE = 'Price increase';
-const STATUS = 'Status';
-const STOCK_PRICE_CURRENT = 'Current';
-const STOCK_PRICE_HIGH = 'High';
-const STOCK_PRICE_HIGH_PCT = 'High %';
-const STOCK_PRICE_LOW = 'Low';
-const STOCK_PRICE_LOW_PCT = 'Low %';
-
-const CSV_DATE_FORMAT = 'DD/MM/YYYY';
+const NOW = dayjs();
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const client = createClient();
   await client.connect();
-  const currentTickerPrices = await get(client, fetchPutTickerPrices, 'putTickerPrices');
+  const currentTickerPrices = await get(client, fetchPutTickerPrices, 'putTickerPrices', NOW);
   const rates = await get(client, getForexRates, 'rates', ONE_HOUR_IN_SECONDS);
 
   return {
@@ -59,146 +53,144 @@ export const getServerSideProps: GetServerSideProps = async () => {
   };
 };
 
-export default function Put({ trades, currentTickerPrices, rates }) {
-  const displayDateFormat = 'D MMM';
-  const date = (x) => x.format(displayDateFormat);
-  const pctOne = (x) => `${(100 * x).toFixed(1)}%`;
-  const decimalTwo = (x) => x.toFixed(2);
-  const thousands = (x) => x && x.toLocaleString().split('.')[0];
-
-  const headings = [
-    { name: ACCOUNT },
-    { name: TICKER },
-    { name: TRADE_DATE, format: date },
-    { name: EXPIRY_DATE, format: date },
-    { name: DTE_TOTAL, align: 'right' },
-    { name: DTE_CURRENT, align: 'right' },
-    { name: TRADE_PRICE, format: decimalTwo, align: 'right' },
-    { name: STOCK_PRICE_AT_TIME_OF_TRADE, format: decimalTwo, align: 'right' },
-    { name: STRIKE, format: decimalTwo, align: 'right' },
-    { name: STOCK_PRICE_CURRENT, format: decimalTwo, align: 'right' },
-    { name: STATUS },
-    { name: STOCK_PRICE_LOW, format: decimalTwo, align: 'right' },
-    { name: STOCK_PRICE_LOW_PCT, format: pctOne, align: 'right' },
-    { name: ASSIGNMENT_PCT, format: pctOne, align: 'right' },
-    { name: STOCK_PRICE_HIGH, format: decimalTwo, align: 'right' },
-    { name: STOCK_PRICE_HIGH_PCT, format: pctOne, align: 'right' },
-    { name: PRICE_INCREASE, format: thousands, align: 'right' },
-    { name: RETURN_30D_PCT, format: pctOne, align: 'right' },
-    { name: CASH_EQUIVALENT_GBP, format: thousands, align: 'right' },
-    { name: RETURN_GBP, format: thousands, align: 'right' },
-    { name: RETURN_GBP_DIFF, format: thousands, align: 'right' },
+export default function Put({
+  trades,
+  currentTickerPrices,
+  rates,
+}: {
+  trades: TradeData[];
+  currentTickerPrices: { [key: string]: number };
+  rates: { [key: string]: number };
+}) {
+  const headings: { name: keyof PutRow; format?: Function; align?: string }[] = [
+    { name: 'account' },
+    { name: 'ticker' },
+    { name: 'date', format: date },
+    { name: 'expiry', format: date },
+    { name: 'dteTotal', align: 'right' },
+    { name: 'dteCurrent', align: 'right' },
+    { name: 'tradePrice', format: decimalTwo, align: 'right' },
+    { name: 'stockPrice', format: decimalTwo, align: 'right' },
+    { name: 'strike', format: decimalTwo, align: 'right' },
+    { name: 'current', format: decimalTwo, align: 'right' },
+    { name: 'status' },
+    { name: 'low', format: decimalTwo, align: 'right' },
+    { name: 'lowPct', format: pctOne, align: 'right' },
+    { name: 'assignmentPct', format: pctOne, align: 'right' },
+    { name: 'high', format: decimalTwo, align: 'right' },
+    { name: 'highPct', format: pctOne, align: 'right' },
+    { name: 'priceIncreaseGBP', format: thousands, align: 'right' },
+    { name: 'return30DPct', format: pctOne, align: 'right' },
+    {
+      name: 'cashEquivalentGBP',
+      format: thousands,
+      align: 'right',
+    },
+    { name: 'returnGBP', format: thousands, align: 'right' },
+    { name: 'difference', format: thousands, align: 'right' },
   ];
 
-  const totals = {
-    [CASH_EQUIVALENT_GBP]: { value: 0 },
-    [RETURN_GBP]: { value: 0 },
-    [RETURN_GBP_DIFF]: { value: 0 },
-    [STATUS]: { value: 0, format: pctZero },
+  // eslint-disable-next-line no-unused-vars
+  const totals: { [key in keyof PutRowTotal]: { value: number; format?: Function } } = {
+    cashEquivalentGBP: { value: 0 },
+    returnGBP: { value: 0 },
+    difference: { value: 0 },
+    status: { value: 0, format: pctZero },
   };
 
-  const countOfTrades = trades.filter(isCurrentPut).length;
+  const countOfTrades = trades.filter((trade) => isCurrentPut(trade, NOW)).length;
 
   return (
     <table className={styles.table}>
       <thead>
         <tr>
           {headings.map(({ name }, index) => (
-            <th className={styles.th} key={index}>
-              {name}
+            <th className={cx(styles.th, styles.stickyTh)} key={index}>
+              {DISPLAY[name] || name}
             </th>
           ))}
         </tr>
       </thead>
       <tbody>
         {trades
-          .filter(isCurrentPut)
-          .sort((a, b) => a[TICKER].localeCompare(b[TICKER]))
-          .sort((a, b) => a[ACCOUNT].localeCompare(b[ACCOUNT]))
-          .map((row, rowIndex) => {
-            const orderedRowValues = headings.map((elem) => ({
-              ...elem,
-              value: undefined,
-            }));
-            const set = (column, value) =>
-              (orderedRowValues.find(({ name }) => name === column).value = value);
+          .filter((trade) => isCurrentPut(trade, NOW))
+          .sort((a, b) => a.ticker.localeCompare(b.ticker))
+          .sort((a, b) => a.account.localeCompare(b.account))
+          .map((trade, tradeIndex) => {
+            const orderedRowValues = headings.map((heading) => ({ ...heading }));
 
-            const account = row[ACCOUNT];
-            const accountColour = accountColours[account];
-            const ticker = row[TICKER];
-            const { size, currency, colour } = tickers[ticker];
-            const tradeDate = dayjs(row[TRADE_DATE], CSV_DATE_FORMAT);
-            const expiryDateBeginning = dayjs(row[EXPIRY_DATE], CSV_DATE_FORMAT);
-            const expiryDate = expiryDateBeginning.add(1, 'day');
-            const today = dayjs();
-            const dteTotal = expiryDateBeginning.diff(tradeDate, 'day');
-            const tradePrice = row[TRADE_PRICE];
-            const strike = row[STRIKE];
-            const commission = row[COMMISSION];
-            const priceThen = row[STOCK_PRICE_AT_TIME_OF_TRADE];
-            const currentStockPrice = currentTickerPrices[ticker];
-            const stockPriceLow = strike - tradePrice - commission / size;
-            const stockPriceHigh = priceThen + tradePrice - commission / size;
-            const netReturn = size * tradePrice - commission;
-            const cashEquivalent = size * strike;
+            const { account, ticker, tradePrice, strike, commission, stockPrice } = trade;
+            const accountColour = accounts[account].colour;
+            const { optionSize, currency, colour } = tickers[ticker];
+            const current = currentTickerPrices[ticker];
             const forexRate = rates[currency];
-            const convertToGBP = (amount) => amount / forexRate;
-            const cashEquivalentGBP = convertToGBP(cashEquivalent);
-            const priceIncrease =
-              currentStockPrice > stockPriceHigh
-                ? ((currentStockPrice - stockPriceHigh) * size) / forexRate
-                : '';
-            const status = strike > currentStockPrice ? ASSIGNABLE : '';
-            const effectiveNetReturn = netReturn - Math.max(0, strike - currentStockPrice) * size;
-            const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
-            const netReturnGBP = convertToGBP(netReturn);
-            const effectiveNetReturn30DPct =
-              Math.pow(Math.pow(1 + effectiveNetReturnPct, 1 / (dteTotal + 1)), 30) - 1;
-            const effectiveNetReturnGBP = convertToGBP(effectiveNetReturn);
-            const returnGBPDiff = effectiveNetReturnGBP - netReturnGBP;
 
-            set(ACCOUNT, account);
-            set(ASSIGNMENT_PCT, strike / currentStockPrice - 1);
-            set(CASH_EQUIVALENT_GBP, cashEquivalentGBP);
-            set(DTE_CURRENT, expiryDate.diff(today, 'day'));
-            set(DTE_TOTAL, dteTotal);
-            set(RETURN_30D_PCT, effectiveNetReturn30DPct);
-            set(RETURN_GBP, effectiveNetReturnGBP);
-            set(RETURN_GBP_DIFF, returnGBPDiff);
-            set(EXPIRY_DATE, expiryDateBeginning);
-            set(PRICE_INCREASE, priceIncrease);
-            set(STATUS, status);
-            set(STRIKE, strike);
-            set(STOCK_PRICE_AT_TIME_OF_TRADE, priceThen);
-            set(STOCK_PRICE_CURRENT, currentStockPrice);
-            set(STOCK_PRICE_LOW, stockPriceLow);
-            set(STOCK_PRICE_LOW_PCT, stockPriceLow / currentStockPrice - 1);
-            set(STOCK_PRICE_HIGH, stockPriceHigh);
-            set(STOCK_PRICE_HIGH_PCT, stockPriceHigh / currentStockPrice - 1);
-            set(TICKER, ticker);
-            set(TRADE_DATE, tradeDate);
-            set(TRADE_PRICE, tradePrice);
+            const date = dayjs(trade.date, CSV_DATE_FORMAT);
+            const expiry = dayjs(trade.expiry, CSV_DATE_FORMAT);
+            const dteTotal = calcDteTotal(expiry, date);
+            const low = calcStockPriceLow(strike, tradePrice, commission, optionSize);
+            const high = calcStockPriceHigh(stockPrice, tradePrice, commission, optionSize);
+            const netReturn = calcNetReturn(optionSize, tradePrice, commission);
+            const cashEquivalent = calcCashEquivalent(optionSize, strike);
+            const priceIncrease = calcPriceIncrease(current, high, optionSize);
+            const difference = calcPutDifference(strike, current, optionSize);
+            const effectiveNetReturn = calcPutEffectiveNetReturn(netReturn, difference);
+            const effectiveNetReturnPct = calcEffectiveNetReturnPct(
+              effectiveNetReturn,
+              cashEquivalent
+            );
+            const return30DPct = calcReturnPctForPeriod(effectiveNetReturnPct, dteTotal, 30);
+            const status = getPutStatus(strike, current);
 
-            totals[CASH_EQUIVALENT_GBP].value += cashEquivalentGBP;
-            totals[RETURN_GBP].value += effectiveNetReturnGBP;
-            totals[RETURN_GBP_DIFF].value += returnGBPDiff;
-            if (status === ASSIGNABLE) {
-              totals[STATUS].value += 1 / countOfTrades;
+            const cashEquivalentGBP = convertToGBP(cashEquivalent, forexRate);
+            const priceIncreaseGBP = convertToGBP(priceIncrease, forexRate);
+            const returnGBP = convertToGBP(effectiveNetReturn, forexRate);
+            const returnGBPDiff = convertToGBP(difference, forexRate);
+
+            const row: PutRow = {
+              account,
+              assignmentPct: calcAssignmentPct(strike, current),
+              cashEquivalentGBP,
+              current,
+              date,
+              difference,
+              dteCurrent: calcDteCurrent(expiry, NOW),
+              dteTotal,
+              expiry,
+              high,
+              highPct: calcStockPricePct(high, current),
+              low,
+              lowPct: calcStockPricePct(low, current),
+              priceIncreaseGBP,
+              return30DPct,
+              returnGBP,
+              status,
+              stockPrice,
+              strike,
+              ticker,
+              tradePrice,
+            };
+
+            totals.cashEquivalentGBP.value += cashEquivalentGBP;
+            totals.returnGBP.value += returnGBP;
+            totals.difference.value += returnGBPDiff;
+            if (status === 'Assignable') {
+              totals.status.value += 1 / countOfTrades;
             }
 
             return (
-              <tr key={rowIndex}>
-                {orderedRowValues.map(({ name, value, format = (v) => v, align }, index) => (
+              <tr key={tradeIndex}>
+                {orderedRowValues.map(({ name, format = (v) => v, align }, index) => (
                   <td
-                    className={cx(styles.td, styles.trades, {
+                    className={cx(styles.td, styles.border, {
                       [styles[align]]: !!align,
-                      [colour]: name === TICKER,
-                      [accountColour]: name === ACCOUNT,
-                      [styles.contrast]: rowIndex % 2 && index > 1,
+                      [colour]: name === 'ticker',
+                      [accountColour]: name === 'account',
+                      [styles.contrast]: tradeIndex % 2 && index > 1,
                     })}
                     key={index}
                   >
-                    {format(value)}
+                    {!!row[name] && format(row[name])}
                   </td>
                 ))}
               </tr>
@@ -212,9 +204,7 @@ export default function Put({ trades, currentTickerPrices, rates }) {
               })}
               key={index}
             >
-              {totals[name] &&
-                totals[name].value &&
-                (totals[name].format || format)(totals[name].value)}
+              {totals[name]?.value && (totals[name].format || format)(totals[name].value)}
             </td>
           ))}
         </tr>

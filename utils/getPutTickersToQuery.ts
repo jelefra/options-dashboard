@@ -1,9 +1,10 @@
-import isCurrentPut from './isCurrentPut';
+import { isCurrentPut } from './index';
 
-import { TICKER } from '../constants/constants';
+import { TradeData } from '../types';
+import { Dayjs } from 'dayjs';
 
-const getPutTickersToQuery = (trades) => [
-  ...new Set(trades.filter(isCurrentPut).map(({ [TICKER]: ticker }) => ticker)),
+const getPutTickersToQuery = (trades: TradeData[], now: Dayjs): string[] => [
+  ...new Set(trades.filter((trade) => isCurrentPut(trade, now)).map(({ ticker }) => ticker)),
 ];
 
 export default getPutTickersToQuery;

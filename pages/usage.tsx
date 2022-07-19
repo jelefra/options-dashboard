@@ -1,9 +1,9 @@
 import React from 'react';
+import { GetServerSideProps } from 'next';
 import dynamic from 'next/dynamic';
 
 import Container from '../components/Container';
-import { pctZero } from '../utils';
-import { GetServerSideProps } from 'next';
+import { pctZero } from '../utils/format';
 
 const AVAILABLE_CREDITS = 50000;
 
