@@ -14,7 +14,7 @@ export const DISPLAY = {
   current: 'Current',
   date: 'Date',
   daysTotal: 'Days total',
-  difference: 'Difference',
+  differenceGBP: 'Difference',
   dteCurrent: 'Current DTE',
   dteTotal: 'DTE',
   expiry: 'Expiry',

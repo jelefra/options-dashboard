@@ -85,7 +85,7 @@ export type Status = 'Assignable';
 type PutRowCommon = {
   cashEquivalentGBP: number;
   returnGBP: number;
-  difference: number;
+  differenceGBP: number;
 };
 
 export type PutRowTotal = PutRowCommon & {

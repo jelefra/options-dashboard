@@ -87,14 +87,14 @@ export default function Put({
       align: 'right',
     },
     { name: 'returnGBP', format: thousands, align: 'right' },
-    { name: 'difference', format: thousands, align: 'right' },
+    { name: 'differenceGBP', format: thousands, align: 'right' },
   ];
 
   // eslint-disable-next-line no-unused-vars
   const totals: { [key in keyof PutRowTotal]: { value: number; format?: Function } } = {
     cashEquivalentGBP: { value: 0 },
     returnGBP: { value: 0 },
-    difference: { value: 0 },
+    differenceGBP: { value: 0 },
     status: { value: 0, format: pctZero },
   };
 
@@ -145,7 +145,7 @@ export default function Put({
             const cashEquivalentGBP = convertToGBP(cashEquivalent, forexRate);
             const priceIncreaseGBP = convertToGBP(priceIncrease, forexRate);
             const returnGBP = convertToGBP(effectiveNetReturn, forexRate);
-            const returnGBPDiff = convertToGBP(difference, forexRate);
+            const differenceGBP = convertToGBP(difference, forexRate);
 
             const row: PutRow = {
               account,
@@ -153,7 +153,7 @@ export default function Put({
               cashEquivalentGBP,
               current,
               date,
-              difference,
+              differenceGBP,
               dteCurrent: calcDteCurrent(expiry, NOW),
               dteTotal,
               expiry,
@@ -173,7 +173,7 @@ export default function Put({
 
             totals.cashEquivalentGBP.value += cashEquivalentGBP;
             totals.returnGBP.value += returnGBP;
-            totals.difference.value += returnGBPDiff;
+            totals.differenceGBP.value += differenceGBP;
             if (status === 'Assignable') {
               totals.status.value += 1 / countOfTrades;
             }
