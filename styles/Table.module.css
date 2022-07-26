@@ -11,9 +11,16 @@
 .th {
   padding: 0.5rem 0.5rem;
   font-size: 0.8em;
+}
+
+.stickyTh {
   position: sticky;
   top: 0;
   background-color: white;
+}
+
+.columnSize {
+  width: 75px;
 }
 
 .td {

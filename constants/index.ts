@@ -1,5 +1,6 @@
 export const CSV_DATE_FORMAT = 'DD/MM/YYYY';
 export const DISPLAY_DATE_FORMAT = 'D MMM';
+export const DISPLAY_MONTH_FORMAT = 'MMMM YY';
 
 export const ONE_MINUTE_IN_SECONDS = 60;
 export const ONE_HOUR_IN_SECONDS = 3600;

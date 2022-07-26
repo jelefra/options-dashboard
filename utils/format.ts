@@ -1,8 +1,10 @@
 import { Dayjs } from 'dayjs';
 
-import { DISPLAY_DATE_FORMAT } from '../constants';
+import { DISPLAY_DATE_FORMAT, DISPLAY_MONTH_FORMAT } from '../constants';
 
 export const date = (day: Dayjs) => day.format(DISPLAY_DATE_FORMAT);
+
+export const month = (day: Dayjs) => day.format(DISPLAY_MONTH_FORMAT);
 
 export const decimalTwo = (x: number) => x.toFixed(2);
 
