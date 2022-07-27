@@ -118,7 +118,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   };
 };
 
-export default function CapitalGains({ gains, accountsInfo }) {
+const CapitalGains = ({ gains, accountsInfo }) => {
   return (
     <table className={styles.table}>
       <thead>
@@ -163,4 +163,6 @@ export default function CapitalGains({ gains, accountsInfo }) {
       </tbody>
     </table>
   );
-}
+};
+
+export default CapitalGains;

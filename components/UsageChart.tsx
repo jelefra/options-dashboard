@@ -1,7 +1,7 @@
 import React from 'react';
 import { CartesianGrid, Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
-export default function UsageChart({ data }) {
+const UsageChart = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" minHeight={380}>
       <BarChart
@@ -22,4 +22,6 @@ export default function UsageChart({ data }) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+};
+
+export default UsageChart;

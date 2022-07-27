@@ -26,13 +26,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   return { props: { bank, rates } };
 };
 
-export default function Forex({
-  bank,
-  rates,
-}: {
-  bank: BankData[];
-  rates: { [key: string]: number };
-}) {
+const Forex = ({ bank, rates }: { bank: BankData[]; rates: { [key: string]: number } }) => {
   const headings: { name: keyof ForexRow; format?: Function; align?: string }[] = [
     { name: 'date', format: dateLongTerm },
     { name: 'account' },
@@ -95,4 +89,6 @@ export default function Forex({
       </tbody>
     </table>
   );
-}
+};
+
+export default Forex;

@@ -55,7 +55,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   };
 };
 
-export default function Call({
+const Call = ({
   trades,
   transactions,
   currentTickerPrices,
@@ -65,7 +65,7 @@ export default function Call({
   transactions: TransactionData[];
   currentTickerPrices: { [key: string]: number };
   rates: { [key: string]: number };
-}) {
+}) => {
   const headings: { name: keyof CallRow; format?: Function; align?: string }[] = [
     { name: 'account' },
     { name: 'batchCode' },
@@ -307,4 +307,6 @@ export default function Call({
       </tbody>
     </table>
   );
-}
+};
+
+export default Call;

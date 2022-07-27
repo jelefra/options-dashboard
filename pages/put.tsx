@@ -53,7 +53,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   };
 };
 
-export default function Put({
+const Put = ({
   trades,
   currentTickerPrices,
   rates,
@@ -61,7 +61,7 @@ export default function Put({
   trades: TradeData[];
   currentTickerPrices: { [key: string]: number };
   rates: { [key: string]: number };
-}) {
+}) => {
   const headings: { name: keyof PutRow; format?: Function; align?: string }[] = [
     { name: 'account' },
     { name: 'ticker' },
@@ -211,4 +211,6 @@ export default function Put({
       </tbody>
     </table>
   );
-}
+};
+
+export default Put;

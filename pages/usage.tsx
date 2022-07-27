@@ -34,7 +34,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
 
 const UsageChart = dynamic(() => import('../components/UsageChart'), { ssr: false });
 
-export default function Usage({ dailyUsage, monthlyUsage, daysInMonth }) {
+const Usage = ({ dailyUsage, monthlyUsage, daysInMonth }) => {
   const now = new Date();
   const currentMonth = now.toLocaleString('default', { month: 'long' });
   const daysSoFar = now.getDate();
@@ -48,4 +48,6 @@ export default function Usage({ dailyUsage, monthlyUsage, daysInMonth }) {
       <UsageChart data={dailyUsage} />
     </Container>
   );
-}
+};
+
+export default Usage;
