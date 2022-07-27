@@ -27,7 +27,7 @@ import {
   convertToGBP,
   getCallStatus,
 } from '../utils';
-import { date, decimalTwo, pctOne, thousands } from '../utils/format';
+import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
 import { Batch, CallRow, TradeData, TransactionData } from '../types';
 
@@ -74,8 +74,8 @@ export default function Call({
     { name: 'costBasisDrop', format: pctOne, align: 'right' },
     { name: 'returnPct', format: pctOne, align: 'right' },
     { name: 'returnGBP', format: thousands, align: 'right' },
-    { name: 'date', format: date },
-    { name: 'expiry', format: date },
+    { name: 'date', format: dateShortTerm },
+    { name: 'expiry', format: dateShortTerm },
     { name: 'dteTotal', align: 'right' },
     { name: 'dteCurrent', align: 'right' },
     { name: 'tradePrice', format: decimalTwo, align: 'right' },

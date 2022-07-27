@@ -1,0 +1,7 @@
+﻿date,account,type,amount,rate,commission,currencyPair
+01/07/2022,Account1,Deposit,3000,,,
+01/07/2022,Account1,Conversion,2800",1.3779,1.45,GBP/USD
+10/07/2022,Account2,Deposit,"10,000",,,
+10/07/2022,Account2,Conversion,4000,10.7994,1.45,GBP/HKD
+10/07/2022,Account2,Conversion,3000,1.2533,1.45,GBP/USD
+10/07/2022,Account2,Conversion,1000,7.8016,1.45,USD/HKD

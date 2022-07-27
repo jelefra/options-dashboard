@@ -129,3 +129,26 @@ export type Batch = {
   ticker: string;
   wheeling: boolean;
 };
+
+export type BankData = {
+  account: string;
+  amount: number;
+  commission: number;
+  currencyPair: string;
+  date: string;
+  rate: number;
+  type: BankActivityTypes;
+};
+
+export type BankActivityTypes = 'Deposit' | 'Conversion';
+
+export type ForexRow = {
+  account: string;
+  amount: number;
+  currencyPair: string;
+  currentRate: number;
+  date: Dayjs;
+  differencePct: number;
+  profitGBP: number;
+  rate: number;
+};

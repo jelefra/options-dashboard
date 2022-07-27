@@ -15,7 +15,7 @@ import accounts from '../data/accounts';
 import get from '../utils/get';
 import fetchPutTickerPrices from '../utils/fetchPutTickerPrices';
 import getForexRates from '../utils/getForexRates';
-import { date, pctOne, decimalTwo, pctZero, thousands } from '../utils/format';
+import { dateShortTerm, decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import {
   calcAssignmentPct,
   calcCashEquivalent,
@@ -65,8 +65,8 @@ export default function Put({
   const headings: { name: keyof PutRow; format?: Function; align?: string }[] = [
     { name: 'account' },
     { name: 'ticker' },
-    { name: 'date', format: date },
-    { name: 'expiry', format: date },
+    { name: 'date', format: dateShortTerm },
+    { name: 'expiry', format: dateShortTerm },
     { name: 'dteTotal', align: 'right' },
     { name: 'dteCurrent', align: 'right' },
     { name: 'tradePrice', format: decimalTwo, align: 'right' },

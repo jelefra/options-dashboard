@@ -7,7 +7,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 import { v4 as uuid } from 'uuid';
 
-import { month, thousands } from '../utils/format';
+import { dateMediumTerm, thousands } from '../utils/format';
 
 import { CSV_DATE_FORMAT } from '../constants';
 import { Account, TradeData, TransactionData } from '../types';
@@ -87,7 +87,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
     if (!accountsWithCurrencies[account].capitalGains) {
       continue;
     }
-    const tradeMonth = month(dayjs(date, CSV_DATE_FORMAT));
+    const tradeMonth = dateMediumTerm(dayjs(date, CSV_DATE_FORMAT));
     const { currency, optionSize } = tickers[ticker];
     const { currencies } = accountsWithCurrencies[account];
     if (!currencies.includes(currency)) {

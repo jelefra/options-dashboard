@@ -37,6 +37,7 @@ yarn-error.log*
 # project
 data/options.csv
 data/transactions.csv
+data/bank.csv
 
 data/tickers.ts
 styles/tickers.css

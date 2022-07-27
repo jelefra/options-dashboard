@@ -1,10 +1,12 @@
 import { Dayjs } from 'dayjs';
 
-import { DISPLAY_DATE_FORMAT, DISPLAY_MONTH_FORMAT } from '../constants';
+import { DATE_SHORT_TERM, DATE_MEDIUM_TERM, DATE_LONG_TERM } from '../constants';
 
-export const date = (day: Dayjs) => day.format(DISPLAY_DATE_FORMAT);
+export const dateShortTerm = (day: Dayjs) => day.format(DATE_SHORT_TERM);
 
-export const month = (day: Dayjs) => day.format(DISPLAY_MONTH_FORMAT);
+export const dateMediumTerm = (day: Dayjs) => day.format(DATE_MEDIUM_TERM);
+
+export const dateLongTerm = (day: Dayjs) => day.format(DATE_LONG_TERM);
 
 export const decimalTwo = (x: number) => x.toFixed(2);
 
