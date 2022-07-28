@@ -288,19 +288,22 @@ const Call = ({
 
             return (
               <tr key={rowIndex}>
-                {orderedRowValues.map(({ name, format = (v) => v, align }, index) => (
-                  <td
-                    className={cx(styles.td, styles.border, {
-                      [styles[align]]: !!align,
-                      [colour]: name === 'batchCode',
-                      [accountColour]: name === 'account',
-                      [styles.contrast]: rowIndex % 2 && index > 1,
-                    })}
-                    key={index}
-                  >
-                    {!!row[name] && format(row[name])}
-                  </td>
-                ))}
+                {orderedRowValues.map(({ name, format = (v) => v, align }, index) => {
+                  const showContrast = name !== 'account' && name !== 'batchCode';
+                  return (
+                    <td
+                      className={cx(styles.td, styles.border, {
+                        [styles[align]]: !!align,
+                        [colour]: name === 'batchCode',
+                        [accountColour]: name === 'account',
+                        [styles.contrast]: rowIndex % 2 && showContrast,
+                      })}
+                      key={index}
+                    >
+                      {!!row[name] && format(row[name])}
+                    </td>
+                  )
+                })}
               </tr>
             );
           })}
