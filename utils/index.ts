@@ -1,6 +1,6 @@
 import dayjs, { Dayjs } from 'dayjs';
 
-import { CSV_DATE_FORMAT } from '../constants';
+import { INPUT_DATE_FORMAT } from '../constants';
 import { Status, TradeData } from '../types';
 
 export const calcAssignmentPct = (strike: number, currentStockPrice: number) =>
@@ -73,4 +73,4 @@ export const getPutStatus = (strike: number, price: number): Status =>
   strike > price ? 'Assignable' : null;
 
 export const isCurrentPut = ({ closePrice, expiry, type }: TradeData, now: Dayjs): boolean =>
-  type === 'Put' && dayjs(expiry, CSV_DATE_FORMAT).isSameOrAfter(now, 'day') && !closePrice;
+  type === 'Put' && dayjs(expiry, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day') && !closePrice;

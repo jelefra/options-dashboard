@@ -14,7 +14,7 @@ import getForexRates from '../utils/getForexRates';
 import { decimalTwo, dateLongTerm, pctOne, thousands } from '../utils/format';
 import { convertToGBP } from '../utils';
 
-import { CSV_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
+import { DISPLAY, INPUT_DATE_FORMAT, ONE_HOUR_IN_SECONDS } from '../constants';
 import { BankData, ForexRow } from '../types';
 
 import styles from '../styles/Table.module.css';
@@ -58,7 +58,7 @@ const Forex = ({ bank, rates }: { bank: BankData[]; rates: { [key: string]: numb
             const profitAndLoss = amount * (rate - currentRate);
 
             const row: ForexRow = {
-              date: dayjs(date, CSV_DATE_FORMAT),
+              date: dayjs(date, INPUT_DATE_FORMAT),
               account,
               amount,
               rate,

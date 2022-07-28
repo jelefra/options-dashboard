@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid';
 
 import { dateMediumTerm, thousands } from '../utils/format';
 
-import { CSV_DATE_FORMAT } from '../constants';
+import { INPUT_DATE_FORMAT } from '../constants';
 import { Account, TradeData, TransactionData } from '../types';
 
 // @ts-ignore
@@ -87,7 +87,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
     if (!accountsWithCurrencies[account].capitalGains) {
       continue;
     }
-    const tradeMonth = dateMediumTerm(dayjs(date, CSV_DATE_FORMAT));
+    const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
     const { currency, optionSize } = tickers[ticker];
     const { currencies } = accountsWithCurrencies[account];
     if (!currencies.includes(currency)) {

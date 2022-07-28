@@ -31,7 +31,7 @@ import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
 import { Batch, CallRow, TradeData, TransactionData } from '../types';
 
-import { CSV_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
+import { INPUT_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
 
 // @ts-ignore
 import trades from '../data/options.csv';
@@ -113,7 +113,7 @@ const Call = ({
           //  Acquisition date set to the first purchase date
           //  May underestimate gains and losses
           //  Is it worth improving?
-          acquisitionDate: dayjs(transaction.date, CSV_DATE_FORMAT),
+          acquisitionDate: dayjs(transaction.date, INPUT_DATE_FORMAT),
           grossCost: 0,
           batchCode,
           netCost: 0,
@@ -168,7 +168,7 @@ const Call = ({
         grossCost: strike,
         netCost: calcPutNetCost(strike, tradePrice, commission, optionSize),
         origin: 'Put',
-        acquisitionDate: dayjs(date, CSV_DATE_FORMAT),
+        acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
         quantity: optionSize,
         ticker,
         wheeling: true,
@@ -183,13 +183,13 @@ const Call = ({
         batch.wheeling = false;
       }
 
-      const expiryDate = dayjs(expiry, CSV_DATE_FORMAT);
+      const expiryDate = dayjs(expiry, INPUT_DATE_FORMAT);
       if (expiryDate.isSameOrAfter(NOW, 'day')) {
         batch.currentCall = {
           account,
           batchCode,
           commission,
-          date: dayjs(date, CSV_DATE_FORMAT),
+          date: dayjs(date, INPUT_DATE_FORMAT),
           expiry: expiryDate,
           stockPrice,
           strike,

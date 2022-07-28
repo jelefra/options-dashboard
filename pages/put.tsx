@@ -35,7 +35,7 @@ import {
   isCurrentPut,
 } from '../utils';
 
-import { CSV_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
+import { INPUT_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
 import { PutRow, PutRowTotal, TradeData } from '../types';
 
 import styles from '../styles/Table.module.css';
@@ -125,8 +125,8 @@ const Put = ({
             const current = currentTickerPrices[ticker];
             const forexRate = rates[currency];
 
-            const date = dayjs(trade.date, CSV_DATE_FORMAT);
-            const expiry = dayjs(trade.expiry, CSV_DATE_FORMAT);
+            const date = dayjs(trade.date, INPUT_DATE_FORMAT);
+            const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
             const dteTotal = calcDteTotal(expiry, date);
             const low = calcStockPriceLow(strike, tradePrice, commission, optionSize);
             const high = calcStockPriceHigh(stockPrice, tradePrice, commission, optionSize);

@@ -1,4 +1,4 @@
-export const CSV_DATE_FORMAT = 'DD/MM/YYYY';
+export const INPUT_DATE_FORMAT = 'DD/MM/YYYY';
 
 export const DATE_SHORT_TERM = 'D MMM';
 export const DATE_MEDIUM_TERM = 'MMMM YY';
