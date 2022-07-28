@@ -190,7 +190,7 @@ const Put = ({
                     })}
                     key={index}
                   >
-                    {!!row[name] && format(row[name])}
+                    {(!!row[name] || name === 'dteCurrent') && format(row[name])}
                   </td>
                 ))}
               </tr>
