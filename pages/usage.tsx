@@ -3,13 +3,16 @@ import { GetServerSideProps } from 'next';
 import dynamic from 'next/dynamic';
 
 import Container from '../components/Container';
+import { fetchFn } from '../utils/fetch';
 import { pctZero } from '../utils/format';
+
+import { IEXCloudUsageResponse } from '../types';
 
 const AVAILABLE_CREDITS = 50000;
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const endpoint = `https://cloud.iexapis.com/v1/account/usage/credits?token=${process.env.IEX_SECRET_KEY}`;
-  const creditUsage = await fetch(endpoint).then((response) => response.json());
+  const creditUsage: IEXCloudUsageResponse = await fetchFn({ endpoint });
 
   const now = new Date();
   const year = now.getFullYear();

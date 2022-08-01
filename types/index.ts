@@ -152,3 +152,9 @@ export type ForexRow = {
   profitGBP: number;
   rate: number;
 };
+
+export type IEXCloudStockResponse = { latestPrice: number };
+
+export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; monthlyUsage: number };
+
+export type ExchangeRateResponse = { rates: { [key: string]: number } };
