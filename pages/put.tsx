@@ -45,8 +45,18 @@ const NOW = dayjs();
 export const getServerSideProps: GetServerSideProps = async () => {
   const client = createClient();
   await client.connect();
-  const currentTickerPrices = await get(client, fetchPutTickerPrices, 'putTickerPrices', NOW);
-  const rates = await get(client, getForexRates, 'rates', ONE_HOUR_IN_SECONDS);
+  const currentTickerPrices = await get({
+    client,
+    fetchFn: fetchPutTickerPrices,
+    keyName: 'putTickerPrices',
+    now: NOW,
+  });
+  const rates = await get({
+    client,
+    fetchFn: getForexRates,
+    keyName: 'rates',
+    expiry: ONE_HOUR_IN_SECONDS,
+  });
 
   return {
     props: { trades, currentTickerPrices, rates },

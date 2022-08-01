@@ -47,8 +47,18 @@ const NOW = dayjs();
 export const getServerSideProps: GetServerSideProps = async () => {
   const client = createClient();
   await client.connect();
-  const currentTickerPrices = await get(client, fetchCallTickerPrices, 'callTickerPrices', NOW);
-  const rates = await get(client, getForexRates, 'rates', ONE_HOUR_IN_SECONDS);
+  const currentTickerPrices = await get({
+    client,
+    fetchFn: fetchCallTickerPrices,
+    keyName: 'callTickerPrices',
+    now: NOW,
+  });
+  const rates = await get({
+    client,
+    fetchFn: getForexRates,
+    keyName: 'rates',
+    expiry: ONE_HOUR_IN_SECONDS,
+  });
 
   return {
     props: { trades, transactions, currentTickerPrices, rates },
@@ -302,7 +312,7 @@ const Call = ({
                     >
                       {(!!row[name] || name === 'dteCurrent') && format(row[name])}
                     </td>
-                  )
+                  );
                 })}
               </tr>
             );

@@ -22,7 +22,12 @@ import styles from '../styles/Table.module.css';
 export const getServerSideProps: GetServerSideProps = async () => {
   const client = createClient();
   await client.connect();
-  const rates = await get(client, getForexRates, 'rates', ONE_HOUR_IN_SECONDS);
+  const rates = await get({
+    client,
+    fetchFn: getForexRates,
+    keyName: 'rates',
+    expiry: ONE_HOUR_IN_SECONDS,
+  });
   return { props: { bank, rates } };
 };
 
