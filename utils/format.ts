@@ -10,8 +10,8 @@ export const dateLongTerm = (day: Dayjs) => day.format(DATE_LONG_TERM);
 
 export const decimalTwo = (x: number) => x.toFixed(2);
 
-export const pctOne = (x: number) => `${(100 * x).toFixed(1)}%`;
+export const pctOne = (x: number) => !isNaN(x) && `${(100 * x).toFixed(1)}%`;
 
-export const pctZero = (x: number) => `${(100 * x).toFixed(0)}%`;
+export const pctZero = (x: number) => !isNaN(x) && `${(100 * x).toFixed(0)}%`;
 
 export const thousands = (x: number) => x && x.toLocaleString().split('.')[0];

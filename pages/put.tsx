@@ -190,19 +190,27 @@ const Put = ({
 
             return (
               <tr key={tradeIndex}>
-                {orderedRowValues.map(({ name, format = (v) => v, align }, index) => (
-                  <td
-                    className={cx(styles.td, styles.border, {
-                      [styles[align]]: !!align,
-                      [colour]: name === 'ticker',
-                      [accountColour]: name === 'account',
-                      [styles.contrast]: tradeIndex % 2 && index > 1,
-                    })}
-                    key={index}
-                  >
-                    {(!!row[name] || name === 'dteCurrent') && format(row[name])}
-                  </td>
-                ))}
+                {orderedRowValues.map(({ name, format = (v) => v, align }, index) => {
+                  const showZeroValues =
+                    name === 'assignmentPct' ||
+                    name === 'dteCurrent' ||
+                    name === 'highPct' ||
+                    name === 'lowPct';
+
+                  return (
+                    <td
+                      className={cx(styles.td, styles.border, {
+                        [styles[align]]: !!align,
+                        [colour]: name === 'ticker',
+                        [accountColour]: name === 'account',
+                        [styles.contrast]: tradeIndex % 2 && index > 1,
+                      })}
+                      key={index}
+                    >
+                      {(!!row[name] || showZeroValues) && format(row[name])}
+                    </td>
+                  );
+                })}
               </tr>
             );
           })}

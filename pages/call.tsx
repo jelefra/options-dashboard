@@ -300,6 +300,8 @@ const Call = ({
               <tr key={rowIndex}>
                 {orderedRowValues.map(({ name, format = (v) => v, align }, index) => {
                   const showContrast = name !== 'account' && name !== 'batchCode';
+                  const showZeroValues =
+                    name === 'assignmentPct' || name === 'dteCurrent' || name === 'highPct';
                   return (
                     <td
                       className={cx(styles.td, styles.border, {
@@ -310,7 +312,7 @@ const Call = ({
                       })}
                       key={index}
                     >
-                      {(!!row[name] || name === 'dteCurrent') && format(row[name])}
+                      {(!!row[name] || showZeroValues) && format(row[name])}
                     </td>
                   );
                 })}
