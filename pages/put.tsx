@@ -114,7 +114,13 @@ const Put = ({
       <thead>
         <tr>
           {headings.map(({ name }, index) => (
-            <th className={cx(styles.th, styles.stickyTh)} key={index}>
+            <th
+              className={cx(styles.th, styles.white, styles.freezeFirstThRow, {
+                [styles.freezeFirstThCell]: index === 0,
+                [styles.freezeSecondThCell]: index === 1,
+              })}
+              key={index}
+            >
               {DISPLAY[name] || name}
             </th>
           ))}
@@ -203,6 +209,8 @@ const Put = ({
                         [colour]: name === 'ticker',
                         [accountColour]: name === 'account',
                         [styles.contrast]: tradeIndex % 2 && index > 1,
+                        [styles.freezeFirstTdColumn]: index === 0,
+                        [styles.freezeSecondTdColumn]: index === 1,
                       })}
                       key={index}
                     >

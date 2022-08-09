@@ -130,6 +130,20 @@ export type Batch = {
   wheeling: boolean;
 };
 
+export type CallGeneral = {
+  strike: number;
+};
+
+export type BatchGeneral = {
+  currentCall?: CallGeneral;
+  batchCode: string;
+  netCost: number;
+  netCumulativePremium: number;
+  exitValue?: number;
+  quantity: number;
+  ticker: string;
+};
+
 export type BankData = {
   account: string;
   amount: number;
@@ -153,10 +167,39 @@ export type ForexRow = {
   rate: number;
 };
 
+export type StocksRowTotal = {
+  returnGBP: number;
+  valueGBP: number;
+};
+
+export type StocksRow = StocksRowTotal & {
+  activeCalls: number;
+  avgCost: number;
+  current: number;
+  partialBatchNetCost: number;
+  partialBatchQuantity: number;
+  putOnlyPremium: number;
+  returnPct: number;
+  ticker: string;
+  totalQuantity: number;
+  wheeledNetCost: number;
+  wheeledQuantity: number;
+  wheeledExitValue: number;
+  wheeledPremium: number;
+  wheeledPremiumAsPctOfReturn: number;
+  wheeledGrowth: number;
+  wheeledGrowthAsPctOfReturn: number;
+  wheeledReturn: number;
+  wheeledReturnPct: number;
+  wheelingNetCost: number;
+  wheelingPremium: number;
+  wheelingQuantity: number;
+};
+
 export type IEXCloudStockResponse = { latestPrice: number };
 
 export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; monthlyUsage: number };
 
 export type ExchangeRateResponse = { rates: { [key: string]: number } };
 
-export type RedisKey = 'rates' | 'callTickerPrices' | 'putTickerPrices';
+export type RedisKey = 'rates' | 'allTickerPrices' | 'callTickerPrices' | 'putTickerPrices';

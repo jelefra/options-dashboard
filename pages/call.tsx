@@ -226,7 +226,13 @@ const Call = ({
       <thead>
         <tr>
           {headings.map(({ name }, index) => (
-            <th className={cx(styles.th, styles.stickyTh)} key={index}>
+            <th
+              className={cx(styles.th, styles.freezeFirstThRow, styles.white, {
+                [styles.freezeFirstThCell]: index === 0,
+                [styles.freezeSecondThCell]: index === 1,
+              })}
+              key={index}
+            >
               {DISPLAY[name] || name}
             </th>
           ))}
@@ -289,8 +295,8 @@ const Call = ({
               returnPct: Math.min(current, strike || Infinity) / netCost - 1,
               returnPctIfAssigned,
               status: getCallStatus(strike, current),
-              stockPrice: stockPrice,
-              strike: strike,
+              stockPrice,
+              strike,
               tradePrice,
             };
 
@@ -309,6 +315,8 @@ const Call = ({
                         [colour]: name === 'batchCode',
                         [accountColour]: name === 'account',
                         [styles.contrast]: rowIndex % 2 && showContrast,
+                        [styles.freezeFirstTdColumn]: index === 0,
+                        [styles.freezeSecondTdColumn]: index === 1,
                         [styles.dwarfed]:
                           current > high && (name === 'returnGBP' || name === 'returnPct'),
                       })}

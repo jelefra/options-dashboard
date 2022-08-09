@@ -13,12 +13,6 @@
   font-size: 0.8em;
 }
 
-.stickyTh {
-  position: sticky;
-  top: 0;
-  background-color: white;
-}
-
 .columnSize {
   width: 75px;
 }
@@ -43,20 +37,41 @@
   background-color: bisque;
 }
 
-/* Freeze the first two columns */
-.th:nth-child(-n + 2) {
-  z-index: 99;
-}
-
-.td:nth-child(-n + 2) {
+/* Freeze header and first columns */
+.freezeFirstThRow {
   position: sticky;
+  top: 0;
 }
 
-.th:nth-child(1), .td:nth-child(1) {
+.freezeSecondThRow {
+  position: sticky;
+  top: 30px;
+}
+
+.freezeFirstThCell {
+  z-index: 99;
   left: 0;
 }
 
-.th:nth-child(2), .td:nth-child(2) {
-  /* TODO Dynamically determine the first column width */
+.freezeFirstTdColumn {
+  position: sticky;
+  left: 0;
+}
+
+.freezeSecondThCell {
+  z-index: 99;
   left: 60px;
+}
+
+.freezeSecondTdColumn {
+  position: sticky;
+  left: 60px;
+}
+
+.white {
+  background-color: white;
+}
+
+.thirtyPx {
+  height: 30px;
 }
