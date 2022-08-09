@@ -13,7 +13,6 @@ import getForexRates from '../utils/getForexRates';
 import {
   calcAssignmentPct,
   calcCashEquivalent,
-  calcCostBasisDrop,
   calcDteCurrent,
   calcDteTotal,
   calcNetReturn,
@@ -22,7 +21,6 @@ import {
   calcReturn,
   calcReturnPctForPeriod,
   calcStockPriceHigh,
-  calcStockPricePct,
   convertToGBP,
   getCallStatus,
 } from '../utils';
@@ -267,7 +265,7 @@ const Call = ({
               assignmentPct: calcAssignmentPct(strike, current),
               batchCode: batchData.batchCode,
               cashEquivalentGBP: convertToGBP(cashEquivalent, forexRate),
-              costBasisDrop: calcCostBasisDrop(netCost, grossCost),
+              costBasisDrop: netCost / grossCost - 1,
               current,
               date,
               daysTotal,
@@ -276,7 +274,7 @@ const Call = ({
               expiry,
               grossCost,
               high,
-              highPct: calcStockPricePct(high, current),
+              highPct: high / current - 1,
               netCost,
               priceIncreaseGBP: convertToGBP(priceIncrease, forexRate),
               return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),

@@ -8,8 +8,6 @@ export const calcAssignmentPct = (strike: number, currentStockPrice: number) =>
 
 export const calcCashEquivalent = (optionSize: number, price: number) => optionSize * price;
 
-export const calcCostBasisDrop = (netCost: number, grossCost: number) => netCost / grossCost - 1;
-
 export const calcDteCurrent = (expiryDate: Dayjs, now: Dayjs) =>
   expiryDate?.add(1, 'day').diff(now, 'day');
 
@@ -52,8 +50,6 @@ export const calcStockPriceHigh = (
   commission: number,
   optionSize: number
 ) => price + tradePrice - commission / optionSize;
-
-export const calcStockPricePct = (price: number, current: number) => price / current - 1;
 
 export const calcStockPriceLow = (
   strike: number,
