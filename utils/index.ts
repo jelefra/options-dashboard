@@ -43,8 +43,6 @@ export const calcPutEffectiveNetReturn = (netReturn: number, difference: number)
 export const calcReturn = (price: number, netCost: number, optionSize: number) =>
   (price - netCost) * optionSize;
 
-export const calcReturnPct = (price: number, netCost: number) => price / netCost - 1;
-
 export const calcReturnPctForPeriod = (returnPct: number, days: number, newPeriod: number) =>
   ((1 + returnPct) ** (1 / (days + 1))) ** newPeriod - 1;
 

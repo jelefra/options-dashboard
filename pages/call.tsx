@@ -20,7 +20,6 @@ import {
   calcPriceIncrease,
   calcPutNetCost,
   calcReturn,
-  calcReturnPct,
   calcReturnPctForPeriod,
   calcStockPriceHigh,
   calcStockPricePct,
@@ -283,10 +282,13 @@ const Call = ({
               return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
               return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
               return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
-              returnGBP: convertToGBP(returnCurrent, forexRate),
+              returnGBP: convertToGBP(
+                Math.min(returnCurrent, returnIfAssigned || Infinity),
+                forexRate
+              ),
               returnGBPIfAssigned: convertToGBP(returnIfAssigned, forexRate),
               returnGBPLastCall: convertToGBP(returnLastCall, forexRate),
-              returnPct: calcReturnPct(current, netCost),
+              returnPct: Math.min(current, strike || Infinity) / netCost - 1,
               returnPctIfAssigned,
               status: getCallStatus(strike, current),
               stockPrice: stockPrice,
@@ -309,6 +311,8 @@ const Call = ({
                         [colour]: name === 'batchCode',
                         [accountColour]: name === 'account',
                         [styles.contrast]: rowIndex % 2 && showContrast,
+                        [styles.dwarfed]:
+                          current > high && (name === 'returnGBP' || name === 'returnPct'),
                       })}
                       key={index}
                     >

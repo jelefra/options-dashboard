@@ -39,6 +39,10 @@
   background-color: #F6F6F6;
 }
 
+.dwarfed {
+  background-color: bisque;
+}
+
 /* Freeze the first two columns */
 .th:nth-child(-n + 2) {
   z-index: 99;
