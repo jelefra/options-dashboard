@@ -117,31 +117,25 @@ export type CallRow = Row & {
   returnPctIfAssigned: number;
 };
 
-export type Batch = {
-  account: string;
-  acquisitionDate: Dayjs;
-  batchCode: string;
-  currentCall?: Call;
-  grossCost: number;
-  netCost: number;
-  origin: 'Purchase' | 'Put';
-  quantity: number;
-  ticker: string;
-  wheeling: boolean;
-};
-
-export type CallGeneral = {
+export type CallMinimal = {
   strike: number;
 };
 
-export type BatchGeneral = {
-  currentCall?: CallGeneral;
+export type BatchMinimal = {
+  currentCall?: CallMinimal;
   batchCode: string;
-  netCost: number;
-  netCumulativePremium: number;
+  grossCost: number;
   exitValue?: number;
+  netCumulativePremium: number;
   quantity: number;
   ticker: string;
+};
+
+export type Batch = BatchMinimal & {
+  account: string;
+  acquisitionDate: Dayjs;
+  currentCall?: Call;
+  origin: 'Purchase' | 'Put';
 };
 
 export type BankData = {
@@ -182,7 +176,7 @@ export type StocksRow = StocksRowTotal & {
   returnPct: number;
   ticker: string;
   totalQuantity: number;
-  wheeledNetCost: number;
+  wheeledGrossCost: number;
   wheeledQuantity: number;
   wheeledExitValue: number;
   wheeledPremium: number;
@@ -191,7 +185,7 @@ export type StocksRow = StocksRowTotal & {
   wheeledGrowthAsPctOfReturn: number;
   wheeledReturn: number;
   wheeledReturnPct: number;
-  wheelingNetCost: number;
+  wheelingGrossCost: number;
   wheelingPremium: number;
   wheelingQuantity: number;
 };

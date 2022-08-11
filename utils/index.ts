@@ -16,13 +16,6 @@ export const calcDteTotal = (expiry: Dayjs, tradeDate: Dayjs) => expiry?.diff(tr
 export const calcEffectiveNetReturnPct = (effectiveNetReturn: number, cashEquivalent: number) =>
   effectiveNetReturn / cashEquivalent;
 
-export const calcPutNetCost = (
-  strike: number,
-  tradePrice: number,
-  commission: number,
-  optionSize: number
-) => strike - tradePrice + commission / optionSize;
-
 export const calcNetReturn = (optionSize: number, tradePrice: number, commission: number) =>
   optionSize * tradePrice - commission;
 

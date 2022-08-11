@@ -17,7 +17,6 @@ import {
   calcDteTotal,
   calcNetReturn,
   calcPriceIncrease,
-  calcPutNetCost,
   calcReturn,
   calcReturnPctForPeriod,
   calcStockPriceHigh,
@@ -123,25 +122,20 @@ const Call = ({
           acquisitionDate: dayjs(transaction.date, INPUT_DATE_FORMAT),
           grossCost: 0,
           batchCode,
-          netCost: 0,
+          netCumulativePremium: 0,
           origin: 'Purchase',
           quantity: 0,
           ticker,
-          wheeling: true,
         };
 
         const batch = batches[batchCode];
-
+        const batchQuantity = quantity / batchCodes.length;
         const oldGrossCost = batch.grossCost;
-        const oldNetCost = batch.netCost;
         const oldQuantity = batch.quantity;
-
         batch.grossCost =
-          (oldGrossCost * oldQuantity + stockPrice * quantity) / (oldQuantity + quantity);
-        batch.netCost =
-          (oldNetCost * oldQuantity + stockPrice * quantity + commission) /
-          (oldQuantity + quantity);
-        batch.quantity += quantity;
+          (oldGrossCost * oldQuantity + stockPrice * batchQuantity) / (oldQuantity + batchQuantity);
+        batch.netCumulativePremium -= commission / batchQuantity;
+        batch.quantity += batchQuantity;
       }
     }
 
@@ -173,21 +167,20 @@ const Call = ({
         account,
         batchCode,
         grossCost: strike,
-        netCost: calcPutNetCost(strike, tradePrice, commission, optionSize),
+        netCumulativePremium: tradePrice - commission / optionSize,
         origin: 'Put',
         acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
         quantity: optionSize,
         ticker,
-        wheeling: true,
       };
     }
 
     if (type === 'Call') {
       const batch = batches[batchCode];
-      batch.netCost -= tradePrice - commission / optionSize;
+      batch.netCumulativePremium += tradePrice - commission / optionSize;
 
       if (closePrice && closePrice > strike) {
-        batch.wheeling = false;
+        batch.exitValue = strike;
       }
 
       const expiryDate = dayjs(expiry, INPUT_DATE_FORMAT);
@@ -241,13 +234,20 @@ const Call = ({
       <tbody>
         {orderedBatches
           // @ts-ignore
-          .filter(([, { wheeling }]) => wheeling)
+          .filter(([, { exitValue }]) => !exitValue)
           .map(([, batchData], rowIndex) => {
             const orderedRowValues = headings.map((heading) => ({
               ...heading,
             }));
 
-            const { account, acquisitionDate, currentCall, grossCost, netCost, ticker } = batchData;
+            const {
+              account,
+              acquisitionDate,
+              currentCall,
+              grossCost,
+              netCumulativePremium,
+              ticker,
+            } = batchData;
             const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
             const { colour, currency, optionSize } = tickers[ticker];
             const forexRate = rates[currency];
@@ -258,6 +258,7 @@ const Call = ({
             const returnPctLastCall =
               (tradePrice * optionSize - commission) / (stockPrice * optionSize);
             const dteLastCall = expiry?.diff(date, 'day');
+            const netCost = grossCost - netCumulativePremium;
             const returnPctIfAssigned = strike / netCost - 1;
 
             const cashEquivalent = calcCashEquivalent(optionSize, stockPrice);
