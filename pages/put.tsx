@@ -1,5 +1,4 @@
-import { createClient } from 'redis';
-import { GetServerSideProps } from 'next';
+import { useEffect, useState } from 'react';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -8,13 +7,10 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 // @ts-ignore
-import trades from '../data/options.csv';
+import tradesData from '../data/options.csv';
 import tickers from '../data/tickers';
 import accounts from '../data/accounts';
 
-import get from '../utils/get';
-import fetchPutTickerPrices from '../utils/fetchPutTickerPrices';
-import getForexRates from '../utils/getForexRates';
 import { dateShortTerm, decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import {
   calcAssignmentPct,
@@ -34,43 +30,41 @@ import {
   isCurrentPut,
 } from '../utils';
 
-import { INPUT_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
+import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
 import { PutRow, PutRowTotal, TradeData } from '../types';
 
 import styles from '../styles/Table.module.css';
 
 const NOW = dayjs();
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const client = createClient();
-  await client.connect();
-  const currentTickerPrices = await get({
-    client,
-    fetchFn: fetchPutTickerPrices,
-    keyName: 'putTickerPrices',
-    now: NOW,
-  });
-  const rates = await get({
-    client,
-    fetchFn: getForexRates,
-    keyName: 'rates',
-    expiry: ONE_HOUR_IN_SECONDS,
-  });
+const Put = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [rates, setRates] = useState<{ [key: string]: number }>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<{ [key: string]: number }>(null);
 
-  return {
-    props: { trades, currentTickerPrices, rates },
-  };
-};
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchForexRates = async () => {
+      const response = await fetch('/api/forexRates');
+      const data = await response.json();
+      setRates(data.rates);
+    };
+    fetchForexRates().catch(console.error);
 
-const Put = ({
-  trades,
-  currentTickerPrices,
-  rates,
-}: {
-  trades: TradeData[];
-  currentTickerPrices: { [key: string]: number };
-  rates: { [key: string]: number };
-}) => {
+    const fetchPutTickerPrices = async () => {
+      const response = await fetch(`/api/putTickerPrices?now=${String(NOW)}`);
+      const data = await response.json();
+      setCurrentTickerPrices(data.currentTickerPrices);
+    };
+    fetchPutTickerPrices().catch(console.error);
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
+
+  const trades: TradeData[] = tradesData;
+
   const headings: { name: keyof PutRow; format?: Function; align?: string }[] = [
     { name: 'account' },
     { name: 'ticker' },

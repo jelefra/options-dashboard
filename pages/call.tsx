@@ -1,5 +1,3 @@
-import { createClient } from 'redis';
-import { GetServerSideProps } from 'next';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -7,9 +5,6 @@ dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
-import get from '../utils/get';
-import fetchCallTickerPrices from '../utils/fetchCallTickerPrices';
-import getForexRates from '../utils/getForexRates';
 import {
   calcAssignmentPct,
   calcCashEquivalent,
@@ -27,51 +22,49 @@ import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
 import { Batch, CallRow, TradeData, TransactionData } from '../types';
 
-import { INPUT_DATE_FORMAT, DISPLAY, ONE_HOUR_IN_SECONDS } from '../constants';
+import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
 
 // @ts-ignore
-import trades from '../data/options.csv';
+import tradesData from '../data/options.csv';
 // @ts-ignore
-import transactions from '../data/transactions.csv';
+import transactionsData from '../data/transactions.csv';
 import tickers from '../data/tickers';
 import accounts from '../data/accounts';
 
 import styles from '../styles/Table.module.css';
+import { useEffect, useState } from 'react';
 
 const NOW = dayjs();
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const client = createClient();
-  await client.connect();
-  const currentTickerPrices = await get({
-    client,
-    fetchFn: fetchCallTickerPrices,
-    keyName: 'callTickerPrices',
-    now: NOW,
-  });
-  const rates = await get({
-    client,
-    fetchFn: getForexRates,
-    keyName: 'rates',
-    expiry: ONE_HOUR_IN_SECONDS,
-  });
+const Call = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [rates, setRates] = useState<{ [key: string]: number }>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<{ [key: string]: number }>(null);
 
-  return {
-    props: { trades, transactions, currentTickerPrices, rates },
-  };
-};
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchForexRates = async () => {
+      const response = await fetch('/api/forexRates');
+      const data = await response.json();
+      setRates(data.rates);
+    };
+    fetchForexRates().catch(console.error);
 
-const Call = ({
-  trades,
-  transactions,
-  currentTickerPrices,
-  rates,
-}: {
-  trades: TradeData[];
-  transactions: TransactionData[];
-  currentTickerPrices: { [key: string]: number };
-  rates: { [key: string]: number };
-}) => {
+    const fetchCallTickerPrices = async () => {
+      const response = await fetch(`/api/callTickerPrices?now=${String(NOW)}`);
+      const data = await response.json();
+      setCurrentTickerPrices(data.currentTickerPrices);
+    };
+    fetchCallTickerPrices().catch(console.error);
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
+
+  const trades: TradeData[] = tradesData;
+  const transactions: TransactionData[] = transactionsData;
+
   const headings: { name: keyof CallRow; format?: Function; align?: string }[] = [
     { name: 'account' },
     { name: 'batchCode' },

@@ -1,37 +1,41 @@
-import { createClient } from 'redis';
+import React, { useEffect, useState } from 'react';
 import cx from 'classnames';
 import dayjs from 'dayjs';
-import { GetServerSideProps } from 'next';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 // @ts-ignore
-import bank from '../data/bank.csv';
+import bankData from '../data/bank.csv';
 import accounts from '../data/accounts';
 
-import get from '../utils/get';
-import getForexRates from '../utils/getForexRates';
 import { decimalTwo, dateLongTerm, pctOne, thousands } from '../utils/format';
 import { convertToGBP } from '../utils';
 
-import { DISPLAY, INPUT_DATE_FORMAT, ONE_HOUR_IN_SECONDS } from '../constants';
+import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
 import { BankData, ForexRow } from '../types';
 
 import styles from '../styles/Table.module.css';
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const client = createClient();
-  await client.connect();
-  const rates = await get({
-    client,
-    fetchFn: getForexRates,
-    keyName: 'rates',
-    expiry: ONE_HOUR_IN_SECONDS,
-  });
-  return { props: { bank, rates } };
-};
+const Forex = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [rates, setRates] = useState<{ [key: string]: number }>(null);
 
-const Forex = ({ bank, rates }: { bank: BankData[]; rates: { [key: string]: number } }) => {
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchForexRates = async () => {
+      const response = await fetch('/api/forexRates');
+      const data = await response.json();
+      setRates(data.rates);
+    };
+    fetchForexRates().catch(console.error);
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (!rates) return <p>Data missing.</p>;
+
+  const bank: BankData[] = bankData;
+
   const headings: { name: keyof ForexRow; format?: Function; align?: string }[] = [
     { name: 'date', format: dateLongTerm },
     { name: 'account' },

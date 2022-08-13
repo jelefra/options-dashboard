@@ -1,5 +1,4 @@
-import { createClient } from 'redis';
-import { GetServerSideProps } from 'next';
+import { useEffect, useState } from 'react';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -7,57 +6,53 @@ dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
-import get from '../utils/get';
-import fetchAllTickerPrices from '../utils/fetchAllTickerPrices';
-import getForexRates from '../utils/getForexRates';
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import { convertToGBP } from '../utils';
 import { factorStockSplit } from '../utils/factorStockSplit';
 
 import { BatchMinimal, StocksRow, StocksRowTotal, TradeData, TransactionData } from '../types';
 
-import { DISPLAY, INPUT_DATE_FORMAT, ONE_HOUR_IN_SECONDS } from '../constants';
+import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
 
 // @ts-ignore
-import trades from '../data/options.csv';
+import tradesData from '../data/options.csv';
 // @ts-ignore
-import transactions from '../data/transactions.csv';
+import transactionsData from '../data/transactions.csv';
 import tickers from '../data/tickers';
 
 import styles from '../styles/Table.module.css';
 
 const NOW = dayjs();
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const client = createClient();
-  await client.connect();
-  const currentTickerPrices = await get({
-    client,
-    fetchFn: fetchAllTickerPrices,
-    keyName: 'allTickerPrices',
-    now: NOW,
-  });
-  const rates = await get({
-    client,
-    fetchFn: getForexRates,
-    keyName: 'rates',
-    expiry: ONE_HOUR_IN_SECONDS,
-  });
+const Stocks = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [rates, setRates] = useState<{ [key: string]: number }>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<{ [key: string]: number }>(null);
 
-  return { props: { currentTickerPrices, rates, trades, transactions } };
-};
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchForexRates = async () => {
+      const response = await fetch('/api/forexRates');
+      const data = await response.json();
+      setRates(data.rates);
+    };
+    fetchForexRates().catch(console.error);
 
-const Stocks = ({
-  currentTickerPrices,
-  rates,
-  trades,
-  transactions,
-}: {
-  currentTickerPrices: { [key: string]: number };
-  rates: { [key: string]: number };
-  trades: TradeData[];
-  transactions: TransactionData[];
-}) => {
+    const fetchAllTickerPrices = async () => {
+      const response = await fetch(`/api/allTickerPrices?now=${String(NOW)}`);
+      const data = await response.json();
+      setCurrentTickerPrices(data.currentTickerPrices);
+    };
+    fetchAllTickerPrices().catch(console.error);
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
+
+  const trades: TradeData[] = tradesData;
+  const transactions: TransactionData[] = transactionsData;
+
   const headings: {
     name: keyof StocksRow;
     section: SectionName;

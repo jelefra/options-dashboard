@@ -1,18 +1,31 @@
-import React from 'react';
-import { GetServerSideProps } from 'next';
-import dynamic from 'next/dynamic';
+import React, { useEffect, useState } from 'react';
 
 import Container from '../components/Container';
-import { fetchFn } from '../utils/fetch';
+import UsageChart from '../components/UsageChart';
+
 import { pctZero } from '../utils/format';
 
 import { IEXCloudUsageResponse } from '../types';
 
 const AVAILABLE_CREDITS = 50000;
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const endpoint = `https://cloud.iexapis.com/v1/account/usage/credits?token=${process.env.IEX_SECRET_KEY}`;
-  const creditUsage: IEXCloudUsageResponse = await fetchFn({ endpoint });
+const Usage = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [creditUsage, setCreditUsage] = useState<IEXCloudUsageResponse>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchCreditUsage = async () => {
+      const response = await fetch('/api/usage');
+      const data = await response.json();
+      setCreditUsage(data.creditUsage);
+    };
+    fetchCreditUsage().catch(console.error);
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (!creditUsage) return <p>Data missing.</p>;
 
   const now = new Date();
   const year = now.getFullYear();
@@ -30,15 +43,6 @@ export const getServerSideProps: GetServerSideProps = async () => {
     .slice(1)
     .map((elem) => ({ name: elem, usage: nonNullDailyUsage[elem] || 0 }));
 
-  return {
-    props: { dailyUsage, monthlyUsage, daysInMonth },
-  };
-};
-
-const UsageChart = dynamic(() => import('../components/UsageChart'), { ssr: false });
-
-const Usage = ({ dailyUsage, monthlyUsage, daysInMonth }) => {
-  const now = new Date();
   const currentMonth = now.toLocaleString('default', { month: 'long' });
   const daysSoFar = now.getDate();
   const projectedUsage = (monthlyUsage / daysSoFar) * daysInMonth;

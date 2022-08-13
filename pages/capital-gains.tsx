@@ -1,4 +1,3 @@
-import { GetServerSideProps } from 'next';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -72,8 +71,8 @@ const getPurchaseCost = () => {
   return { ...purchaseCostFromTrades, ...purchaseCostFromTransactions };
 };
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const tradesTyped: TradeData[] = tradesData;
+const CapitalGains = () => {
+  const trades: TradeData[] = tradesData;
 
   const batches = getPurchaseCost();
 
@@ -82,7 +81,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
   } = { ...accounts };
   const gains = {};
 
-  for (let trade of tradesTyped) {
+  for (let trade of trades) {
     const { account, batchCode, closePrice, date, strike, ticker, tradePrice, type } = trade;
     if (!accountsWithCurrencies[account].capitalGains) {
       continue;
@@ -110,15 +109,6 @@ export const getServerSideProps: GetServerSideProps = async () => {
     ({ capitalGains }) => capitalGains
   );
 
-  return {
-    props: {
-      gains,
-      accountsInfo,
-    },
-  };
-};
-
-const CapitalGains = ({ gains, accountsInfo }) => {
   return (
     <table className={styles.table}>
       <thead>
