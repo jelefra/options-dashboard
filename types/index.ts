@@ -196,4 +196,9 @@ export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; mon
 
 export type ExchangeRateResponse = { rates: { [key: string]: number } };
 
-export type RedisKey = 'rates' | 'allTickerPrices' | 'callTickerPrices' | 'putTickerPrices';
+export type RedisKey =
+  | 'rates'
+  | 'allTickerPrices'
+  | 'callTickerPrices'
+  | 'putTickerPrices'
+  | 'creditUsage';
