@@ -20,6 +20,7 @@ const get = async ({
   let data;
   const redisData = await client.get(keyName);
   if (redisData) {
+    console.info(`Retrieving '${keyName}' Redis key.`);
     data = JSON.parse(redisData);
   } else {
     data = await fetchFn(now);
