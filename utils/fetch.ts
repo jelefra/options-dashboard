@@ -12,7 +12,9 @@ export const fetchFn = async ({
       }
       if (retries > 0) {
         console.info(
-          `${response.status} status code.\tEndpoint: ${endpoint}.\t(${retries} retries left)`
+          `${response.status} status code.\tEndpoint: ${endpoint}.\t(${retries} retr${
+            retries > 1 ? 'ies' : 'y'
+          } left)`
         );
         setTimeout(() => fetchFn({ ticker, endpoint, retries: retries - 1, delay: delay * 2 }));
       } else {
