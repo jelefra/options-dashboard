@@ -12,7 +12,12 @@ import { factorStockSplit } from '../utils/factorStockSplit';
 
 import { BatchMinimal, StocksRow, StocksRowTotal, TradeData, TransactionData } from '../types';
 
-import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
+import {
+  DISPLAY,
+  INPUT_DATE_FORMAT,
+  ONE_HOUR_IN_SECONDS,
+  ONE_MINUTE_IN_SECONDS,
+} from '../constants';
 
 // @ts-ignore
 import tradesData from '../data/options.csv';
@@ -37,7 +42,13 @@ const Stocks = () => {
       setRates(data.rates);
     };
     fetchForexRates().catch(console.error);
+    setIsLoading(false);
+    const interval = setInterval(fetchForexRates, ONE_HOUR_IN_SECONDS * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
+  useEffect(() => {
+    setIsLoading(true);
     const fetchAllTickerPrices = async () => {
       const response = await fetch(`/api/allTickerPrices?now=${String(NOW)}`);
       const data = await response.json();
@@ -45,6 +56,8 @@ const Stocks = () => {
     };
     fetchAllTickerPrices().catch(console.error);
     setIsLoading(false);
+    const interval = setInterval(fetchAllTickerPrices, ONE_MINUTE_IN_SECONDS * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) return <p>Loading...</p>;

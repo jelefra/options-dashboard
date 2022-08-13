@@ -30,7 +30,12 @@ import {
   isCurrentPut,
 } from '../utils';
 
-import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
+import {
+  INPUT_DATE_FORMAT,
+  DISPLAY,
+  ONE_HOUR_IN_SECONDS,
+  ONE_MINUTE_IN_SECONDS,
+} from '../constants';
 import { PutRow, PutRowTotal, TradeData } from '../types';
 
 import styles from '../styles/Table.module.css';
@@ -50,7 +55,13 @@ const Put = () => {
       setRates(data.rates);
     };
     fetchForexRates().catch(console.error);
+    setIsLoading(false);
+    const interval = setInterval(fetchForexRates, ONE_HOUR_IN_SECONDS * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
+  useEffect(() => {
+    setIsLoading(true);
     const fetchPutTickerPrices = async () => {
       const response = await fetch(`/api/putTickerPrices?now=${String(NOW)}`);
       const data = await response.json();
@@ -58,6 +69,8 @@ const Put = () => {
     };
     fetchPutTickerPrices().catch(console.error);
     setIsLoading(false);
+    const interval = setInterval(fetchPutTickerPrices, ONE_MINUTE_IN_SECONDS * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) return <p>Loading...</p>;
