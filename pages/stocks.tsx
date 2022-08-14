@@ -7,7 +7,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
-import { convertToGBP } from '../utils';
+import { convertToGBP, removeNullValues } from '../utils';
 import { factorStockSplit } from '../utils/factorStockSplit';
 
 import { BatchMinimal, StocksRow, StocksRowTotal, TradeData, TransactionData } from '../types';
@@ -50,8 +50,8 @@ const Stocks = () => {
   if (isLoading) return <p>Loading...</p>;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
-  const trades: TradeData[] = tradesData;
-  const transactions: TransactionData[] = transactionsData;
+  const trades: TradeData[] = tradesData.map(removeNullValues);
+  const transactions: TransactionData[] = transactionsData.map(removeNullValues);
 
   const headings: {
     name: keyof StocksRow;
@@ -212,9 +212,9 @@ const Stocks = () => {
   for (let trade of trades) {
     const {
       batchCode,
-      closeCommission,
+      closeCommission = 0,
       closePrice,
-      closeTradePrice,
+      closeTradePrice = 0,
       commission,
       strike,
       ticker,

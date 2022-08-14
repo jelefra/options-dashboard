@@ -17,6 +17,7 @@ import {
   calcStockPriceHigh,
   convertToGBP,
   getCallStatus,
+  removeNullValues,
 } from '../utils';
 import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
@@ -62,8 +63,8 @@ const Call = () => {
   if (isLoading) return <p>Loading...</p>;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
-  const trades: TradeData[] = tradesData;
-  const transactions: TransactionData[] = transactionsData;
+  const trades: TradeData[] = tradesData.map(removeNullValues);
+  const transactions: TransactionData[] = transactionsData.map(removeNullValues);
 
   const headings: { name: keyof CallRow; format?: Function; align?: string }[] = [
     { name: 'account' },

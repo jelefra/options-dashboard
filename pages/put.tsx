@@ -28,6 +28,7 @@ import {
   convertToGBP,
   getPutStatus,
   isCurrentPut,
+  removeNullValues,
 } from '../utils';
 
 import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
@@ -63,7 +64,7 @@ const Put = () => {
   if (isLoading) return <p>Loading...</p>;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
-  const trades: TradeData[] = tradesData;
+  const trades: TradeData[] = tradesData.map(removeNullValues);
 
   const headings: { name: keyof PutRow; format?: Function; align?: string }[] = [
     { name: 'account' },

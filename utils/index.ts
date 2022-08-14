@@ -61,3 +61,6 @@ export const getPutStatus = (strike: number, price: number): Status =>
 
 export const isCurrentPut = ({ closePrice, expiry, type }: TradeData, now: Dayjs): boolean =>
   type === 'Put' && dayjs(expiry, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day') && !closePrice;
+
+export const removeNullValues = (obj) =>
+  Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== null));

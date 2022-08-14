@@ -7,6 +7,7 @@ dayjs.extend(customParseFormat);
 import { v4 as uuid } from 'uuid';
 
 import { dateMediumTerm, thousands } from '../utils/format';
+import { removeNullValues } from '../utils';
 
 import { INPUT_DATE_FORMAT } from '../constants';
 import { Account, BatchCost, TradeData, TransactionData } from '../types';
@@ -70,16 +71,17 @@ const getPurchaseCostFromTrades = (trades: TradeData[]) => {
   return batches;
 };
 
-const getPurchaseCost = () => {
-  const purchaseCostFromTransactions = getPurchaseCostFromTransactions(transactionsData);
-  const purchaseCostFromTrades = getPurchaseCostFromTrades(tradesData);
+const getPurchaseCost = (transactions: TransactionData[], trades: tradesData[]) => {
+  const purchaseCostFromTransactions = getPurchaseCostFromTransactions(transactions);
+  const purchaseCostFromTrades = getPurchaseCostFromTrades(trades);
   return { ...purchaseCostFromTrades, ...purchaseCostFromTransactions };
 };
 
 const CapitalGains = () => {
-  const trades: TradeData[] = tradesData;
+  const transactions: TransactionData[] = transactionsData.map(removeNullValues);
+  const trades: TradeData[] = tradesData.map(removeNullValues);
 
-  const batches = getPurchaseCost();
+  const batches = getPurchaseCost(transactions, trades);
 
   const accountsWithCurrencies: {
     [key: string]: Account;
@@ -90,9 +92,9 @@ const CapitalGains = () => {
     const {
       account,
       batchCode,
-      closeCommission,
+      closeCommission = 0,
       closePrice,
-      closeTradePrice,
+      closeTradePrice = 0,
       commission,
       date,
       strike,
