@@ -18,7 +18,10 @@ type Operation = {
 
 export type TradeData = Operation & {
   batchCode?: string;
+  closeCommission?: number;
+  closeDate?: string;
   closePrice?: number;
+  closeTradePrice?: number;
   date: string;
   delta: number;
   expiry: string;
@@ -32,6 +35,9 @@ export type TradeType = 'Put' | 'Call';
 
 type Trade = Operation & {
   batchCode: string;
+  closeCommission?: number;
+  closeDate?: string;
+  closeTradePrice?: number;
   date: Dayjs;
   expiry: Dayjs;
   strike: number;
@@ -101,11 +107,11 @@ export type PutRow = Row &
   };
 
 export type CallRow = Row & {
+  acquisitionCost: number;
   batchCode: string;
   cashEquivalentGBP: number;
   costBasisDrop: number;
   daysTotal: number;
-  grossCost: number;
   netCost: number;
   return1YPctIfAssigned: number;
   return30DPctIfAssigned: number;
@@ -121,13 +127,16 @@ export type CallMinimal = {
   strike: number;
 };
 
-export type BatchMinimal = {
-  currentCall?: CallMinimal;
+export type BatchCost = {
+  acquisitionCost: number;
   batchCode: string;
-  grossCost: number;
+  quantity: number;
+};
+
+export type BatchMinimal = BatchCost & {
+  currentCall?: CallMinimal;
   exitValue?: number;
   netCumulativePremium: number;
-  quantity: number;
   ticker: string;
 };
 
@@ -170,13 +179,13 @@ export type StocksRow = StocksRowTotal & {
   activeCalls: number;
   avgCost: number;
   current: number;
-  partialBatchNetCost: number;
+  partialBatchAcquisitionCost: number;
   partialBatchQuantity: number;
   putOnlyPremium: number;
   returnPct: number;
   ticker: string;
   totalQuantity: number;
-  wheeledGrossCost: number;
+  wheeledAcquisitionCost: number;
   wheeledQuantity: number;
   wheeledExitValue: number;
   wheeledPremium: number;
@@ -185,7 +194,7 @@ export type StocksRow = StocksRowTotal & {
   wheeledGrowthAsPctOfReturn: number;
   wheeledReturn: number;
   wheeledReturnPct: number;
-  wheelingGrossCost: number;
+  wheelingAcquisitionCost: number;
   wheelingPremium: number;
   wheelingQuantity: number;
 };

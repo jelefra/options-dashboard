@@ -60,13 +60,13 @@ const Stocks = () => {
     align?: string;
   }[] = [
     { name: 'ticker', section: 'ticker', align: 'default' },
-    { name: 'partialBatchNetCost', section: 'partialBatch', format: thousands },
+    { name: 'partialBatchAcquisitionCost', section: 'partialBatch', format: thousands },
     { name: 'partialBatchQuantity', section: 'partialBatch', format: thousands },
     { name: 'putOnlyPremium', section: 'putOnly', format: thousands },
-    { name: 'wheelingGrossCost', section: 'wheeling', format: thousands },
+    { name: 'wheelingAcquisitionCost', section: 'wheeling', format: thousands },
     { name: 'wheelingQuantity', section: 'wheeling', format: thousands },
     { name: 'wheelingPremium', section: 'wheeling', format: thousands },
-    { name: 'wheeledGrossCost', section: 'wheeled', format: thousands },
+    { name: 'wheeledAcquisitionCost', section: 'wheeled', format: thousands },
     { name: 'wheeledQuantity', section: 'wheeled' },
     { name: 'wheeledExitValue', section: 'wheeled', format: thousands },
     { name: 'wheeledPremium', section: 'wheeled', format: thousands },
@@ -131,7 +131,7 @@ const Stocks = () => {
     [key: string]: {
       ticker: string;
       partialBatch?: {
-        netCost: number;
+        acquisitionCost: number;
         quantity: number;
       };
       putOnly?: {
@@ -139,13 +139,13 @@ const Stocks = () => {
       };
       wheeled?: {
         exitValue?: number;
-        grossCost: number;
+        acquisitionCost: number;
         premium: number;
         quantity: number;
       };
       wheeling?: {
         activeCalls: number;
-        grossCost: number;
+        acquisitionCost: number;
         premium: number;
         quantity: number;
         missedUpside: number;
@@ -176,25 +176,29 @@ const Stocks = () => {
           batches[batchCode] = batches[batchCode] || {
             batchCode,
             netCumulativePremium: 0,
-            grossCost: 0,
+            acquisitionCost: 0,
             quantity: 0,
             ticker,
           };
 
           const batch = batches[batchCode];
+          const batchCommission = commission / batchCodes.length;
           const batchQuantity = quantity / batchCodes.length;
-          const oldGrossCost = batch.grossCost;
+          const oldAcquisitionCost = batch.acquisitionCost;
           const oldQuantity = batch.quantity;
-          batch.grossCost =
-            (oldGrossCost * oldQuantity + stockPrice * batchQuantity) /
+          batch.acquisitionCost =
+            (oldAcquisitionCost * oldQuantity + stockPrice * batchQuantity + batchCommission) /
             (oldQuantity + batchQuantity);
           batch.netCumulativePremium -= commission / batchQuantity;
           batch.quantity += batchQuantity;
         }
       } else {
-        stocks[ticker].partialBatch = stocks[ticker].partialBatch || { netCost: 0, quantity: 0 };
+        stocks[ticker].partialBatch = stocks[ticker].partialBatch || {
+          acquisitionCost: 0,
+          quantity: 0,
+        };
         const partialBatch = stocks[ticker].partialBatch;
-        partialBatch.netCost += stockPrice * quantity + commission;
+        partialBatch.acquisitionCost += stockPrice * quantity + commission;
         partialBatch.quantity += factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
       }
     }
@@ -206,9 +210,22 @@ const Stocks = () => {
   }
 
   for (let trade of trades) {
-    const { batchCode, closePrice, commission, strike, ticker, tradePrice, type } = trade;
+    const {
+      batchCode,
+      closeCommission,
+      closePrice,
+      closeTradePrice,
+      commission,
+      strike,
+      ticker,
+      tradePrice,
+      type,
+    } = trade;
 
     const { optionSize } = tickers[ticker];
+
+    const netCumulativePremium =
+      tradePrice - closeTradePrice - (commission + closeCommission) / optionSize;
 
     // Puts
     if (type === 'Put') {
@@ -216,23 +233,23 @@ const Stocks = () => {
       if (type === 'Put' && closePrice && closePrice < strike) {
         batches[batchCode] = {
           batchCode,
-          netCumulativePremium: tradePrice - commission / optionSize,
-          grossCost: strike,
+          netCumulativePremium,
+          acquisitionCost: strike,
           quantity: optionSize,
           ticker,
         };
       } else {
         // Put only (including current assignable puts)
-        const { ticker, tradePrice } = trade;
         stocks[ticker].putOnly = stocks[ticker].putOnly || { premium: 0 };
-        stocks[ticker].putOnly.premium += tradePrice * optionSize;
+        stocks[ticker].putOnly.premium +=
+          (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
       }
     }
 
     // Wheeling previously assigned puts
     if (type === 'Call') {
       const batch = batches[batchCode];
-      batch.netCumulativePremium += tradePrice - commission / optionSize;
+      batch.netCumulativePremium += netCumulativePremium;
 
       // Current calls
       const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
@@ -250,41 +267,40 @@ const Stocks = () => {
   }
 
   for (let batch of Object.values(batches)) {
-    const { currentCall, netCumulativePremium, grossCost, exitValue, quantity, ticker } = batch;
+    const { currentCall, netCumulativePremium, acquisitionCost, exitValue, quantity, ticker } =
+      batch;
 
     if (exitValue) {
       stocks[ticker].wheeled = stocks[ticker].wheeled || {
-        grossCost: 0,
+        acquisitionCost: 0,
         exitValue: 0,
         quantity: 0,
         premium: 0,
       };
       const stock = stocks[ticker].wheeled;
-      const { optionSize } = tickers[ticker];
+      stock.acquisitionCost += acquisitionCost * quantity;
       stock.exitValue += exitValue;
-      stock.grossCost += grossCost * optionSize;
-      stock.premium += netCumulativePremium * optionSize;
+      stock.premium += netCumulativePremium * quantity;
       stock.quantity += quantity;
     } else {
       stocks[ticker].wheeling = stocks[ticker].wheeling || {
         activeCalls: 0,
         missedUpside: 0,
-        grossCost: 0,
+        acquisitionCost: 0,
         premium: 0,
         quantity: 0,
       };
 
       const { strike } = currentCall || {};
       const current = currentTickerPrices[ticker];
-      const { optionSize } = tickers[ticker];
-      const missedUpside = strike ? Math.max(current - strike, 0) * optionSize : 0;
+      const missedUpside = strike ? Math.max(current - strike, 0) * quantity : 0;
 
       const stock = stocks[ticker].wheeling;
-      stock.missedUpside += missedUpside;
-      stock.grossCost += grossCost * optionSize;
-      stock.premium += netCumulativePremium * optionSize;
-      stock.quantity += quantity;
       stock.activeCalls += currentCall ? 1 : 0;
+      stock.missedUpside += missedUpside;
+      stock.acquisitionCost += acquisitionCost * quantity;
+      stock.premium += netCumulativePremium * quantity;
+      stock.quantity += quantity;
     }
   }
 
@@ -345,27 +361,27 @@ const Stocks = () => {
           const forexRate = rates[currency];
 
           const partialBatchQuantity = stock.partialBatch?.quantity || 0;
-          const partialBatchNetCost = stock.partialBatch?.netCost || 0;
+          const partialBatchAcquisitionCost = stock.partialBatch?.acquisitionCost || 0;
 
-          const wheeledGrossCost = stock.wheeled?.grossCost;
+          const wheeledAcquisitionCost = stock.wheeled?.acquisitionCost;
           const wheeledQuantity = stock.wheeled?.quantity;
           const wheeledPremium = stock.wheeled?.premium || 0;
           const wheeledExitValue = stock.wheeled?.exitValue;
-          const wheeledGrowth = wheeledExitValue - wheeledGrossCost;
+          const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
           const wheeledReturn = wheeledPremium + wheeledGrowth || 0;
 
           const putOnlyPremium = stock.putOnly?.premium || 0;
 
           const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
-          const wheelingGrossCost = stock.wheeling?.grossCost || 0;
+          const wheelingAcquisitionCost = stock.wheeling?.acquisitionCost || 0;
           const wheelingPremium = stock.wheeling?.premium || 0;
           const wheelingQuantity = stock.wheeling?.quantity || 0;
 
           const totalQuantity = wheelingQuantity + partialBatchQuantity;
           const avgCost =
             totalQuantity &&
-            (wheelingGrossCost +
-              partialBatchNetCost -
+            (wheelingAcquisitionCost +
+              partialBatchAcquisitionCost -
               wheeledReturn -
               wheelingPremium -
               putOnlyPremium) /
@@ -375,8 +391,8 @@ const Stocks = () => {
 
           const returnCurrency =
             totalQuantity * current -
-            wheelingGrossCost -
-            partialBatchNetCost -
+            wheelingAcquisitionCost -
+            partialBatchAcquisitionCost -
             wheelingMissedUpside +
             putOnlyPremium +
             wheelingPremium +
@@ -390,7 +406,7 @@ const Stocks = () => {
             activeCalls: stock.wheeling?.activeCalls,
             avgCost,
             current,
-            partialBatchNetCost,
+            partialBatchAcquisitionCost,
             partialBatchQuantity,
             putOnlyPremium,
             returnGBP,
@@ -398,7 +414,7 @@ const Stocks = () => {
             ticker,
             totalQuantity,
             valueGBP,
-            wheeledGrossCost,
+            wheeledAcquisitionCost,
             wheeledQuantity,
             wheeledExitValue,
             wheeledPremium,
@@ -406,8 +422,8 @@ const Stocks = () => {
             wheeledGrowth,
             wheeledGrowthAsPctOfReturn: wheeledGrowth / wheeledReturn,
             wheeledReturn,
-            wheeledReturnPct: wheeledReturn / wheeledGrossCost,
-            wheelingGrossCost,
+            wheeledReturnPct: wheeledReturn / wheeledAcquisitionCost,
+            wheelingAcquisitionCost,
             wheelingPremium,
             wheelingQuantity,
           };

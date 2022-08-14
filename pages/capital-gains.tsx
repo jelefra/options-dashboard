@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid';
 import { dateMediumTerm, thousands } from '../utils/format';
 
 import { INPUT_DATE_FORMAT } from '../constants';
-import { Account, TradeData, TransactionData } from '../types';
+import { Account, BatchCost, TradeData, TransactionData } from '../types';
 
 // @ts-ignore
 import tradesData from '../data/options.csv';
@@ -21,7 +21,7 @@ import accounts from '../data/accounts';
 import styles from '../styles/Table.module.css';
 
 const getPurchaseCostFromTransactions = (transactions: TransactionData[]) => {
-  const batches: { [key: string]: { batchCode: string; netCost: number; quantity: number } } = {};
+  const batches: { [key: string]: BatchCost } = {};
 
   for (let transaction of transactions) {
     const { batchCodes: batchCodesStr } = transaction;
@@ -33,19 +33,19 @@ const getPurchaseCostFromTransactions = (transactions: TransactionData[]) => {
       for (let batchCode of batchCodes) {
         batches[batchCode] = batches[batchCode] || {
           batchCode,
-          netCost: 0,
+          acquisitionCost: 0,
           quantity: 0,
         };
 
         const batch = batches[batchCode];
-
-        const oldNetCost = batch.netCost;
+        const batchCommission = commission / batchCodes.length;
+        const batchQuantity = quantity / batchCodes.length;
+        const oldAcquisitionCost = batch.acquisitionCost;
         const oldQuantity = batch.quantity;
-
-        batch.netCost =
-          (oldQuantity * oldNetCost + quantity * stockPrice + commission) /
-          (oldQuantity + quantity);
-        batch.quantity += quantity / batchCodes.length;
+        batch.acquisitionCost =
+          (oldAcquisitionCost * oldQuantity + stockPrice * batchQuantity + batchCommission) /
+          (oldQuantity + batchQuantity);
+        batch.quantity += batchQuantity;
       }
     }
   }
@@ -54,12 +54,17 @@ const getPurchaseCostFromTransactions = (transactions: TransactionData[]) => {
 };
 
 const getPurchaseCostFromTrades = (trades: TradeData[]) => {
-  const batches = {};
+  const batches: { [key: string]: BatchCost } = {};
   for (let trade of trades) {
-    const { batchCode, closePrice, strike, type } = trade;
+    const { batchCode, closePrice, strike, ticker, type } = trade;
+    const { optionSize } = tickers[ticker];
 
     if (type === 'Put' && closePrice && closePrice < strike) {
-      batches[batchCode] = strike;
+      batches[batchCode] = {
+        batchCode,
+        acquisitionCost: strike,
+        quantity: optionSize,
+      };
     }
   }
   return batches;
@@ -82,7 +87,19 @@ const CapitalGains = () => {
   const gains = {};
 
   for (let trade of trades) {
-    const { account, batchCode, closePrice, date, strike, ticker, tradePrice, type } = trade;
+    const {
+      account,
+      batchCode,
+      closeCommission,
+      closePrice,
+      closeTradePrice,
+      commission,
+      date,
+      strike,
+      ticker,
+      tradePrice,
+      type,
+    } = trade;
     if (!accountsWithCurrencies[account].capitalGains) {
       continue;
     }
@@ -92,7 +109,7 @@ const CapitalGains = () => {
     if (!currencies.includes(currency)) {
       currencies.push(currency);
     }
-    const gain = tradePrice * optionSize;
+    const gain = (tradePrice - closeTradePrice) * optionSize - (commission + closeCommission);
     gains[tradeMonth] = gains[tradeMonth] || {};
     gains[tradeMonth][account] = gains[tradeMonth][account] || {};
     gains[tradeMonth][account][currency] = gains[tradeMonth][account][currency] || {};
@@ -100,8 +117,8 @@ const CapitalGains = () => {
       (gains[tradeMonth][account][currency].gain || 0) + gain;
 
     if (type === 'Call' && closePrice > strike) {
-      const grossCost = batches[batchCode];
-      gains[tradeMonth][account][currency].gain += (strike - grossCost) * optionSize;
+      const { acquisitionCost } = batches[batchCode];
+      gains[tradeMonth][account][currency].gain += (strike - acquisitionCost) * optionSize;
     }
   }
 

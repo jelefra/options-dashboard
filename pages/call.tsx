@@ -68,7 +68,7 @@ const Call = () => {
   const headings: { name: keyof CallRow; format?: Function; align?: string }[] = [
     { name: 'account' },
     { name: 'batchCode' },
-    { name: 'grossCost', format: decimalTwo, align: 'right' },
+    { name: 'acquisitionCost', format: decimalTwo, align: 'right' },
     { name: 'netCost', format: decimalTwo, align: 'right' },
     { name: 'costBasisDrop', format: pctOne, align: 'right' },
     { name: 'returnPct', format: pctOne, align: 'right' },
@@ -113,7 +113,7 @@ const Call = () => {
           //  May underestimate gains and losses
           //  Is it worth improving?
           acquisitionDate: dayjs(transaction.date, INPUT_DATE_FORMAT),
-          grossCost: 0,
+          acquisitionCost: 0,
           batchCode,
           netCumulativePremium: 0,
           origin: 'Purchase',
@@ -123,10 +123,11 @@ const Call = () => {
 
         const batch = batches[batchCode];
         const batchQuantity = quantity / batchCodes.length;
-        const oldGrossCost = batch.grossCost;
+        const oldAcquisitionCost = batch.acquisitionCost;
         const oldQuantity = batch.quantity;
-        batch.grossCost =
-          (oldGrossCost * oldQuantity + stockPrice * batchQuantity) / (oldQuantity + batchQuantity);
+        batch.acquisitionCost =
+          (oldAcquisitionCost * oldQuantity + stockPrice * batchQuantity) /
+          (oldQuantity + batchQuantity);
         batch.netCumulativePremium -= commission / batchQuantity;
         batch.quantity += batchQuantity;
       }
@@ -159,7 +160,7 @@ const Call = () => {
       batches[batchCode] = {
         account,
         batchCode,
-        grossCost: strike,
+        acquisitionCost: strike,
         netCumulativePremium: tradePrice - commission / optionSize,
         origin: 'Put',
         acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
@@ -237,7 +238,7 @@ const Call = () => {
               account,
               acquisitionDate,
               currentCall,
-              grossCost,
+              acquisitionCost,
               netCumulativePremium,
               ticker,
             } = batchData;
@@ -251,7 +252,7 @@ const Call = () => {
             const returnPctLastCall =
               (tradePrice * optionSize - commission) / (stockPrice * optionSize);
             const dteLastCall = expiry?.diff(date, 'day');
-            const netCost = grossCost - netCumulativePremium;
+            const netCost = acquisitionCost - netCumulativePremium;
             const returnPctIfAssigned = strike / netCost - 1;
 
             const cashEquivalent = calcCashEquivalent(optionSize, stockPrice);
@@ -262,17 +263,17 @@ const Call = () => {
 
             const row: CallRow = {
               account,
+              acquisitionCost,
               assignmentPct: calcAssignmentPct(strike, current),
               batchCode: batchData.batchCode,
               cashEquivalentGBP: convertToGBP(cashEquivalent, forexRate),
-              costBasisDrop: netCost / grossCost - 1,
+              costBasisDrop: netCost / acquisitionCost - 1,
               current,
               date,
               daysTotal,
               dteCurrent: calcDteCurrent(expiry, NOW),
               dteTotal: calcDteTotal(expiry, date),
               expiry,
-              grossCost,
               high,
               highPct: high / current - 1,
               netCost,
