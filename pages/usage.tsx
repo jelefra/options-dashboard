@@ -5,7 +5,6 @@ import UsageChart from '../components/UsageChart';
 
 import { pctZero } from '../utils/format';
 
-import { FIFTEEN_MINUTES_IN_SECONDS } from '../constants';
 import { IEXCloudUsageResponse } from '../types';
 
 const AVAILABLE_CREDITS = 50000;
@@ -23,8 +22,6 @@ const Usage = () => {
     };
     fetchCreditUsage().catch(console.error);
     setIsLoading(false);
-    const interval = setInterval(fetchCreditUsage, FIFTEEN_MINUTES_IN_SECONDS * 1000);
-    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) return <p>Loading...</p>;

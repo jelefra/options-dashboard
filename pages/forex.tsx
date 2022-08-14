@@ -11,7 +11,7 @@ import accounts from '../data/accounts';
 import { decimalTwo, dateLongTerm, pctOne, thousands } from '../utils/format';
 import { convertToGBP } from '../utils';
 
-import { DISPLAY, INPUT_DATE_FORMAT, ONE_HOUR_IN_SECONDS } from '../constants';
+import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
 import { BankData, ForexRow } from '../types';
 
 import styles from '../styles/Table.module.css';
@@ -29,8 +29,6 @@ const Forex = () => {
     };
     fetchForexRates().catch(console.error);
     setIsLoading(false);
-    const interval = setInterval(fetchForexRates, ONE_HOUR_IN_SECONDS * 1000);
-    return () => clearInterval(interval);
   }, []);
 
   if (isLoading) return <p>Loading...</p>;

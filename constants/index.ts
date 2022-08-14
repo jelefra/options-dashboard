@@ -5,8 +5,7 @@ export const DATE_MEDIUM_TERM = 'MMMM YY';
 export const DATE_LONG_TERM = 'D MMM YY';
 
 export const ONE_MINUTE_IN_SECONDS = 60;
-export const FIFTEEN_MINUTES_IN_SECONDS = 15 * 60;
-export const ONE_HOUR_IN_SECONDS = 60 * 60;
+export const ONE_HOUR_IN_SECONDS = 3600;
 
 export const DISPLAY = {
   account: 'Account',
