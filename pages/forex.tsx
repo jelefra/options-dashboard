@@ -36,7 +36,7 @@ const Forex = () => {
 
   const bank: BankData[] = bankData;
 
-  const headings: { name: keyof ForexRow; format?: Function; align?: string }[] = [
+  const headings: { name: keyof ForexRow; format?: Function; align?: 'right' }[] = [
     { name: 'date', format: dateLongTerm },
     { name: 'account' },
     { name: 'amount', format: thousands, align: 'right' },
@@ -83,7 +83,7 @@ const Forex = () => {
                 {headings.map(({ name, format = (v) => v, align }, index) => (
                   <td
                     className={cx(styles.td, styles.border, {
-                      [styles[align]]: !!align,
+                      [styles[align]]: align === 'right',
                       [accountColour]: name === 'account',
                       [styles.contrast]: rowIndex % 2 && index !== 1,
                     })}

@@ -66,32 +66,28 @@ const Put = () => {
 
   const trades: TradeData[] = tradesData.map(removeNullValues);
 
-  const headings: { name: keyof PutRow; format?: Function; align?: string }[] = [
-    { name: 'account' },
-    { name: 'ticker' },
-    { name: 'date', format: dateShortTerm },
-    { name: 'expiry', format: dateShortTerm },
-    { name: 'dteTotal', align: 'right' },
-    { name: 'dteCurrent', align: 'right' },
-    { name: 'tradePrice', format: decimalTwo, align: 'right' },
-    { name: 'stockPrice', format: decimalTwo, align: 'right' },
-    { name: 'strike', format: decimalTwo, align: 'right' },
-    { name: 'current', format: decimalTwo, align: 'right' },
-    { name: 'status' },
-    { name: 'low', format: decimalTwo, align: 'right' },
-    { name: 'lowPct', format: pctOne, align: 'right' },
-    { name: 'assignmentPct', format: pctOne, align: 'right' },
-    { name: 'high', format: decimalTwo, align: 'right' },
-    { name: 'highPct', format: pctOne, align: 'right' },
-    { name: 'priceIncreaseGBP', format: thousands, align: 'right' },
-    { name: 'return30DPct', format: pctOne, align: 'right' },
-    {
-      name: 'cashEquivalentGBP',
-      format: thousands,
-      align: 'right',
-    },
-    { name: 'returnGBP', format: thousands, align: 'right' },
-    { name: 'differenceGBP', format: thousands, align: 'right' },
+  const headings: { name: keyof PutRow; format?: Function; align?: 'default' | 'right' }[] = [
+    { name: 'account', align: 'default' },
+    { name: 'ticker', align: 'default' },
+    { name: 'date', format: dateShortTerm, align: 'default' },
+    { name: 'expiry', format: dateShortTerm, align: 'default' },
+    { name: 'dteTotal' },
+    { name: 'dteCurrent' },
+    { name: 'tradePrice', format: decimalTwo },
+    { name: 'stockPrice', format: decimalTwo },
+    { name: 'strike', format: decimalTwo },
+    { name: 'current', format: decimalTwo },
+    { name: 'status', align: 'default' },
+    { name: 'low', format: decimalTwo },
+    { name: 'lowPct', format: pctOne },
+    { name: 'assignmentPct', format: pctOne },
+    { name: 'high', format: decimalTwo },
+    { name: 'highPct', format: pctOne },
+    { name: 'priceIncreaseGBP', format: thousands },
+    { name: 'return30DPct', format: pctOne },
+    { name: 'cashEquivalentGBP', format: thousands },
+    { name: 'returnGBP', format: thousands },
+    { name: 'differenceGBP', format: thousands },
   ];
 
   // eslint-disable-next-line no-unused-vars
@@ -190,7 +186,7 @@ const Put = () => {
 
             return (
               <tr key={tradeIndex}>
-                {orderedRowValues.map(({ name, format = (v) => v, align }, index) => {
+                {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
                   const showZeroValues =
                     name === 'assignmentPct' ||
                     name === 'dteCurrent' ||
@@ -200,7 +196,7 @@ const Put = () => {
                   return (
                     <td
                       className={cx(styles.td, styles.border, {
-                        [styles[align]]: !!align,
+                        [styles[align]]: align === 'right',
                         [colour]: name === 'ticker',
                         [accountColour]: name === 'account',
                         [styles.contrast]: tradeIndex % 2 && index > 1,
@@ -217,10 +213,10 @@ const Put = () => {
             );
           })}
         <tr>
-          {headings.map(({ name, format, align }, index) => (
+          {headings.map(({ name, format, align = 'right' }, index) => (
             <td
               className={cx(styles.td, {
-                [styles[align]]: !!align,
+                [styles[align]]: align === 'right',
               })}
               key={index}
             >

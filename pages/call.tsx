@@ -66,35 +66,40 @@ const Call = () => {
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
 
-  const headings: { name: keyof CallRow; format?: Function; align?: string; scope?: 'all' }[] = [
-    { name: 'account', scope: 'all' },
-    { name: 'batchCode', scope: 'all' },
-    { name: 'acquisitionCost', format: decimalTwo, align: 'right', scope: 'all' },
-    { name: 'netCost', format: decimalTwo, align: 'right', scope: 'all' },
-    { name: 'costBasisDrop', format: pctOne, align: 'right', scope: 'all' },
-    { name: 'returnPct', format: pctOne, align: 'right', scope: 'all' },
-    { name: 'returnGBP', format: thousands, align: 'right', scope: 'all' },
-    { name: 'date', format: dateShortTerm },
-    { name: 'expiry', format: dateShortTerm },
-    { name: 'dteTotal', align: 'right' },
-    { name: 'dteCurrent', align: 'right' },
-    { name: 'tradePrice', format: decimalTwo, align: 'right' },
-    { name: 'stockPrice', format: decimalTwo, align: 'right' },
-    { name: 'current', format: decimalTwo, align: 'right', scope: 'all' },
-    { name: 'strike', format: decimalTwo, align: 'right' },
-    { name: 'status' },
-    { name: 'assignmentPct', format: pctOne, align: 'right' },
-    { name: 'high', format: decimalTwo, align: 'right' },
-    { name: 'highPct', format: pctOne, align: 'right' },
-    { name: 'priceIncreaseGBP', format: thousands, align: 'right' },
-    { name: 'return30DPctLastCall', format: pctOne, align: 'right' },
-    { name: 'returnGBPLastCall', format: thousands, align: 'right' },
-    { name: 'cashEquivalentGBP', format: thousands, align: 'right' },
-    { name: 'daysTotal', align: 'right' },
-    { name: 'returnGBPIfAssigned', format: thousands, align: 'right' },
-    { name: 'returnPctIfAssigned', format: pctOne, align: 'right' },
-    { name: 'return30DPctIfAssigned', format: pctOne, align: 'right' },
-    { name: 'return1YPctIfAssigned', format: pctOne, align: 'right' },
+  const headings: {
+    name: keyof CallRow;
+    format?: Function;
+    align?: 'default' | 'right';
+    scope?: 'all';
+  }[] = [
+    { name: 'account', align: 'default', scope: 'all' },
+    { name: 'batchCode', align: 'default', scope: 'all' },
+    { name: 'acquisitionCost', format: decimalTwo, scope: 'all' },
+    { name: 'netCost', format: decimalTwo, scope: 'all' },
+    { name: 'costBasisDrop', format: pctOne, scope: 'all' },
+    { name: 'returnPct', format: pctOne, scope: 'all' },
+    { name: 'returnGBP', format: thousands, scope: 'all' },
+    { name: 'date', format: dateShortTerm, align: 'default' },
+    { name: 'expiry', format: dateShortTerm, align: 'default' },
+    { name: 'dteTotal' },
+    { name: 'dteCurrent' },
+    { name: 'tradePrice', format: decimalTwo },
+    { name: 'stockPrice', format: decimalTwo },
+    { name: 'current', format: decimalTwo, scope: 'all' },
+    { name: 'strike', format: decimalTwo },
+    { name: 'status', align: 'default' },
+    { name: 'assignmentPct', format: pctOne },
+    { name: 'high', format: decimalTwo },
+    { name: 'highPct', format: pctOne },
+    { name: 'priceIncreaseGBP', format: thousands },
+    { name: 'return30DPctLastCall', format: pctOne },
+    { name: 'returnGBPLastCall', format: thousands },
+    { name: 'cashEquivalentGBP', format: thousands },
+    { name: 'daysTotal' },
+    { name: 'returnGBPIfAssigned', format: thousands },
+    { name: 'returnPctIfAssigned', format: pctOne },
+    { name: 'return30DPctIfAssigned', format: pctOne },
+    { name: 'return1YPctIfAssigned', format: pctOne },
   ];
 
   const batches: { [key: string]: Batch } = {};
@@ -276,14 +281,14 @@ const Call = () => {
 
         return (
           <tr key={rowIndex}>
-            {orderedRowValues.map(({ name, format = (v) => v, align }, index) => {
+            {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
               const showContrast = name !== 'account' && name !== 'batchCode';
               const showZeroValues =
                 name === 'assignmentPct' || name === 'dteCurrent' || name === 'highPct';
               return (
                 <td
                   className={cx(styles.td, styles.border, {
-                    [styles[align]]: !!align,
+                    [styles[align]]: align === 'right',
                     [colour]: name === 'batchCode',
                     [accountColour]: name === 'account',
                     [styles.contrast]: rowIndex % 2 && showContrast,

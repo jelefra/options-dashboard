@@ -57,7 +57,7 @@ const Stocks = () => {
     name: keyof StocksRow;
     section: SectionName;
     format?: Function;
-    align?: string;
+    align?: 'default' | 'right';
   }[] = [
     { name: 'ticker', section: 'ticker', align: 'default' },
     { name: 'partialBatchAcquisitionCost', section: 'partialBatch', format: thousands },
@@ -436,7 +436,7 @@ const Stocks = () => {
               {headings.map(({ name, format = (v) => v, align = 'right' }, index) => (
                 <td
                   className={cx(styles.td, styles.border, {
-                    [styles[align]]: !!align,
+                    [styles[align]]: align === 'right',
                     [colour]: name === 'ticker',
                     [styles.contrast]: rowIndex % 2 && index > 0,
                     [styles.freezeFirstTdColumn]: index === 0,
@@ -454,7 +454,7 @@ const Stocks = () => {
           {headings.map(({ name, format, align = 'right' }, index) => (
             <td
               className={cx(styles.td, {
-                [styles[align]]: !!align,
+                [styles[align]]: align === 'right',
               })}
               key={index}
             >
