@@ -66,21 +66,21 @@ const Call = () => {
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
 
-  const headings: { name: keyof CallRow; format?: Function; align?: string }[] = [
-    { name: 'account' },
-    { name: 'batchCode' },
-    { name: 'acquisitionCost', format: decimalTwo, align: 'right' },
-    { name: 'netCost', format: decimalTwo, align: 'right' },
-    { name: 'costBasisDrop', format: pctOne, align: 'right' },
-    { name: 'returnPct', format: pctOne, align: 'right' },
-    { name: 'returnGBP', format: thousands, align: 'right' },
+  const headings: { name: keyof CallRow; format?: Function; align?: string; scope?: 'all' }[] = [
+    { name: 'account', scope: 'all' },
+    { name: 'batchCode', scope: 'all' },
+    { name: 'acquisitionCost', format: decimalTwo, align: 'right', scope: 'all' },
+    { name: 'netCost', format: decimalTwo, align: 'right', scope: 'all' },
+    { name: 'costBasisDrop', format: pctOne, align: 'right', scope: 'all' },
+    { name: 'returnPct', format: pctOne, align: 'right', scope: 'all' },
+    { name: 'returnGBP', format: thousands, align: 'right', scope: 'all' },
     { name: 'date', format: dateShortTerm },
     { name: 'expiry', format: dateShortTerm },
     { name: 'dteTotal', align: 'right' },
     { name: 'dteCurrent', align: 'right' },
     { name: 'tradePrice', format: decimalTwo, align: 'right' },
     { name: 'stockPrice', format: decimalTwo, align: 'right' },
-    { name: 'current', format: decimalTwo, align: 'right' },
+    { name: 'current', format: decimalTwo, align: 'right', scope: 'all' },
     { name: 'strike', format: decimalTwo, align: 'right' },
     { name: 'status' },
     { name: 'assignmentPct', format: pctOne, align: 'right' },
@@ -196,137 +196,154 @@ const Call = () => {
     }
   }
 
-  const orderedBatches = Object.entries(batches)
+  const batchesWithCalls = Object.entries(batches)
+    .filter(([, batch]) => batch.currentCall)
     .sort(([a], [b]) => a.localeCompare(b))
-    .sort(([, a], [, b]) => a.account.localeCompare(b.account))
-    .sort(([, a], [, b]) => {
-      if (a.currentCall?.account && b.currentCall?.account) {
-        return 0;
-      } else if (a.currentCall?.account) {
-        return -1;
-      } else {
-        return 1;
-      }
-    });
+    .sort(([, a], [, b]) => a.account.localeCompare(b.account));
+
+  const batchesWithoutCalls = Object.entries(batches)
+    .filter(([, batch]) => !batch.currentCall)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([, a], [, b]) => a.account.localeCompare(b.account));
+
+  const renderTableBody = (batches: [string, Batch][], headingFilterFunction = (value) => value) =>
+    batches
+      .filter(([, { exitValue }]) => !exitValue)
+      .map(([, batchData], rowIndex) => {
+        const orderedRowValues = headings.filter(headingFilterFunction).map((heading) => ({
+          ...heading,
+        }));
+
+        const {
+          account,
+          acquisitionDate,
+          currentCall,
+          acquisitionCost,
+          netCumulativePremium,
+          ticker,
+        } = batchData;
+        const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
+        const { colour, currency, optionSize } = tickers[ticker];
+        const forexRate = rates[currency];
+        const current = currentTickerPrices[ticker];
+
+        const daysTotal = expiry?.diff(acquisitionDate, 'day');
+        const high = calcStockPriceHigh(strike, tradePrice, commission, optionSize);
+        const returnPctLastCall =
+          (tradePrice * optionSize - commission) / (stockPrice * optionSize);
+        const dteLastCall = expiry?.diff(date, 'day');
+        const netCost = acquisitionCost - netCumulativePremium;
+        const returnPctIfAssigned = strike / netCost - 1;
+
+        const cashEquivalent = calcCashEquivalent(optionSize, stockPrice);
+        const priceIncrease = calcPriceIncrease(current, high, optionSize);
+        const returnCurrent = calcReturn(current, netCost, optionSize);
+        const returnIfAssigned = calcReturn(strike, netCost, optionSize);
+        const returnLastCall = calcNetReturn(optionSize, tradePrice, commission);
+
+        const row: CallRow = {
+          account,
+          acquisitionCost,
+          assignmentPct: calcAssignmentPct(strike, current),
+          batchCode: batchData.batchCode,
+          cashEquivalentGBP: convertToGBP(cashEquivalent, forexRate),
+          costBasisDrop: netCost / acquisitionCost - 1,
+          current,
+          date,
+          daysTotal,
+          dteCurrent: calcDteCurrent(expiry, NOW),
+          dteTotal: calcDteTotal(expiry, date),
+          expiry,
+          high,
+          highPct: high / current - 1,
+          netCost,
+          priceIncreaseGBP: convertToGBP(priceIncrease, forexRate),
+          return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
+          return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
+          return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
+          returnGBP: convertToGBP(Math.min(returnCurrent, returnIfAssigned || Infinity), forexRate),
+          returnGBPIfAssigned: convertToGBP(returnIfAssigned, forexRate),
+          returnGBPLastCall: convertToGBP(returnLastCall, forexRate),
+          returnPct: Math.min(current, strike || Infinity) / netCost - 1,
+          returnPctIfAssigned,
+          status: getCallStatus(strike, current),
+          stockPrice,
+          strike,
+          tradePrice,
+        };
+
+        const accountColour = accounts[account].colour;
+
+        return (
+          <tr key={rowIndex}>
+            {orderedRowValues.map(({ name, format = (v) => v, align }, index) => {
+              const showContrast = name !== 'account' && name !== 'batchCode';
+              const showZeroValues =
+                name === 'assignmentPct' || name === 'dteCurrent' || name === 'highPct';
+              return (
+                <td
+                  className={cx(styles.td, styles.border, {
+                    [styles[align]]: !!align,
+                    [colour]: name === 'batchCode',
+                    [accountColour]: name === 'account',
+                    [styles.contrast]: rowIndex % 2 && showContrast,
+                    [styles.freezeFirstTdColumn]: index === 0,
+                    [styles.freezeSecondTdColumn]: index === 1,
+                    [styles.dwarfed]:
+                      current > high && (name === 'returnGBP' || name === 'returnPct'),
+                  })}
+                  key={index}
+                >
+                  {(!!row[name] || showZeroValues) && format(row[name])}
+                </td>
+              );
+            })}
+          </tr>
+        );
+      });
 
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          {headings.map(({ name }, index) => (
-            <th
-              className={cx(styles.th, styles.freezeFirstThRow, styles.white, {
-                [styles.freezeFirstThCell]: index === 0,
-                [styles.freezeSecondThCell]: index === 1,
-              })}
-              key={index}
-            >
-              {DISPLAY[name] || name}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {orderedBatches
-          // @ts-ignore
-          .filter(([, { exitValue }]) => !exitValue)
-          .map(([, batchData], rowIndex) => {
-            const orderedRowValues = headings.map((heading) => ({
-              ...heading,
-            }));
-
-            const {
-              account,
-              acquisitionDate,
-              currentCall,
-              acquisitionCost,
-              netCumulativePremium,
-              ticker,
-            } = batchData;
-            const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
-            const { colour, currency, optionSize } = tickers[ticker];
-            const forexRate = rates[currency];
-            const current = currentTickerPrices[ticker];
-
-            const daysTotal = expiry?.diff(acquisitionDate, 'day');
-            const high = calcStockPriceHigh(strike, tradePrice, commission, optionSize);
-            const returnPctLastCall =
-              (tradePrice * optionSize - commission) / (stockPrice * optionSize);
-            const dteLastCall = expiry?.diff(date, 'day');
-            const netCost = acquisitionCost - netCumulativePremium;
-            const returnPctIfAssigned = strike / netCost - 1;
-
-            const cashEquivalent = calcCashEquivalent(optionSize, stockPrice);
-            const priceIncrease = calcPriceIncrease(current, high, optionSize);
-            const returnCurrent = calcReturn(current, netCost, optionSize);
-            const returnIfAssigned = calcReturn(strike, netCost, optionSize);
-            const returnLastCall = calcNetReturn(optionSize, tradePrice, commission);
-
-            const row: CallRow = {
-              account,
-              acquisitionCost,
-              assignmentPct: calcAssignmentPct(strike, current),
-              batchCode: batchData.batchCode,
-              cashEquivalentGBP: convertToGBP(cashEquivalent, forexRate),
-              costBasisDrop: netCost / acquisitionCost - 1,
-              current,
-              date,
-              daysTotal,
-              dteCurrent: calcDteCurrent(expiry, NOW),
-              dteTotal: calcDteTotal(expiry, date),
-              expiry,
-              high,
-              highPct: high / current - 1,
-              netCost,
-              priceIncreaseGBP: convertToGBP(priceIncrease, forexRate),
-              return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
-              return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
-              return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
-              returnGBP: convertToGBP(
-                Math.min(returnCurrent, returnIfAssigned || Infinity),
-                forexRate
-              ),
-              returnGBPIfAssigned: convertToGBP(returnIfAssigned, forexRate),
-              returnGBPLastCall: convertToGBP(returnLastCall, forexRate),
-              returnPct: Math.min(current, strike || Infinity) / netCost - 1,
-              returnPctIfAssigned,
-              status: getCallStatus(strike, current),
-              stockPrice,
-              strike,
-              tradePrice,
-            };
-
-            const accountColour = accounts[account].colour;
-
-            return (
-              <tr key={rowIndex}>
-                {orderedRowValues.map(({ name, format = (v) => v, align }, index) => {
-                  const showContrast = name !== 'account' && name !== 'batchCode';
-                  const showZeroValues =
-                    name === 'assignmentPct' || name === 'dteCurrent' || name === 'highPct';
-                  return (
-                    <td
-                      className={cx(styles.td, styles.border, {
-                        [styles[align]]: !!align,
-                        [colour]: name === 'batchCode',
-                        [accountColour]: name === 'account',
-                        [styles.contrast]: rowIndex % 2 && showContrast,
-                        [styles.freezeFirstTdColumn]: index === 0,
-                        [styles.freezeSecondTdColumn]: index === 1,
-                        [styles.dwarfed]:
-                          current > high && (name === 'returnGBP' || name === 'returnPct'),
-                      })}
-                      key={index}
-                    >
-                      {(!!row[name] || showZeroValues) && format(row[name])}
-                    </td>
-                  );
+    <>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            {headings.map(({ name }, index) => (
+              <th
+                className={cx(styles.th, styles.freezeFirstThRow, styles.white, {
+                  [styles.freezeFirstThCell]: index === 0,
+                  [styles.freezeSecondThCell]: index === 1,
                 })}
-              </tr>
-            );
-          })}
-      </tbody>
-    </table>
+                key={index}
+              >
+                {DISPLAY[name] || name}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{renderTableBody(batchesWithCalls)}</tbody>
+      </table>
+
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            {headings
+              .filter(({ scope }) => scope === 'all')
+              .map(({ name }, index) => (
+                <th
+                  className={cx(styles.th, styles.freezeFirstThRow, styles.white, {
+                    [styles.freezeFirstThCell]: index === 0,
+                    [styles.freezeSecondThCell]: index === 1,
+                  })}
+                  key={index}
+                >
+                  {DISPLAY[name] || name}
+                </th>
+              ))}
+          </tr>
+        </thead>
+        <tbody>{renderTableBody(batchesWithoutCalls, ({ scope }) => scope === 'all')}</tbody>
+      </table>
+    </>
   );
 };
 
