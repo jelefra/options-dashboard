@@ -109,7 +109,6 @@ export type PutRow = Row &
 export type CallRow = Row & {
   acquisitionCost: number;
   batchCode: string;
-  cashEquivalentGBP: number;
   costBasisDrop: number;
   daysTotal: number;
   netCost: number;
@@ -121,6 +120,7 @@ export type CallRow = Row & {
   returnGBPLastCall: number;
   returnPct: number;
   returnPctIfAssigned: number;
+  valueGBP: number;
 };
 
 export type CallMinimal = {

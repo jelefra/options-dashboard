@@ -7,7 +7,6 @@ dayjs.extend(customParseFormat);
 
 import {
   calcAssignmentPct,
-  calcCashEquivalent,
   calcDteCurrent,
   calcDteTotal,
   calcNetReturn,
@@ -79,6 +78,7 @@ const Call = () => {
     { name: 'costBasisDrop', format: pctOne, scope: 'all' },
     { name: 'returnPct', format: pctOne, scope: 'all' },
     { name: 'returnGBP', format: thousands, scope: 'all' },
+    { name: 'valueGBP', format: thousands, scope: 'all' },
     { name: 'date', format: dateShortTerm, align: 'default' },
     { name: 'expiry', format: dateShortTerm, align: 'default' },
     { name: 'dteTotal' },
@@ -94,7 +94,6 @@ const Call = () => {
     { name: 'priceIncreaseGBP', format: thousands },
     { name: 'return30DPctLastCall', format: pctOne },
     { name: 'returnGBPLastCall', format: thousands },
-    { name: 'cashEquivalentGBP', format: thousands },
     { name: 'daysTotal' },
     { name: 'returnGBPIfAssigned', format: thousands },
     { name: 'returnPctIfAssigned', format: pctOne },
@@ -211,101 +210,117 @@ const Call = () => {
     .sort(([a], [b]) => a.localeCompare(b))
     .sort(([, a], [, b]) => a.account.localeCompare(b.account));
 
-  const renderTableBody = (batches: [string, Batch][], headingFilterFunction = (value) => value) =>
-    batches
-      .filter(([, { exitValue }]) => !exitValue)
-      .map(([, batchData], rowIndex) => {
-        const orderedRowValues = headings.filter(headingFilterFunction).map((heading) => ({
-          ...heading,
-        }));
+  const renderTableBody = (
+    batches: [string, Batch][],
+    headingFilterFunction = (value) => value
+  ) => {
+    return (
+      <tbody>
+        {batches
+          .filter(([, { exitValue }]) => !exitValue)
+          .map(([, batchData], rowIndex) => {
+            const orderedRowValues = headings.filter(headingFilterFunction).map((heading) => ({
+              ...heading,
+            }));
 
-        const {
-          account,
-          acquisitionDate,
-          currentCall,
-          acquisitionCost,
-          netCumulativePremium,
-          ticker,
-        } = batchData;
-        const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
-        const { colour, currency, optionSize } = tickers[ticker];
-        const forexRate = rates[currency];
-        const current = currentTickerPrices[ticker];
+            const {
+              account,
+              acquisitionCost,
+              acquisitionDate,
+              currentCall,
+              netCumulativePremium,
+              quantity,
+              ticker,
+            } = batchData;
+            const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
+            const { colour, currency, optionSize } = tickers[ticker];
+            const forexRate = rates[currency];
+            const current = currentTickerPrices[ticker];
 
-        const daysTotal = expiry?.diff(acquisitionDate, 'day');
-        const high = calcStockPriceHigh(strike, tradePrice, commission, optionSize);
-        const returnPctLastCall =
-          (tradePrice * optionSize - commission) / (stockPrice * optionSize);
-        const dteLastCall = expiry?.diff(date, 'day');
-        const netCost = acquisitionCost - netCumulativePremium;
-        const returnPctIfAssigned = strike / netCost - 1;
+            const daysTotal = expiry?.diff(acquisitionDate, 'day');
+            const high = calcStockPriceHigh(strike, tradePrice, commission, optionSize);
+            const returnPctLastCall =
+              (tradePrice * optionSize - commission) / (stockPrice * optionSize);
+            const dteLastCall = expiry?.diff(date, 'day');
+            const netCost = acquisitionCost - netCumulativePremium;
+            const returnPctIfAssigned = strike / netCost - 1;
 
-        const cashEquivalent = calcCashEquivalent(optionSize, stockPrice);
-        const priceIncrease = calcPriceIncrease(current, high, optionSize);
-        const returnCurrent = calcReturn(current, netCost, optionSize);
-        const returnIfAssigned = calcReturn(strike, netCost, optionSize);
-        const returnLastCall = calcNetReturn(optionSize, tradePrice, commission);
+            const priceIncrease = calcPriceIncrease(current, high, optionSize);
+            const returnCurrent = calcReturn(current, netCost, optionSize);
+            const returnIfAssigned = calcReturn(strike, netCost, optionSize);
+            const returnLastCall = calcNetReturn(optionSize, tradePrice, commission);
+            const value = quantity * current;
 
-        const row: CallRow = {
-          account,
-          acquisitionCost,
-          assignmentPct: calcAssignmentPct(strike, current),
-          batchCode: batchData.batchCode,
-          cashEquivalentGBP: convertToGBP(cashEquivalent, forexRate),
-          costBasisDrop: netCost / acquisitionCost - 1,
-          current,
-          date,
-          daysTotal,
-          dteCurrent: calcDteCurrent(expiry, NOW),
-          dteTotal: calcDteTotal(expiry, date),
-          expiry,
-          high,
-          highPct: high / current - 1,
-          netCost,
-          priceIncreaseGBP: convertToGBP(priceIncrease, forexRate),
-          return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
-          return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
-          return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
-          returnGBP: convertToGBP(Math.min(returnCurrent, returnIfAssigned || Infinity), forexRate),
-          returnGBPIfAssigned: convertToGBP(returnIfAssigned, forexRate),
-          returnGBPLastCall: convertToGBP(returnLastCall, forexRate),
-          returnPct: Math.min(current, strike || Infinity) / netCost - 1,
-          returnPctIfAssigned,
-          status: getCallStatus(strike, current),
-          stockPrice,
-          strike,
-          tradePrice,
-        };
+            const returnGBP = convertToGBP(
+              Math.min(returnCurrent, returnIfAssigned || Infinity),
+              forexRate
+            );
+            const valueGBP = convertToGBP(value, forexRate);
+            const returnGBPLastCall = convertToGBP(returnLastCall, forexRate);
 
-        const accountColour = accounts[account].colour;
+            const row: CallRow = {
+              account,
+              acquisitionCost,
+              assignmentPct: calcAssignmentPct(strike, current),
+              batchCode: batchData.batchCode,
+              costBasisDrop: netCost / acquisitionCost - 1,
+              current,
+              date,
+              daysTotal,
+              dteCurrent: calcDteCurrent(expiry, NOW),
+              dteTotal: calcDteTotal(expiry, date),
+              expiry,
+              high,
+              highPct: high / current - 1,
+              netCost,
+              priceIncreaseGBP: convertToGBP(priceIncrease, forexRate),
+              return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
+              return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
+              return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
+              returnGBP,
+              returnGBPIfAssigned: convertToGBP(returnIfAssigned, forexRate),
+              returnGBPLastCall,
+              returnPct: Math.min(current, strike || Infinity) / netCost - 1,
+              returnPctIfAssigned,
+              status: getCallStatus(strike, current),
+              stockPrice,
+              strike,
+              tradePrice,
+              valueGBP,
+            };
 
-        return (
-          <tr key={rowIndex}>
-            {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
-              const showContrast = name !== 'account' && name !== 'batchCode';
-              const showZeroValues =
-                name === 'assignmentPct' || name === 'dteCurrent' || name === 'highPct';
-              return (
-                <td
-                  className={cx(styles.td, styles.border, {
-                    [styles[align]]: align === 'right',
-                    [colour]: name === 'batchCode',
-                    [accountColour]: name === 'account',
-                    [styles.contrast]: rowIndex % 2 && showContrast,
-                    [styles.freezeFirstTdColumn]: index === 0,
-                    [styles.freezeSecondTdColumn]: index === 1,
-                    [styles.dwarfed]:
-                      current > high && (name === 'returnGBP' || name === 'returnPct'),
-                  })}
-                  key={index}
-                >
-                  {(!!row[name] || showZeroValues) && format(row[name])}
-                </td>
-              );
-            })}
-          </tr>
-        );
-      });
+            const accountColour = accounts[account].colour;
+
+            return (
+              <tr key={rowIndex}>
+                {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
+                  const showContrast = name !== 'account' && name !== 'batchCode';
+                  const showZeroValues =
+                    name === 'assignmentPct' || name === 'dteCurrent' || name === 'highPct';
+                  return (
+                    <td
+                      className={cx(styles.td, styles.border, {
+                        [styles[align]]: align === 'right',
+                        [colour]: name === 'batchCode',
+                        [accountColour]: name === 'account',
+                        [styles.contrast]: rowIndex % 2 && showContrast,
+                        [styles.freezeFirstTdColumn]: index === 0,
+                        [styles.freezeSecondTdColumn]: index === 1,
+                        [styles.dwarfed]:
+                          current > high && (name === 'returnGBP' || name === 'returnPct'),
+                      })}
+                      key={index}
+                    >
+                      {(!!row[name] || showZeroValues) && format(row[name])}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+      </tbody>
+    );
+  };
 
   return (
     <>
@@ -325,7 +340,7 @@ const Call = () => {
             ))}
           </tr>
         </thead>
-        <tbody>{renderTableBody(batchesWithCalls)}</tbody>
+        {renderTableBody(batchesWithCalls)}
       </table>
 
       <table className={styles.table}>
@@ -346,7 +361,7 @@ const Call = () => {
               ))}
           </tr>
         </thead>
-        <tbody>{renderTableBody(batchesWithoutCalls, ({ scope }) => scope === 'all')}</tbody>
+        {renderTableBody(batchesWithoutCalls, ({ scope }) => scope === 'all')}
       </table>
     </>
   );
