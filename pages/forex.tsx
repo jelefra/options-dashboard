@@ -9,7 +9,6 @@ import bankData from '../data/bank.csv';
 import accounts from '../data/accounts';
 
 import { decimalTwo, dateLongTerm, pctOne, thousands } from '../utils/format';
-import { convertToGBP } from '../utils';
 
 import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
 import { BankData, ForexRow } from '../types';
@@ -73,7 +72,7 @@ const Forex = () => {
               rate,
               currencyPair,
               currentRate,
-              profitGBP: convertToGBP(profitAndLoss, rates[currencyBought]) - commission,
+              profitGBP: profitAndLoss / rates[currencyBought] - commission,
               differencePct: rate / currentRate - 1,
             };
             const accountColour = accounts[account].colour;

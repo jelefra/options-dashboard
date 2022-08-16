@@ -13,20 +13,11 @@ import accounts from '../data/accounts';
 
 import { dateShortTerm, decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import {
-  calcAssignmentPct,
-  calcCashEquivalent,
   calcDteCurrent,
   calcDteTotal,
-  calcEffectiveNetReturnPct,
-  calcNetReturn,
   calcPriceIncrease,
   calcPutDifference,
-  calcPutEffectiveNetReturn,
   calcReturnPctForPeriod,
-  calcStockPriceLow,
-  calcStockPriceHigh,
-  convertToGBP,
-  getPutStatus,
   isCurrentPut,
   removeNullValues,
 } from '../utils';
@@ -134,28 +125,25 @@ const Put = () => {
             const date = dayjs(trade.date, INPUT_DATE_FORMAT);
             const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
             const dteTotal = calcDteTotal(expiry, date);
-            const low = calcStockPriceLow(strike, tradePrice, commission, optionSize);
-            const high = calcStockPriceHigh(stockPrice, tradePrice, commission, optionSize);
-            const netReturn = calcNetReturn(optionSize, tradePrice, commission);
-            const cashEquivalent = calcCashEquivalent(optionSize, strike);
+            const low = strike - tradePrice - commission / optionSize;
+            const high = stockPrice + tradePrice - commission / optionSize;
+            const netReturn = optionSize * tradePrice - commission;
+            const cashEquivalent = optionSize * strike;
             const priceIncrease = calcPriceIncrease(current, high, optionSize);
             const difference = calcPutDifference(strike, current, optionSize);
-            const effectiveNetReturn = calcPutEffectiveNetReturn(netReturn, difference);
-            const effectiveNetReturnPct = calcEffectiveNetReturnPct(
-              effectiveNetReturn,
-              cashEquivalent
-            );
+            const effectiveNetReturn = netReturn + difference;
+            const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
             const return30DPct = calcReturnPctForPeriod(effectiveNetReturnPct, dteTotal, 30);
-            const status = getPutStatus(strike, current);
+            const status = strike > current ? 'Assignable' : null;
 
-            const cashEquivalentGBP = convertToGBP(cashEquivalent, forexRate);
-            const priceIncreaseGBP = convertToGBP(priceIncrease, forexRate);
-            const returnGBP = convertToGBP(effectiveNetReturn, forexRate);
-            const differenceGBP = convertToGBP(difference, forexRate);
+            const cashEquivalentGBP = cashEquivalent / forexRate;
+            const priceIncreaseGBP = priceIncrease / forexRate;
+            const returnGBP = effectiveNetReturn / forexRate;
+            const differenceGBP = difference / forexRate;
 
             const row: PutRow = {
               account,
-              assignmentPct: calcAssignmentPct(strike, current),
+              assignmentPct: strike / current - 1,
               cashEquivalentGBP,
               current,
               date,

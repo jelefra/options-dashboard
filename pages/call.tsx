@@ -6,16 +6,10 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 import {
-  calcAssignmentPct,
   calcDteCurrent,
   calcDteTotal,
-  calcNetReturn,
   calcPriceIncrease,
-  calcReturn,
   calcReturnPctForPeriod,
-  calcStockPriceHigh,
-  convertToGBP,
-  getCallStatus,
   removeNullValues,
 } from '../utils';
 import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
@@ -245,7 +239,7 @@ const Call = () => {
             const current = currentTickerPrices[ticker];
 
             const daysTotal = expiry?.diff(acquisitionDate, 'day');
-            const high = calcStockPriceHigh(strike, tradePrice, commission, optionSize);
+            const high = strike + tradePrice - commission / optionSize;
             const returnPctLastCall =
               (tradePrice * optionSize - commission) / (stockPrice * optionSize);
             const dteLastCall = expiry?.diff(date, 'day');
@@ -253,22 +247,19 @@ const Call = () => {
             const returnPctIfAssigned = strike / netCost - 1;
 
             const priceIncrease = calcPriceIncrease(current, high, optionSize);
-            const returnCurrent = calcReturn(current, netCost, optionSize);
-            const returnIfAssigned = calcReturn(strike, netCost, optionSize);
-            const returnLastCall = calcNetReturn(optionSize, tradePrice, commission);
+            const returnCurrent = (current - netCost) * optionSize;
+            const returnIfAssigned = (strike - netCost) * optionSize;
+            const returnLastCall = optionSize * tradePrice - commission;
             const value = quantity * current;
 
-            const returnGBP = convertToGBP(
-              Math.min(returnCurrent, returnIfAssigned || Infinity),
-              forexRate
-            );
-            const valueGBP = convertToGBP(value, forexRate);
-            const returnGBPLastCall = convertToGBP(returnLastCall, forexRate);
+            const returnGBP = Math.min(returnCurrent, returnIfAssigned || Infinity) / forexRate;
+            const valueGBP = value / forexRate;
+            const returnGBPLastCall = returnLastCall / forexRate;
 
             const row: CallRow = {
               account,
               acquisitionCost,
-              assignmentPct: calcAssignmentPct(strike, current),
+              assignmentPct: strike / current - 1,
               batchCode: batchData.batchCode,
               costBasisDrop: netCost / acquisitionCost - 1,
               current,
@@ -280,16 +271,16 @@ const Call = () => {
               high,
               highPct: high / current - 1,
               netCost,
-              priceIncreaseGBP: convertToGBP(priceIncrease, forexRate),
+              priceIncreaseGBP: priceIncrease / forexRate,
               return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
               return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
               return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
               returnGBP,
-              returnGBPIfAssigned: convertToGBP(returnIfAssigned, forexRate),
+              returnGBPIfAssigned: returnIfAssigned / forexRate,
               returnGBPLastCall,
               returnPct: Math.min(current, strike || Infinity) / netCost - 1,
               returnPctIfAssigned,
-              status: getCallStatus(strike, current),
+              status: strike < current ? 'Assignable' : null,
               stockPrice,
               strike,
               tradePrice,

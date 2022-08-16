@@ -7,7 +7,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
-import { convertToGBP, removeNullValues } from '../utils';
+import { removeNullValues } from '../utils';
 import { factorStockSplit } from '../utils/factorStockSplit';
 
 import { BatchMinimal, StocksRow, StocksRowTotal, TradeData, TransactionData } from '../types';
@@ -399,8 +399,8 @@ const Stocks = () => {
             wheeledReturn;
           const value = totalQuantity * current - wheelingMissedUpside;
 
-          const returnGBP = convertToGBP(returnCurrency, forexRate);
-          const valueGBP = convertToGBP(value, forexRate);
+          const returnGBP = returnCurrency / forexRate;
+          const valueGBP = value / forexRate;
 
           const row: StocksRow = {
             activeCalls: stock.wheeling?.activeCalls,
