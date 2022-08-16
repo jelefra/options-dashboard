@@ -1,21 +1,19 @@
 import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-import { fetchFn } from '../../utils/fetch';
 import get from '../../utils/get';
 
-const fetchCreditUsage = () => {
-  const endpoint = `https://cloud.iexapis.com/v1/account/usage/credits?token=${process.env.IEX_SECRET_KEY}`;
-  return fetchFn({ endpoint });
-};
+import { FIFTEEN_MINUTES_IN_SECONDS } from '../../constants';
 
 const creditUsage = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();
   await client.connect();
+  const endpoint = `https://cloud.iexapis.com/v1/account/usage/credits?token=${process.env.IEX_SECRET_KEY}`;
   const creditUsage = await get({
     client,
-    fetchFn: fetchCreditUsage,
+    endpoint,
     keyName: 'creditUsage',
+    expiry: FIFTEEN_MINUTES_IN_SECONDS,
   });
   res.status(200).json({ creditUsage });
 };

@@ -1,4 +1,6 @@
-import { fetchFn } from './fetch';
+import { createClient } from 'redis';
+
+import get from './get';
 
 import { IEXCloudStockResponse } from '../types';
 
@@ -19,13 +21,17 @@ const fetchTickerPrices = async (
       const endpoint = constructEndpoint(ticker);
       // Delay queries to avoid 'Too Many Requests' (429) statuses
       await new Promise((resolve) => setTimeout(resolve, index * 25));
-      const response: IEXCloudStockResponse | null = await fetchFn({ ticker, endpoint });
-      const latestPrice = response.latestPrice || null;
+      const client = createClient();
+      await client.connect();
+      const response: IEXCloudStockResponse = await get({
+        client,
+        endpoint,
+        keyName: ticker,
+      });
+      const latestPrice = response.latestPrice;
       return { ticker, latestPrice };
     })
   );
-
-  console.info('Fetched ticker prices');
 
   return tickerPrices.reduce((tickerPriceMap, tickerWithPrice) => {
     const { ticker, latestPrice } = tickerWithPrice;

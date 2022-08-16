@@ -1,9 +1,4 @@
-export const fetchFn = async ({
-  ticker = undefined,
-  endpoint,
-  retries = 3,
-  delay = 200,
-}): Promise<any> =>
+export const fetchFn = async (endpoint, retries = 3, delay = 200): Promise<any> =>
   fetch(endpoint)
     .then((response) => {
       const contentType = response.headers?.get('content-type');
@@ -16,7 +11,7 @@ export const fetchFn = async ({
             retries > 1 ? 'ies' : 'y'
           } left)`
         );
-        setTimeout(() => fetchFn({ ticker, endpoint, retries: retries - 1, delay: delay * 2 }));
+        setTimeout(() => fetchFn(endpoint, retries - 1, delay * 2));
       } else {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }

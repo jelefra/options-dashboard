@@ -45,7 +45,7 @@ const Call = () => {
     fetchForexRates().catch(console.error);
 
     const fetchCallTickerPrices = async () => {
-      const response = await fetch(`/api/callTickerPrices?now=${String(NOW)}`);
+      const response = await fetch('/api/callTickerPrices');
       const data = await response.json();
       setCurrentTickerPrices(data.currentTickerPrices);
     };

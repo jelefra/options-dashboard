@@ -1,29 +1,24 @@
-import { Dayjs } from 'dayjs';
+import { fetchFn } from './fetch';
 
 import { ONE_MINUTE_IN_SECONDS } from '../constants';
 
-import { RedisKey } from '../types';
-
 const get = async ({
   client,
-  fetchFn,
+  endpoint,
   keyName,
-  now = undefined,
   expiry = ONE_MINUTE_IN_SECONDS,
 }: {
   client;
-  fetchFn: Function;
-  keyName: RedisKey;
-  now?: Dayjs;
+  endpoint: string;
+  keyName: string;
   expiry?: number;
 }) => {
   let data;
   const redisData = await client.get(keyName);
   if (redisData) {
-    console.info(`Retrieving '${keyName}' Redis key.`);
     data = JSON.parse(redisData);
   } else {
-    data = await fetchFn(now);
+    data = await fetchFn(endpoint);
     await client.set(keyName, JSON.stringify(data), {
       EX: expiry,
     });

@@ -208,10 +208,3 @@ export type IEXCloudStockResponse = { latestPrice: number };
 export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; monthlyUsage: number };
 
 export type ExchangeRateResponse = { rates: { [key: string]: number } };
-
-export type RedisKey =
-  | 'rates'
-  | 'allTickerPrices'
-  | 'callTickerPrices'
-  | 'putTickerPrices'
-  | 'creditUsage';

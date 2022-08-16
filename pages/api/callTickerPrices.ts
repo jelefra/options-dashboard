@@ -1,23 +1,25 @@
 import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import dayjs from 'dayjs';
 
-import get from '../../utils/get';
-import fetchCallTickerPrices from '../../utils/fetchCallTickerPrices';
+import { removeNullValues } from '../../utils';
+import getCallTickersToQuery from '../../utils/getCallTickersToQuery';
+import fetchTickerPrices from '../../utils/fetchTickerPrices';
+
+import { TradeData, TransactionData } from '../../types';
+
+// @ts-ignore
+import tradesData from '../../data/options.csv';
+// @ts-ignore
+import transactionsData from '../../data/transactions.csv';
 
 const callTickerPrices = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();
   await client.connect();
-  const { now } = req.query;
-  if (typeof now === 'string') {
-    const currentTickerPrices = await get({
-      client,
-      fetchFn: fetchCallTickerPrices,
-      keyName: 'callTickerPrices',
-      now: dayjs(now),
-    });
-    res.status(200).json({ currentTickerPrices });
-  }
+  const trades: TradeData[] = tradesData.map(removeNullValues);
+  const transactions: TransactionData[] = transactionsData.map(removeNullValues);
+  const callTickersToQuery = getCallTickersToQuery(trades, transactions);
+  const currentTickerPrices = await fetchTickerPrices(callTickersToQuery);
+  res.status(200).json({ currentTickerPrices });
 };
 
 export default callTickerPrices;
