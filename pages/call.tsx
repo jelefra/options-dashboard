@@ -20,7 +20,7 @@ import {
 } from '../utils';
 import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
-import { Batch, CallRow, TradeData, TransactionData } from '../types';
+import { Batch, CallRow, CallRowTotal, TradeData, TransactionData } from '../types';
 
 import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
 
@@ -214,6 +214,13 @@ const Call = () => {
     batches: [string, Batch][],
     headingFilterFunction = (value) => value
   ) => {
+    // eslint-disable-next-line no-unused-vars
+    const totals: { [key in keyof CallRowTotal]: number } = {
+      returnGBP: 0,
+      returnGBPLastCall: 0,
+      valueGBP: 0,
+    };
+
     return (
       <tbody>
         {batches
@@ -289,6 +296,10 @@ const Call = () => {
               valueGBP,
             };
 
+            totals.returnGBP += returnGBP;
+            totals.returnGBPLastCall += returnGBPLastCall;
+            totals.valueGBP += valueGBP;
+
             const accountColour = accounts[account].colour;
 
             return (
@@ -318,6 +329,20 @@ const Call = () => {
               </tr>
             );
           })}
+        <tr>
+          {headings
+            .filter(headingFilterFunction)
+            .map(({ name, format, align = 'right' }, index) => (
+              <td
+                className={cx(styles.td, {
+                  [styles[align]]: align === 'right',
+                })}
+                key={index}
+              >
+                {totals[name] && format(totals[name])}
+              </td>
+            ))}
+        </tr>
       </tbody>
     );
   };

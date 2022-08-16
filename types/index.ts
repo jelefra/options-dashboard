@@ -106,22 +106,26 @@ export type PutRow = Row &
     ticker: string;
   };
 
-export type CallRow = Row & {
-  acquisitionCost: number;
-  batchCode: string;
-  costBasisDrop: number;
-  daysTotal: number;
-  netCost: number;
-  return1YPctIfAssigned: number;
-  return30DPctIfAssigned: number;
-  return30DPctLastCall: number;
+export type CallRowTotal = {
   returnGBP: number;
-  returnGBPIfAssigned: number;
   returnGBPLastCall: number;
-  returnPct: number;
-  returnPctIfAssigned: number;
   valueGBP: number;
 };
+
+export type CallRow = Row &
+  CallRowTotal & {
+    acquisitionCost: number;
+    batchCode: string;
+    costBasisDrop: number;
+    daysTotal: number;
+    netCost: number;
+    return1YPctIfAssigned: number;
+    return30DPctIfAssigned: number;
+    return30DPctLastCall: number;
+    returnGBPIfAssigned: number;
+    returnPct: number;
+    returnPctIfAssigned: number;
+  };
 
 export type CallMinimal = {
   strike: number;
