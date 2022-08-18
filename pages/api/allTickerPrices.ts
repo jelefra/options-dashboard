@@ -1,4 +1,3 @@
-import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { removeNullValues } from '../../utils';
@@ -23,8 +22,6 @@ const getAllTickersToQuery = () => {
 };
 
 const allTickerPrices = async (req: NextApiRequest, res: NextApiResponse) => {
-  const client = createClient();
-  await client.connect();
   const { now } = req.query;
   if (typeof now === 'string') {
     const allTickersToQuery = getAllTickersToQuery();

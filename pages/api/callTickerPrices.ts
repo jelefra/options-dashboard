@@ -1,4 +1,3 @@
-import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { removeNullValues } from '../../utils';
@@ -13,8 +12,6 @@ import tradesData from '../../data/options.csv';
 import transactionsData from '../../data/transactions.csv';
 
 const callTickerPrices = async (req: NextApiRequest, res: NextApiResponse) => {
-  const client = createClient();
-  await client.connect();
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
   const callTickersToQuery = getCallTickersToQuery(trades, transactions);

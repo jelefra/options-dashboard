@@ -1,4 +1,3 @@
-import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -15,8 +14,6 @@ const getPutTickersToQuery = (trades: TradeData[], now: Dayjs): string[] => [
 ];
 
 const putTickerPrices = async (req: NextApiRequest, res: NextApiResponse) => {
-  const client = createClient();
-  await client.connect();
   const { now } = req.query;
   if (typeof now === 'string') {
     const trades: TradeData[] = tradesData.map(removeNullValues);
