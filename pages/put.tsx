@@ -208,7 +208,7 @@ const Put = () => {
               })}
               key={index}
             >
-              {totals[name]?.value && (totals[name].format || format)(totals[name].value)}
+              {!!totals[name]?.value && (totals[name].format || format)(totals[name].value)}
             </td>
           ))}
         </tr>
