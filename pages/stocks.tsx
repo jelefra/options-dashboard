@@ -24,6 +24,22 @@ import styles from '../styles/Table.module.css';
 
 const NOW = dayjs();
 
+const calcValueGBP = (stock, currentTickerPrices, rates) => {
+  const { ticker } = stock;
+  const value = calcValue(stock, currentTickerPrices[ticker]);
+  const { currency } = tickers[ticker];
+  const forexRate = rates[currency];
+  return value / forexRate;
+};
+
+const calcValue = (stock, current) => {
+  const partialBatchQuantity = stock.partialBatch?.quantity || 0;
+  const wheelingQuantity = stock.wheeling?.quantity || 0;
+  const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
+  const totalQuantity = wheelingQuantity + partialBatchQuantity;
+  return totalQuantity * current - wheelingMissedUpside;
+};
+
 const Stocks = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [rates, setRates] = useState<{ [key: string]: number }>(null);
@@ -304,18 +320,11 @@ const Stocks = () => {
     }
   }
 
-  const orderedStocks = Object.values(stocks).sort((stockA, stockB) => {
-    const calcValue = (stock, currentTickerPrices) => {
-      const partialBatchQuantity = stock.partialBatch?.quantity || 0;
-      const wheelingQuantity = stock.wheeling?.quantity || 0;
-      const totalQuantity = wheelingQuantity + partialBatchQuantity;
-      return totalQuantity * currentTickerPrices[stock.ticker];
-    };
-
-    const valueA = calcValue(stockA, currentTickerPrices);
-    const valueB = calcValue(stockB, currentTickerPrices);
-    return valueB - valueA;
-  });
+  const orderedStocks = Object.values(stocks).sort(
+    (stockA, stockB) =>
+      calcValueGBP(stockB, currentTickerPrices, rates) -
+      calcValueGBP(stockA, currentTickerPrices, rates)
+  );
 
   // eslint-disable-next-line no-unused-vars
   const totals: { [key in keyof StocksRowTotal]: { value: number; format?: Function } } = {
@@ -397,10 +406,9 @@ const Stocks = () => {
             putOnlyPremium +
             wheelingPremium +
             wheeledReturn;
-          const value = totalQuantity * current - wheelingMissedUpside;
 
           const returnGBP = returnCurrency / forexRate;
-          const valueGBP = value / forexRate;
+          const valueGBP = calcValueGBP(stock, currentTickerPrices, rates);
 
           const row: StocksRow = {
             activeCalls: stock.wheeling?.activeCalls,
