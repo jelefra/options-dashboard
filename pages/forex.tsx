@@ -38,8 +38,8 @@ const Forex = () => {
   const headings: { name: keyof ForexRow; format?: Function; align?: 'right' }[] = [
     { name: 'date', format: dateLongTerm },
     { name: 'account' },
-    { name: 'amount', format: thousands, align: 'right' },
     { name: 'currencyPair' },
+    { name: 'amount', format: thousands, align: 'right' },
     { name: 'rate', format: decimalTwo, align: 'right' },
     { name: 'currentRate', format: decimalTwo },
     { name: 'differencePct', format: pctOne, align: 'right' },
