@@ -250,10 +250,11 @@ const Call = () => {
             const returnCurrent = (current - netCost) * optionSize;
             const returnIfAssigned = (strike - netCost) * optionSize;
             const returnLastCall = optionSize * tradePrice - commission;
-            const value = quantity * current;
+            const valueCurrent = quantity * current;
+            const valueIfAssigned = strike * optionSize;
 
             const returnGBP = Math.min(returnCurrent, returnIfAssigned || Infinity) / forexRate;
-            const valueGBP = value / forexRate;
+            const valueGBP = Math.min(valueCurrent, valueIfAssigned || Infinity) / forexRate;
             const returnGBPLastCall = returnLastCall / forexRate;
 
             const row: CallRow = {
@@ -309,7 +310,8 @@ const Call = () => {
                         [styles.freezeFirstTdColumn]: index === 0,
                         [styles.freezeSecondTdColumn]: index === 1,
                         [styles.dwarfed]:
-                          current > high && (name === 'returnGBP' || name === 'returnPct'),
+                          current > high &&
+                          (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
                       })}
                       key={index}
                     >
