@@ -1,9 +1,12 @@
+import React, { useEffect, useState } from 'react';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
+
+import CloseTradePriceInput from '../components/CloseTradePriceInput';
 
 import {
   calcDteCurrent,
@@ -26,12 +29,12 @@ import tickers from '../data/tickers';
 import accounts from '../data/accounts';
 
 import styles from '../styles/Table.module.css';
-import { useEffect, useState } from 'react';
 
 const NOW = dayjs();
 
 const Call = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
   const [rates, setRates] = useState<{ [key: string]: number }>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<{ [key: string]: number }>(null);
 
@@ -53,47 +56,8 @@ const Call = () => {
     setIsLoading(false);
   }, []);
 
-  if (isLoading) return <p>Loading...</p>;
-  if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
-
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
-
-  const headings: {
-    name: keyof CallRow;
-    format?: Function;
-    align?: 'default' | 'right';
-    scope?: 'all';
-  }[] = [
-    { name: 'account', align: 'default', scope: 'all' },
-    { name: 'batchCode', align: 'default', scope: 'all' },
-    { name: 'acquisitionCost', format: decimalTwo, scope: 'all' },
-    { name: 'netCost', format: decimalTwo, scope: 'all' },
-    { name: 'costBasisDrop', format: pctOne, scope: 'all' },
-    { name: 'returnPct', format: pctOne, scope: 'all' },
-    { name: 'returnGBP', format: thousands, scope: 'all' },
-    { name: 'valueGBP', format: thousands, scope: 'all' },
-    { name: 'date', format: dateShortTerm, align: 'default' },
-    { name: 'expiry', format: dateShortTerm, align: 'default' },
-    { name: 'dteTotal' },
-    { name: 'dteCurrent' },
-    { name: 'tradePrice', format: decimalTwo },
-    { name: 'stockPrice', format: decimalTwo },
-    { name: 'current', format: decimalTwo, scope: 'all' },
-    { name: 'strike', format: decimalTwo },
-    { name: 'status', align: 'default' },
-    { name: 'assignmentPct', format: pctOne },
-    { name: 'high', format: decimalTwo },
-    { name: 'highPct', format: pctOne },
-    { name: 'priceIncreaseGBP', format: thousands },
-    { name: 'return30DPctLastCall', format: pctOne },
-    { name: 'returnGBPLastCall', format: thousands },
-    { name: 'daysTotal' },
-    { name: 'returnGBPIfAssigned', format: thousands },
-    { name: 'returnPctIfAssigned', format: pctOne },
-    { name: 'return30DPctIfAssigned', format: pctOne },
-    { name: 'return1YPctIfAssigned', format: pctOne },
-  ];
 
   const batches: { [key: string]: Batch } = {};
 
@@ -199,10 +163,65 @@ const Call = () => {
     .sort(([a], [b]) => a.localeCompare(b))
     .sort(([, a], [, b]) => a.account.localeCompare(b.account));
 
+  const callIds = batchesWithCalls.map(([batchCode]) => batchCode).join(',');
+
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchCallCloseTradePrices = async () => {
+      const response = await fetch(`/api/closeTradePrices?ids=${callIds}`);
+      const data = await response.json();
+      setCloseTradePrices(data.closeTradePrices);
+    };
+    fetchCallCloseTradePrices().catch(console.error);
+
+    setIsLoading(false);
+  }, [callIds]);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
+
   const batchesWithoutCalls = Object.entries(batches)
     .filter(([, batch]) => !batch.currentCall)
     .sort(([a], [b]) => a.localeCompare(b))
     .sort(([, a], [, b]) => a.account.localeCompare(b.account));
+
+  const headings: {
+    name: keyof CallRow;
+    format?: Function;
+    align?: 'default' | 'right';
+    scope?: 'all';
+  }[] = [
+    { name: 'account', align: 'default', scope: 'all' },
+    { name: 'batchCode', align: 'default', scope: 'all' },
+    { name: 'acquisitionCost', format: decimalTwo, scope: 'all' },
+    { name: 'netCost', format: decimalTwo, scope: 'all' },
+    { name: 'costBasisDrop', format: pctOne, scope: 'all' },
+    { name: 'returnPct', format: pctOne, scope: 'all' },
+    { name: 'returnGBP', format: thousands, scope: 'all' },
+    { name: 'valueGBP', format: thousands, scope: 'all' },
+    { name: 'date', format: dateShortTerm, align: 'default' },
+    { name: 'expiry', format: dateShortTerm, align: 'default' },
+    { name: 'dteTotal' },
+    { name: 'dteCurrent' },
+    { name: 'tradePrice', format: decimalTwo },
+    { name: 'stockPrice', format: decimalTwo },
+    { name: 'current', format: decimalTwo, scope: 'all' },
+    { name: 'strike', format: decimalTwo },
+    { name: 'status', align: 'default' },
+    { name: 'assignmentPct', format: pctOne },
+    { name: 'high', format: decimalTwo },
+    { name: 'highPct', format: pctOne },
+    { name: 'priceIncreaseGBP', format: thousands },
+    { name: 'return30DPctLastCall', format: pctOne },
+    { name: 'closeTradePrice' },
+    { name: 'return30DPctResidual', format: pctOne },
+    { name: 'returnGBPLastCall', format: thousands },
+    { name: 'daysTotal' },
+    { name: 'returnGBPIfAssigned', format: thousands },
+    { name: 'returnPctIfAssigned', format: pctOne },
+    { name: 'return30DPctIfAssigned', format: pctOne },
+    { name: 'return1YPctIfAssigned', format: pctOne },
+  ];
 
   const renderTableBody = (
     batches: [string, Batch][],
@@ -228,6 +247,7 @@ const Call = () => {
               account,
               acquisitionCost,
               acquisitionDate,
+              batchCode,
               currentCall,
               netCumulativePremium,
               quantity,
@@ -257,16 +277,35 @@ const Call = () => {
             const valueGBP = Math.min(valueCurrent, valueIfAssigned || Infinity) / forexRate;
             const returnGBPLastCall = returnLastCall / forexRate;
 
+            const closeTradePrice = closeTradePrices[batchCode];
+
+            const effectiveCloseNetReturn =
+              closeTradePrice > 0 ? optionSize * closeTradePrice - commission : 0;
+            const effectiveCloseNetReturnPct = effectiveCloseNetReturn / valueCurrent;
+            const dteCurrent = calcDteCurrent(expiry, NOW);
+            const return30DPctResidual = calcReturnPctForPeriod(
+              effectiveCloseNetReturnPct,
+              dteCurrent,
+              30
+            );
+
             const row: CallRow = {
               account,
               acquisitionCost,
               assignmentPct: strike / current - 1,
-              batchCode: batchData.batchCode,
+              batchCode,
+              closeTradePrice: (
+                <CloseTradePriceInput
+                  batchId={batchCode}
+                  closeTradePrices={closeTradePrices}
+                  setCloseTradePrices={setCloseTradePrices}
+                />
+              ),
               costBasisDrop: netCost / acquisitionCost - 1,
               current,
               date,
               daysTotal,
-              dteCurrent: calcDteCurrent(expiry, NOW),
+              dteCurrent,
               dteTotal: calcDteTotal(expiry, date),
               expiry,
               high,
@@ -276,6 +315,7 @@ const Call = () => {
               return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
               return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
               return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
+              return30DPctResidual,
               returnGBP,
               returnGBPIfAssigned: returnIfAssigned / forexRate,
               returnGBPLastCall,

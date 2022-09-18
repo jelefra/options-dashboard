@@ -69,9 +69,9 @@ const Put = () => {
   useEffect(() => {
     setIsLoading(true);
     const fetchPutCloseTradePrices = async () => {
-      const response = await fetch(`/api/putCloseTradePrices?ids=${putIds}`);
+      const response = await fetch(`/api/closeTradePrices?ids=${putIds}`);
       const data = await response.json();
-      setCloseTradePrices(data.putCloseTradePrices);
+      setCloseTradePrices(data.closeTradePrices);
     };
     fetchPutCloseTradePrices().catch(console.error);
 

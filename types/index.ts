@@ -123,12 +123,14 @@ export type CallRow = Row &
   CallRowTotal & {
     acquisitionCost: number;
     batchCode: string;
+    closeTradePrice: ReactElement;
     costBasisDrop: number;
     daysTotal: number;
     netCost: number;
     return1YPctIfAssigned: number;
     return30DPctIfAssigned: number;
     return30DPctLastCall: number;
+    return30DPctResidual: number;
     returnGBPIfAssigned: number;
     returnPct: number;
     returnPctIfAssigned: number;
