@@ -1,3 +1,4 @@
+import { ReactElement } from 'react';
 import { Dayjs } from 'dayjs';
 
 export type Stock = {
@@ -16,16 +17,15 @@ type Operation = {
   type: TransactionType | TradeType;
 };
 
-export type TradeData = Operation & {
+type TradeCommon = {
   batchCode?: string;
   closeCommission?: number;
   closeDate?: string;
   closePrice?: number;
   closeTradePrice?: number;
-  date: string;
-  delta: number;
-  expiry: string;
-  IV: number;
+  // Trades filled long after being placed don't feature delta or IV
+  delta?: number;
+  IV?: number;
   strike: number;
   tradePrice: number;
   type: TradeType;
@@ -33,19 +33,24 @@ export type TradeData = Operation & {
 
 export type TradeType = 'Put' | 'Call';
 
-type Trade = Operation & {
-  batchCode: string;
-  closeCommission?: number;
-  closeDate?: string;
-  closeTradePrice?: number;
-  date: Dayjs;
-  expiry: Dayjs;
-  strike: number;
-  tradePrice: number;
-  type: TradeType;
+export type TradeData = Operation &
+  TradeCommon & {
+    date: string;
+    expiry: string;
+  };
+
+export type PutData = TradeData & {
+  type: 'Put';
 };
 
+type Trade = Operation &
+  TradeCommon & {
+    date: Dayjs;
+    expiry: Dayjs;
+  };
+
 export type Call = Trade & {
+  batchCode: string;
   type: 'Call';
 };
 
@@ -100,9 +105,11 @@ export type PutRowTotal = PutRowCommon & {
 
 export type PutRow = Row &
   PutRowCommon & {
+    closeTradePrice: ReactElement;
     low: number;
     lowPct: number;
     return30DPct: number;
+    return30DPctResidual: number;
     ticker: string;
   };
 

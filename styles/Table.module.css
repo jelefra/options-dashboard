@@ -37,6 +37,11 @@
   background-color: bisque;
 }
 
+.closeTradePriceInput {
+  width: 100%;
+  text-align: right;
+}
+
 /* Freeze header and first columns */
 .freezeFirstThRow {
   position: sticky;
