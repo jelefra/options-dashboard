@@ -347,7 +347,7 @@ const Call = () => {
           <tr>
             {headings.map(({ name }, index) => (
               <th
-                className={cx(styles.th, styles.freezeFirstThRow, styles.white, {
+                className={cx(styles.th, styles.freezeFirstThRow, styles.white, styles.rotate, {
                   [styles.freezeFirstThCell]: index === 0,
                   [styles.freezeSecondThCell]: index === 1,
                 })}

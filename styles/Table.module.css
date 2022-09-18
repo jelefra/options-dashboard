@@ -9,8 +9,15 @@
 }
 
 .th {
-  padding: 0.5rem 0.5rem;
+  padding: var(--th-padding);
   font-size: 0.8em;
+}
+
+.th.rotate {
+  text-align: left;
+  transform:
+      rotate(-180deg);
+  writing-mode: vertical-lr;
 }
 
 .columnSize {
@@ -18,7 +25,7 @@
 }
 
 .td {
-  padding: var(--cell-padding);
+  padding: var(--td-padding);
 }
 
 .border {

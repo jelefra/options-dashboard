@@ -123,7 +123,7 @@ const Put = () => {
         <tr>
           {headings.map(({ name }, index) => (
             <th
-              className={cx(styles.th, styles.white, styles.freezeFirstThRow, {
+              className={cx(styles.th, styles.white, styles.freezeFirstThRow, styles.rotate, {
                 [styles.freezeFirstThCell]: index === 0,
                 [styles.freezeSecondThCell]: index === 1,
               })}

@@ -43,7 +43,7 @@ const CloseTradePriceInput = ({ batchId, closeTradePrices, setCloseTradePrices }
 
   return (
     <input
-      style={{ width: '100%', textAlign: 'right' }}
+      style={{ width: '65px', textAlign: 'right' }}
       type="number"
       id="closeTradePrice"
       name="closeTradePrice"
