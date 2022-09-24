@@ -8,7 +8,7 @@ dayjs.extend(customParseFormat);
 
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import { removeNullValues } from '../utils';
-import { factorStockSplit } from '../utils/factorStockSplit';
+import { factorStockSplit, factorStockSplitStockPrice } from '../utils/factorStockSplit';
 
 import { BatchMinimal, StocksRow, StocksRowTotal, TradeData, TransactionData } from '../types';
 
@@ -199,11 +199,19 @@ const Stocks = () => {
 
           const batch = batches[batchCode];
           const batchCommission = commission / batchCodes.length;
-          const batchQuantity = quantity / batchCodes.length;
+          const batchQuantity =
+            factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT)) / batchCodes.length;
+          const actualisedStockPrice = factorStockSplitStockPrice(
+            ticker,
+            stockPrice,
+            dayjs(date, INPUT_DATE_FORMAT)
+          );
           const oldAcquisitionCost = batch.acquisitionCost;
           const oldQuantity = batch.quantity;
           batch.acquisitionCost =
-            (oldAcquisitionCost * oldQuantity + stockPrice * batchQuantity + batchCommission) /
+            (oldAcquisitionCost * oldQuantity +
+              actualisedStockPrice * batchQuantity +
+              batchCommission) /
             (oldQuantity + batchQuantity);
           batch.netCumulativePremium -= commission / batchQuantity;
           batch.quantity += batchQuantity;
@@ -262,7 +270,7 @@ const Stocks = () => {
       }
     }
 
-    // Wheeling previously assigned puts
+    // Wheeling
     if (type === 'Call') {
       const batch = batches[batchCode];
       batch.netCumulativePremium += netCumulativePremium;

@@ -29,6 +29,7 @@ import tickers from '../data/tickers';
 import accounts from '../data/accounts';
 
 import styles from '../styles/Table.module.css';
+import { factorStockSplit, factorStockSplitStockPrice } from '../utils/factorStockSplit';
 
 const NOW = dayjs();
 
@@ -62,7 +63,7 @@ const Call = () => {
   const batches: { [key: string]: Batch } = {};
 
   for (let transaction of transactions) {
-    const { account, batchCodes: batchCodesStr, ticker, type } = transaction;
+    const { account, batchCodes: batchCodesStr, date, ticker, type } = transaction;
 
     if (type === 'Purchase' && batchCodesStr) {
       const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
@@ -85,11 +86,17 @@ const Call = () => {
         };
 
         const batch = batches[batchCode];
-        const batchQuantity = quantity / batchCodes.length;
+        const batchQuantity =
+          factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT)) / batchCodes.length;
+        const actualisedStockPrice = factorStockSplitStockPrice(
+          ticker,
+          stockPrice,
+          dayjs(date, INPUT_DATE_FORMAT)
+        );
         const oldAcquisitionCost = batch.acquisitionCost;
         const oldQuantity = batch.quantity;
         batch.acquisitionCost =
-          (oldAcquisitionCost * oldQuantity + stockPrice * batchQuantity) /
+          (oldAcquisitionCost * oldQuantity + actualisedStockPrice * batchQuantity) /
           (oldQuantity + batchQuantity);
         batch.netCumulativePremium -= commission / batchQuantity;
         batch.quantity += batchQuantity;

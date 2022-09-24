@@ -11,3 +11,15 @@ export const factorStockSplit = (ticker: string, quantity: number, tradeDate: Da
   }
   return quantity;
 };
+
+export const factorStockSplitStockPrice = (
+  ticker: string,
+  stockPrice: number,
+  tradeDate: Dayjs
+) => {
+  if (stockSplits[ticker]) {
+    const { date, ratio } = stockSplits[ticker];
+    return stockPrice / (tradeDate.isBefore(dayjs(date, INPUT_DATE_FORMAT)) ? ratio : 1);
+  }
+  return stockPrice;
+};
