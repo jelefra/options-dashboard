@@ -347,7 +347,10 @@ const Call = () => {
                 {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
                   const showContrast = name !== 'account' && name !== 'batchCode';
                   const showZeroValues =
-                    name === 'assignmentPct' || name === 'dteCurrent' || name === 'highPct';
+                    name === 'assignmentPct' ||
+                    name === 'dteCurrent' ||
+                    name === 'highPct' ||
+                    name === 'costBasisDrop';
                   return (
                     <td
                       className={cx(styles.td, styles.border, {
