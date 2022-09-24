@@ -6,13 +6,19 @@ dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
+import processData from '../utils/processData';
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import { removeNullValues } from '../utils';
-import { factorStockSplit, factorStockSplitStockPrice } from '../utils/factorStockSplit';
 
-import { BatchMinimal, StocksRow, StocksRowTotal, TradeData, TransactionData } from '../types';
+import {
+  CurrentTickerPrices,
+  StocksRow,
+  StocksRowTotal,
+  TradeData,
+  TransactionData,
+} from '../types';
 
-import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
+import { DISPLAY } from '../constants';
 
 // @ts-ignore
 import tradesData from '../data/options.csv';
@@ -43,7 +49,7 @@ const calcValue = (stock, current) => {
 const Stocks = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [rates, setRates] = useState<{ [key: string]: number }>(null);
-  const [currentTickerPrices, setCurrentTickerPrices] = useState<{ [key: string]: number }>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -65,9 +71,6 @@ const Stocks = () => {
 
   if (isLoading) return <p>Loading...</p>;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
-
-  const trades: TradeData[] = tradesData.map(removeNullValues);
-  const transactions: TransactionData[] = transactionsData.map(removeNullValues);
 
   const headings: {
     name: keyof StocksRow;
@@ -143,151 +146,10 @@ const Stocks = () => {
     rowSpan: sections[section].rowSpan || 1,
   }));
 
-  const stocks: {
-    [key: string]: {
-      ticker: string;
-      partialBatch?: {
-        acquisitionCost: number;
-        quantity: number;
-      };
-      putOnly?: {
-        premium: number;
-      };
-      wheeled?: {
-        exitValue?: number;
-        acquisitionCost: number;
-        premium: number;
-        quantity: number;
-      };
-      wheeling?: {
-        activeCalls: number;
-        acquisitionCost: number;
-        premium: number;
-        quantity: number;
-        missedUpside: number;
-      };
-    };
-  } = Object.fromEntries(
-    Object.keys(currentTickerPrices).map((ticker) => [ticker, { ticker: ticker }])
-  );
+  const trades: TradeData[] = tradesData.map(removeNullValues);
+  const transactions: TransactionData[] = transactionsData.map(removeNullValues);
 
-  const batches: { [key: string]: BatchMinimal } = {};
-
-  for (let transaction of transactions) {
-    const {
-      batchCodes: batchCodesStr,
-      commission,
-      date,
-      quantity,
-      stockPrice,
-      ticker,
-      type,
-    } = transaction;
-
-    if (type === 'Purchase') {
-      if (batchCodesStr) {
-        const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
-
-        for (let batchCode of batchCodes) {
-          batches[batchCode] = batches[batchCode] || {
-            batchCode,
-            netCumulativePremium: 0,
-            acquisitionCost: 0,
-            quantity: 0,
-            ticker,
-          };
-
-          const batch = batches[batchCode];
-          const batchCommission = commission / batchCodes.length;
-          const batchQuantity =
-            factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT)) / batchCodes.length;
-          const actualisedStockPrice = factorStockSplitStockPrice(
-            ticker,
-            stockPrice,
-            dayjs(date, INPUT_DATE_FORMAT)
-          );
-          const oldAcquisitionCost = batch.acquisitionCost;
-          const oldQuantity = batch.quantity;
-          batch.acquisitionCost =
-            (oldAcquisitionCost * oldQuantity +
-              actualisedStockPrice * batchQuantity +
-              batchCommission) /
-            (oldQuantity + batchQuantity);
-          batch.quantity += batchQuantity;
-        }
-      } else {
-        stocks[ticker].partialBatch = stocks[ticker].partialBatch || {
-          acquisitionCost: 0,
-          quantity: 0,
-        };
-        const partialBatch = stocks[ticker].partialBatch;
-        partialBatch.acquisitionCost += stockPrice * quantity + commission;
-        partialBatch.quantity += factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
-      }
-    }
-
-    // TODO
-    // if (type === 'Sale' && batchCodes) {
-    //   ...
-    // }
-  }
-
-  for (let trade of trades) {
-    const {
-      batchCode,
-      closeCommission = 0,
-      closePrice,
-      closeTradePrice = 0,
-      commission,
-      strike,
-      ticker,
-      tradePrice,
-      type,
-    } = trade;
-
-    const { optionSize } = tickers[ticker];
-
-    const netCumulativePremium =
-      tradePrice - closeTradePrice - (commission + closeCommission) / optionSize;
-
-    // Puts
-    if (type === 'Put') {
-      // Assigned puts
-      if (type === 'Put' && closePrice && closePrice < strike) {
-        batches[batchCode] = {
-          batchCode,
-          netCumulativePremium,
-          acquisitionCost: strike,
-          quantity: optionSize,
-          ticker,
-        };
-      } else {
-        // Put only (including current assignable puts)
-        stocks[ticker].putOnly = stocks[ticker].putOnly || { premium: 0 };
-        stocks[ticker].putOnly.premium +=
-          (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
-      }
-    }
-
-    // Wheeling
-    if (type === 'Call') {
-      const batch = batches[batchCode];
-      batch.netCumulativePremium += netCumulativePremium;
-
-      // Current calls
-      const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
-      if (expiry.isSameOrAfter(NOW, 'day')) {
-        batch.currentCall = {
-          strike: trade.strike,
-        };
-      }
-
-      // Assigned calls
-      if (closePrice && closePrice > strike) {
-        batch.exitValue = strike * optionSize;
-      }
-    }
-  }
+  const { batches, stocks } = processData(NOW, transactions, trades, currentTickerPrices);
 
   for (let batch of Object.values(batches)) {
     const { currentCall, netCumulativePremium, acquisitionCost, exitValue, quantity, ticker } =

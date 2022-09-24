@@ -8,6 +8,7 @@ dayjs.extend(customParseFormat);
 
 import CloseTradePriceInput from '../components/CloseTradePriceInput';
 
+import processData from '../utils/processData';
 import {
   calcDteCurrent,
   calcDteTotal,
@@ -17,9 +18,16 @@ import {
 } from '../utils';
 import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
-import { Batch, CallRow, CallRowTotal, TradeData, TransactionData } from '../types';
+import {
+  Batch,
+  CallRow,
+  CallRowTotal,
+  CurrentTickerPrices,
+  TradeData,
+  TransactionData,
+} from '../types';
 
-import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
+import { DISPLAY } from '../constants';
 
 // @ts-ignore
 import tradesData from '../data/options.csv';
@@ -29,7 +37,6 @@ import tickers from '../data/tickers';
 import accounts from '../data/accounts';
 
 import styles from '../styles/Table.module.css';
-import { factorStockSplit, factorStockSplitStockPrice } from '../utils/factorStockSplit';
 
 const NOW = dayjs();
 
@@ -37,7 +44,7 @@ const Call = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
   const [rates, setRates] = useState<{ [key: string]: number }>(null);
-  const [currentTickerPrices, setCurrentTickerPrices] = useState<{ [key: string]: number }>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -57,114 +64,10 @@ const Call = () => {
     setIsLoading(false);
   }, []);
 
-  const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
+  const trades: TradeData[] = tradesData.map(removeNullValues);
 
-  const batches: { [key: string]: Batch } = {};
-
-  for (let transaction of transactions) {
-    const { account, batchCodes: batchCodesStr, date, ticker, type } = transaction;
-
-    if (type === 'Purchase' && batchCodesStr) {
-      const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
-
-      for (let batchCode of batchCodes) {
-        const { commission, quantity, stockPrice } = transaction;
-        batches[batchCode] = batches[batchCode] || {
-          account,
-          // TODO
-          //  Acquisition date set to the first purchase date
-          //  May underestimate gains and losses
-          //  Is it worth improving?
-          acquisitionDate: dayjs(transaction.date, INPUT_DATE_FORMAT),
-          acquisitionCost: 0,
-          batchCode,
-          netCumulativePremium: 0,
-          origin: 'Purchase',
-          quantity: 0,
-          ticker,
-        };
-
-        const batch = batches[batchCode];
-        const batchQuantity =
-          factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT)) / batchCodes.length;
-        const actualisedStockPrice = factorStockSplitStockPrice(
-          ticker,
-          stockPrice,
-          dayjs(date, INPUT_DATE_FORMAT)
-        );
-        const oldAcquisitionCost = batch.acquisitionCost;
-        const oldQuantity = batch.quantity;
-        batch.acquisitionCost =
-          (oldAcquisitionCost * oldQuantity +
-            actualisedStockPrice * batchQuantity +
-            commission / batchCodes.length) /
-          (oldQuantity + batchQuantity);
-        batch.quantity += batchQuantity;
-      }
-    }
-
-    // TODO
-    // if (type === 'Sale' && batchCodes) {
-    //   ...
-    // }
-  }
-
-  for (let trade of trades) {
-    const {
-      account,
-      batchCode,
-      closePrice,
-      commission,
-      date,
-      expiry,
-      stockPrice,
-      strike,
-      ticker,
-      tradePrice,
-      type,
-    } = trade;
-
-    const { optionSize } = tickers[ticker];
-
-    if (type === 'Put' && closePrice && closePrice < strike) {
-      batches[batchCode] = {
-        account,
-        batchCode,
-        acquisitionCost: strike,
-        netCumulativePremium: tradePrice - commission / optionSize,
-        origin: 'Put',
-        acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
-        quantity: optionSize,
-        ticker,
-      };
-    }
-
-    if (type === 'Call') {
-      const batch = batches[batchCode];
-      batch.netCumulativePremium += tradePrice - commission / optionSize;
-
-      if (closePrice && closePrice > strike) {
-        batch.exitValue = strike;
-      }
-
-      const expiryDate = dayjs(expiry, INPUT_DATE_FORMAT);
-      if (expiryDate.isSameOrAfter(NOW, 'day')) {
-        batch.currentCall = {
-          account,
-          batchCode,
-          commission,
-          date: dayjs(date, INPUT_DATE_FORMAT),
-          expiry: expiryDate,
-          stockPrice,
-          strike,
-          ticker: batch.ticker,
-          tradePrice,
-          type: 'Call',
-        };
-      }
-    }
-  }
+  const { batches } = processData(NOW, transactions, trades);
 
   const batchesWithCalls = Object.entries(batches)
     .filter(([, batch]) => batch.currentCall)

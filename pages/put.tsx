@@ -25,7 +25,7 @@ import {
 } from '../utils';
 
 import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
-import { PutData, PutRow, PutRowTotal, TradeData } from '../types';
+import { CurrentTickerPrices, PutData, PutRow, PutRowTotal, TradeData } from '../types';
 
 import styles from '../styles/Table.module.css';
 
@@ -46,7 +46,7 @@ const Put = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
   const [rates, setRates] = useState<{ [key: string]: number }>(null);
-  const [currentTickerPrices, setCurrentTickerPrices] = useState<{ [key: string]: number }>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
 
   useEffect(() => {
     setIsLoading(true);

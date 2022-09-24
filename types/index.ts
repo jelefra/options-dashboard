@@ -136,28 +136,20 @@ export type CallRow = Row &
     returnPctIfAssigned: number;
   };
 
-export type CallMinimal = {
-  strike: number;
-};
-
 export type BatchCost = {
   acquisitionCost: number;
   batchCode: string;
   quantity: number;
 };
 
-export type BatchMinimal = BatchCost & {
-  currentCall?: CallMinimal;
-  exitValue?: number;
-  netCumulativePremium: number;
-  ticker: string;
-};
-
-export type Batch = BatchMinimal & {
+export type Batch = BatchCost & {
   account: string;
   acquisitionDate: Dayjs;
   currentCall?: Call;
+  exitValue?: number;
+  netCumulativePremium: number;
   origin: 'Purchase' | 'Put';
+  ticker: string;
 };
 
 export type BankData = {
@@ -217,3 +209,5 @@ export type IEXCloudStockResponse = { latestPrice: number };
 export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; monthlyUsage: number };
 
 export type ExchangeRateResponse = { rates: { [key: string]: number } };
+
+export type CurrentTickerPrices = { [key: string]: number };
