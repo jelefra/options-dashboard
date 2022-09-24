@@ -213,7 +213,6 @@ const Stocks = () => {
               actualisedStockPrice * batchQuantity +
               batchCommission) /
             (oldQuantity + batchQuantity);
-          batch.netCumulativePremium -= commission / batchQuantity;
           batch.quantity += batchQuantity;
         }
       } else {

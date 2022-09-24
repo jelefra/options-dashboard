@@ -96,9 +96,10 @@ const Call = () => {
         const oldAcquisitionCost = batch.acquisitionCost;
         const oldQuantity = batch.quantity;
         batch.acquisitionCost =
-          (oldAcquisitionCost * oldQuantity + actualisedStockPrice * batchQuantity) /
+          (oldAcquisitionCost * oldQuantity +
+            actualisedStockPrice * batchQuantity +
+            commission / batchCodes.length) /
           (oldQuantity + batchQuantity);
-        batch.netCumulativePremium -= commission / batchQuantity;
         batch.quantity += batchQuantity;
       }
     }
