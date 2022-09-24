@@ -121,7 +121,6 @@ export type CallRowTotal = {
 
 export type CallRow = Row &
   CallRowTotal & {
-    acquisitionCost: number;
     batchCode: string;
     closeTradePrice: ReactElement;
     costBasisDrop: number;
@@ -134,6 +133,7 @@ export type CallRow = Row &
     returnGBPIfAssigned: number;
     returnPct: number;
     returnPctIfAssigned: number;
+    unitAcquisitionCost: number;
   };
 
 export type BatchCost = {

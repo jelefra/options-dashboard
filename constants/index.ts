@@ -62,6 +62,7 @@ export const DISPLAY = {
   ticker: 'Ticker',
   totalQuantity: 'Total quantity',
   valueGBP: 'Value GBP',
+  unitAcquisitionCost: 'Acquisition cost',
   wheeled: 'Wheeled',
   wheeledQuantity: 'Quantity',
   wheeledExitValue: 'Exit value',

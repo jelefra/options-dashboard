@@ -104,7 +104,7 @@ const Call = () => {
   }[] = [
     { name: 'account', align: 'default', scope: 'all' },
     { name: 'batchCode', align: 'default', scope: 'all' },
-    { name: 'acquisitionCost', format: decimalTwo, scope: 'all' },
+    { name: 'unitAcquisitionCost', format: decimalTwo, scope: 'all' },
     { name: 'netCost', format: decimalTwo, scope: 'all' },
     { name: 'costBasisDrop', format: pctOne, scope: 'all' },
     { name: 'returnPct', format: pctOne, scope: 'all' },
@@ -174,7 +174,8 @@ const Call = () => {
             const returnPctLastCall =
               (tradePrice * optionSize - commission) / (stockPrice * optionSize);
             const dteLastCall = expiry?.diff(date, 'day');
-            const netCost = acquisitionCost - netCumulativePremium;
+            const unitAcquisitionCost = acquisitionCost / optionSize;
+            const netCost = (acquisitionCost - netCumulativePremium) / optionSize;
             const returnPctIfAssigned = strike / netCost - 1;
 
             const priceIncrease = calcPriceIncrease(current, high, optionSize);
@@ -202,7 +203,6 @@ const Call = () => {
 
             const row: CallRow = {
               account,
-              acquisitionCost,
               assignmentPct: strike / current - 1,
               batchCode,
               closeTradePrice: (
@@ -212,7 +212,7 @@ const Call = () => {
                   setCloseTradePrices={setCloseTradePrices}
                 />
               ),
-              costBasisDrop: netCost / acquisitionCost - 1,
+              costBasisDrop: netCost / unitAcquisitionCost - 1,
               current,
               date,
               daysTotal,
@@ -236,6 +236,7 @@ const Call = () => {
               stockPrice,
               strike,
               tradePrice,
+              unitAcquisitionCost,
               valueGBP,
             };
 

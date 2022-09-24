@@ -1,6 +1,6 @@
 import dayjs, { Dayjs } from 'dayjs';
 
-import { factorStockSplit, factorStockSplitStockPrice } from './factorStockSplit';
+import { factorStockSplit } from './factorStockSplit';
 
 import { Batch, CurrentTickerPrices, TradeData, TransactionData } from '../types';
 
@@ -79,21 +79,9 @@ const processData = (
           };
 
           const batch = batches[batchCode];
-          const batchCommission = commission / batchCodes.length;
           const batchQuantity =
             factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT)) / batchCodes.length;
-          const actualisedStockPrice = factorStockSplitStockPrice(
-            ticker,
-            stockPrice,
-            dayjs(date, INPUT_DATE_FORMAT)
-          );
-          const oldAcquisitionCost = batch.acquisitionCost;
-          const oldQuantity = batch.quantity;
-          batch.acquisitionCost =
-            (oldAcquisitionCost * oldQuantity +
-              actualisedStockPrice * batchQuantity +
-              batchCommission) /
-            (oldQuantity + batchQuantity);
+          batch.acquisitionCost += (stockPrice * quantity + commission) / batchCodes.length;
           batch.quantity += batchQuantity;
         }
       } else if (buildStocks) {
@@ -132,14 +120,14 @@ const processData = (
     const { optionSize } = tickers[ticker];
 
     const netCumulativePremium =
-      tradePrice - closeTradePrice - (commission + closeCommission) / optionSize;
+      (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
 
     if (type === 'Put') {
       if (closePrice && closePrice < strike) {
         batches[batchCode] = {
           account,
           batchCode,
-          acquisitionCost: strike,
+          acquisitionCost: strike * optionSize,
           acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
           netCumulativePremium,
           origin: 'Put',

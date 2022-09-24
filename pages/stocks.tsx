@@ -163,9 +163,9 @@ const Stocks = () => {
         premium: 0,
       };
       const stock = stocks[ticker].wheeled;
-      stock.acquisitionCost += acquisitionCost * quantity;
+      stock.acquisitionCost += acquisitionCost;
       stock.exitValue += exitValue;
-      stock.premium += netCumulativePremium * quantity;
+      stock.premium += netCumulativePremium;
       stock.quantity += quantity;
     } else {
       stocks[ticker].wheeling = stocks[ticker].wheeling || {
@@ -183,8 +183,8 @@ const Stocks = () => {
       const stock = stocks[ticker].wheeling;
       stock.activeCalls += currentCall ? 1 : 0;
       stock.missedUpside += missedUpside;
-      stock.acquisitionCost += acquisitionCost * quantity;
-      stock.premium += netCumulativePremium * quantity;
+      stock.acquisitionCost += acquisitionCost;
+      stock.premium += netCumulativePremium;
       stock.quantity += quantity;
     }
   }
