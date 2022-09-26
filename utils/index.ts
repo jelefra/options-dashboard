@@ -1,4 +1,6 @@
 import dayjs, { Dayjs } from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+dayjs.extend(isSameOrAfter);
 
 import { INPUT_DATE_FORMAT } from '../constants';
 import { TradeData } from '../types';

@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import cx from 'classnames';
 import dayjs from 'dayjs';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-dayjs.extend(isSameOrAfter);
-import customParseFormat from 'dayjs/plugin/customParseFormat';
-dayjs.extend(customParseFormat);
 
 import CloseTradePriceInput from '../components/CloseTradePriceInput';
 
