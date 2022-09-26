@@ -2,7 +2,6 @@ import cx from 'classnames';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
-import { v4 as uuid } from 'uuid';
 
 import { dateMediumTerm, thousands } from '../utils/format';
 import { removeNullValues } from '../utils';
@@ -140,9 +139,9 @@ const CapitalGains = () => {
           ))}
         </tr>
         <tr>
-          {accountsInfo.map(({ currencies }) =>
+          {accountsInfo.map(({ name, currencies }) =>
             currencies.map((currency) => (
-              <th className={cx(styles.th, styles.columnSize)} key={uuid()}>
+              <th className={cx(styles.th, styles.columnSize)} key={`${name}-${currency}`}>
                 {currency}
               </th>
             ))
@@ -159,7 +158,7 @@ const CapitalGains = () => {
                   className={cx(styles.td, styles.right, styles.border, {
                     [styles.contrast]: rowIndex % 2,
                   })}
-                  key={uuid()}
+                  key={`${month}-${name}-${currency}`}
                 >
                   {thousands(accountData[name]?.[currency]?.gain || 0)}
                 </td>
