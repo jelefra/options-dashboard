@@ -211,3 +211,5 @@ export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; mon
 export type ExchangeRateResponse = { rates: { [key: string]: number } };
 
 export type CurrentTickerPrices = { [key: string]: number };
+
+export type EarningsDates = { [key: string]: string };

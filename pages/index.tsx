@@ -1,11 +1,18 @@
-// import { GetServerSideProps } from 'next';
-//
-// export const getServerSideProps: GetServerSideProps = async () => {
-//   return { props: {}}
-// };
+import dayjs from 'dayjs';
+
+import Container from '../components/Container';
+import UpcomingEarnings from '../components/UpcomingEarnings';
+
+import data from '../data/upcomingEarnings';
+
+const NOW = dayjs();
 
 const Home = () => {
-  return <></>;
+  return (
+    <Container>
+      <UpcomingEarnings data={data} now={NOW} />
+    </Container>
+  );
 };
 
 export default Home;

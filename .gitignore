@@ -44,3 +44,5 @@ styles/tickers.css
 
 data/accounts.ts
 styles/accounts.css
+
+data/upcomingEarnings.ts
