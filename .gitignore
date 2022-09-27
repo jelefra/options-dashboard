@@ -46,3 +46,4 @@ data/accounts.ts
 styles/accounts.css
 
 data/upcomingEarnings.ts
+data/stockSplits.ts
