@@ -121,7 +121,7 @@ const Put = () => {
         <tr>
           {headings.map(({ name }, index) => (
             <th
-              className={cx(styles.th, styles.white, styles.freezeFirstThRow, styles.rotate, {
+              className={cx(styles.white, styles.freezeFirstThRow, styles.rotate, {
                 [styles.freezeFirstThCell]: index === 0,
                 [styles.freezeSecondThCell]: index === 1,
               })}
@@ -225,7 +225,7 @@ const Put = () => {
 
                 return (
                   <td
-                    className={cx(styles.td, styles.border, {
+                    className={cx({
                       [styles[align]]: align === 'right',
                       [colour]: name === 'ticker',
                       [accountColour]: name === 'account',
@@ -245,7 +245,7 @@ const Put = () => {
         <tr>
           {headings.map(({ name, format, align = 'right' }, index) => (
             <td
-              className={cx(styles.td, {
+              className={cx(styles.total, {
                 [styles[align]]: align === 'right',
               })}
               key={index}

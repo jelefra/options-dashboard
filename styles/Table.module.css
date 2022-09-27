@@ -8,28 +8,28 @@
   position: relative;
 }
 
-.th {
+.table th {
   padding: var(--th-padding);
   font-size: 0.8em;
 }
 
-.th.rotate {
+.table th.rotate {
   text-align: left;
   transform:
       rotate(-180deg);
   writing-mode: vertical-lr;
 }
 
-.columnSize {
-  width: 75px;
-}
-
-.td {
+.table td {
   padding: var(--td-padding);
 }
 
-.border {
+.table td:not(.total) {
   border: 1px solid lightgrey;
+}
+
+.columnSize {
+  width: 75px;
 }
 
 .right {

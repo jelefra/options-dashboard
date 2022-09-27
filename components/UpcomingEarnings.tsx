@@ -1,4 +1,3 @@
-import cx from 'classnames';
 import dayjs, { Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
@@ -17,9 +16,9 @@ const UpcomingEarnings = ({ data, now }: { data: EarningsDates; now: Dayjs }) =>
   <table className={styles.table}>
     <thead>
       <tr>
-        <th className={styles.th}>Ticker</th>
-        <th className={styles.th}>Earnings date</th>
-        <th className={styles.th}>Days to earnings</th>
+        <th>Ticker</th>
+        <th>Earnings date</th>
+        <th>Days to earnings</th>
       </tr>
     </thead>
     <tbody>
@@ -28,9 +27,9 @@ const UpcomingEarnings = ({ data, now }: { data: EarningsDates; now: Dayjs }) =>
         .filter(([, date]) => dayjs(date, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day'))
         .map(([ticker, date]) => (
           <tr key={ticker}>
-            <td className={cx(tickers[ticker].colour, styles.td, styles.border)}>{ticker}</td>
-            <td className={cx(styles.td, styles.border)}>{date}</td>
-            <td className={cx(styles.td, styles.border, styles.right)}>
+            <td className={tickers[ticker].colour}>{ticker}</td>
+            <td>{date}</td>
+            <td className={styles.right}>
               {dayjs(date, INPUT_DATE_FORMAT).add(1, 'day').diff(now, 'day')}
             </td>
           </tr>

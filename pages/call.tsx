@@ -253,7 +253,7 @@ const Call = () => {
                     name === 'costBasisDrop';
                   return (
                     <td
-                      className={cx(styles.td, styles.border, {
+                      className={cx({
                         [styles[align]]: align === 'right',
                         [colour]: name === 'batchCode',
                         [accountColour]: name === 'account',
@@ -278,7 +278,7 @@ const Call = () => {
             .filter(headingFilterFunction)
             .map(({ name, format, align = 'right' }, index) => (
               <td
-                className={cx(styles.td, {
+                className={cx(styles.total, {
                   [styles[align]]: align === 'right',
                 })}
                 key={index}
@@ -298,7 +298,7 @@ const Call = () => {
           <tr>
             {headings.map(({ name }, index) => (
               <th
-                className={cx(styles.th, styles.freezeFirstThRow, styles.white, styles.rotate, {
+                className={cx(styles.freezeFirstThRow, styles.white, styles.rotate, {
                   [styles.freezeFirstThCell]: index === 0,
                   [styles.freezeSecondThCell]: index === 1,
                 })}
@@ -319,7 +319,7 @@ const Call = () => {
               .filter(({ scope }) => scope === 'all')
               .map(({ name }, index) => (
                 <th
-                  className={cx(styles.th, styles.freezeFirstThRow, styles.white, {
+                  className={cx(styles.freezeFirstThRow, styles.white, {
                     [styles.freezeFirstThCell]: index === 0,
                     [styles.freezeSecondThCell]: index === 1,
                   })}

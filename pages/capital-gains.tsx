@@ -129,11 +129,9 @@ const CapitalGains = () => {
     <table className={styles.table}>
       <thead>
         <tr>
-          <th rowSpan={2} className={styles.th}>
-            Month
-          </th>
+          <th rowSpan={2}>Month</th>
           {accountsInfo.map(({ name, currencies, colour }) => (
-            <th colSpan={currencies.length} className={cx(styles.th, colour)} key={name}>
+            <th colSpan={currencies.length} className={colour} key={name}>
               {name}
             </th>
           ))}
@@ -141,7 +139,7 @@ const CapitalGains = () => {
         <tr>
           {accountsInfo.map(({ name, currencies }) =>
             currencies.map((currency) => (
-              <th className={cx(styles.th, styles.columnSize)} key={`${name}-${currency}`}>
+              <th className={styles.columnSize} key={`${name}-${currency}`}>
                 {currency}
               </th>
             ))
@@ -151,11 +149,11 @@ const CapitalGains = () => {
       <tbody>
         {Object.entries(gains).map(([month, accountData], rowIndex) => (
           <tr className={cx({ [styles.contrast]: rowIndex % 2 })} key={month}>
-            <td className={cx(styles.td, styles.border)}>{month}</td>
+            <td>{month}</td>
             {accountsInfo.map(({ name, currencies }) =>
               currencies.map((currency) => (
                 <td
-                  className={cx(styles.td, styles.right, styles.border, {
+                  className={cx(styles.right, {
                     [styles.contrast]: rowIndex % 2,
                   })}
                   key={`${month}-${name}-${currency}`}

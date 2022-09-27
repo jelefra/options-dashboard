@@ -51,9 +51,7 @@ const Forex = () => {
       <thead>
         <tr>
           {headings.map(({ name }, index) => (
-            <th className={styles.th} key={index}>
-              {DISPLAY[name] || name}
-            </th>
+            <th key={index}>{DISPLAY[name] || name}</th>
           ))}
         </tr>
       </thead>
@@ -81,7 +79,7 @@ const Forex = () => {
               <tr key={rowIndex}>
                 {headings.map(({ name, format = (v) => v, align }, index) => (
                   <td
-                    className={cx(styles.td, styles.border, {
+                    className={cx({
                       [styles[align]]: align === 'right',
                       [accountColour]: name === 'account',
                       [styles.contrast]: rowIndex % 2 && index !== 1,

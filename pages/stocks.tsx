@@ -203,7 +203,7 @@ const Stocks = () => {
         <tr className={styles.thirtyPx}>
           {sectionsWithCounts.map(({ count, name, rowSpan, backgroundColor }, index) => (
             <th
-              className={cx(styles.th, styles.freezeFirstThRow, {
+              className={cx(styles.freezeFirstThRow, {
                 [styles.freezeFirstThCell]: index === 0,
               })}
               style={{ backgroundColor }}
@@ -218,7 +218,7 @@ const Stocks = () => {
         <tr className={styles.thirtyPx}>
           {headings.slice(1).map(({ name, section }, index) => (
             <th
-              className={cx(styles.th, styles.freezeSecondThRow)}
+              className={cx(styles.freezeSecondThRow)}
               style={{ backgroundColor: sections[section].backgroundColor }}
               key={index}
             >
@@ -308,7 +308,7 @@ const Stocks = () => {
             <tr key={rowIndex}>
               {headings.map(({ name, format = (v) => v, align = 'right' }, index) => (
                 <td
-                  className={cx(styles.td, styles.border, {
+                  className={cx({
                     [styles[align]]: align === 'right',
                     [colour]: name === 'ticker',
                     [styles.contrast]: rowIndex % 2 && index > 0,
@@ -326,7 +326,7 @@ const Stocks = () => {
         <tr>
           {headings.map(({ name, format, align = 'right' }, index) => (
             <td
-              className={cx(styles.td, {
+              className={cx(styles.total, {
                 [styles[align]]: align === 'right',
               })}
               key={index}
