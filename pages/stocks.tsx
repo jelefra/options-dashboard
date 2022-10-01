@@ -42,6 +42,15 @@ const calcValue = (stock, current) => {
   return totalQuantity * current - wheelingMissedUpside;
 };
 
+// Approximate as not using historical conversion rate
+const calcPutOnlyPremiumGBP = (stock, rates) => {
+  const { ticker } = stock;
+  const putOnlyPremium = stock.putOnly?.premium;
+  const { currency } = tickers[ticker];
+  const forexRate = rates[currency];
+  return putOnlyPremium / forexRate;
+};
+
 const Stocks = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [rates, setRates] = useState<{ [key: string]: number }>(null);
@@ -185,10 +194,11 @@ const Stocks = () => {
     }
   }
 
-  const orderedStocks = Object.values(stocks).sort(
-    (stockA, stockB) =>
-      calcValueGBP(stockB, currentTickerPrices, rates) -
-      calcValueGBP(stockA, currentTickerPrices, rates)
+  const orderedStocks = Object.values(stocks).sort((stockA, stockB) =>
+    !(stockA.partialBatch || stockA.wheeling || stockB.partialBatch || stockB.wheeling)
+      ? calcPutOnlyPremiumGBP(stockB, rates) - calcPutOnlyPremiumGBP(stockA, rates)
+      : calcValueGBP(stockB, currentTickerPrices, rates) -
+        calcValueGBP(stockA, currentTickerPrices, rates)
   );
 
   // eslint-disable-next-line no-unused-vars
