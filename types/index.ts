@@ -69,6 +69,7 @@ export type TransactionType = 'Purchase' | 'Sale';
 
 export type Account = {
   name: string;
+  id: string;
   capitalGains: boolean;
   colour: string;
   currencies: string[];

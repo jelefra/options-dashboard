@@ -1,0 +1,13 @@
+.button {
+  cursor: pointer;
+  color: white;
+  background-color: DimGrey;
+  border-width: 0;
+  margin: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+.button:hover {
+  color: white;
+  background-color: Grey;
+}

@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import Container from '../components/Container';
 import UpcomingEarnings from '../components/UpcomingEarnings';
 import AllocationSummary from '../components/AllocationSummary';
+import FetchLedgers from '../components/FetchLedgers';
 
 import { CurrentTickerPrices, TradeData, TransactionData } from '../types';
 import { removeNullValues } from '../utils';
@@ -52,6 +53,7 @@ const Home = () => {
           transactions={transactions}
         />
       )}
+      <FetchLedgers />
     </Container>
   );
 };
