@@ -6,7 +6,7 @@ import { IEXCloudStockResponse } from '../types';
 
 import tickers from '../data/tickers';
 
-const constructEndpoint = (ticker: string) =>
+const constructURL = (ticker: string) =>
   `https://cloud.iexapis.com/v1/stock/${tickers[ticker].officialTicker || ticker}/quote?token=${
     process.env.IEX_PUBLISHABLE_KEY
   }`;
@@ -18,14 +18,14 @@ const fetchTickerPrices = async (
 }> => {
   const tickerPrices = await Promise.all(
     tickersToQuery.map(async (ticker, index) => {
-      const endpoint = constructEndpoint(ticker);
+      const URL = constructURL(ticker);
       // Delay queries to avoid 'Too Many Requests' (429) statuses
       await new Promise((resolve) => setTimeout(resolve, index * 25));
       const client = createClient();
       await client.connect();
       const response: IEXCloudStockResponse = await get({
         client,
-        endpoint,
+        URL,
         keyName: ticker,
       });
       const latestPrice = response.latestPrice;

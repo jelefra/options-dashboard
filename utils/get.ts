@@ -4,13 +4,13 @@ import { ONE_MINUTE_IN_SECONDS } from '../constants';
 
 const get = async ({
   client,
-  endpoint,
+  URL,
   keyName,
   expiry = ONE_MINUTE_IN_SECONDS,
   fetchFnOptions = {},
 }: {
   client;
-  endpoint: string;
+  URL: string;
   keyName: string;
   expiry?: number;
   fetchFnOptions?: object;
@@ -20,7 +20,7 @@ const get = async ({
   if (redisData) {
     data = JSON.parse(redisData);
   } else {
-    data = await fetchFn(endpoint, fetchFnOptions);
+    data = await fetchFn(URL, fetchFnOptions);
     await client.set(keyName, JSON.stringify(data), {
       EX: expiry,
     });

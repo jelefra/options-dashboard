@@ -10,11 +10,11 @@ import { ONE_HOUR_IN_SECONDS } from '../../constants';
 const forexRates = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();
   await client.connect();
-  const endpoint = 'https://api.exchangerate.host/latest?base=GBP';
+  const URL = 'https://api.exchangerate.host/latest?base=GBP';
 
   const response: ExchangeRateResponse = await get({
     client,
-    endpoint,
+    URL,
     expiry: ONE_HOUR_IN_SECONDS,
     keyName: 'rates',
   });

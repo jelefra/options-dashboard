@@ -15,10 +15,10 @@ const ledger = async (req: NextApiRequest, res: NextApiResponse) => {
   await client.connect();
   const { id } = req.query;
   if (typeof id === 'string') {
-    const endpoint = `https://localhost:5000/v1/api/portfolio/${id}/ledger`;
+    const URL = `https://localhost:5000/v1/api/portfolio/${id}/ledger`;
     const ledger = await get({
       client,
-      endpoint,
+      URL,
       keyName: id,
       expiry: THIRTY_DAYS_IN_SECONDS,
       fetchFnOptions: { agent },

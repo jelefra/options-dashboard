@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 
-export const fetchFn = async (endpoint, options, retries = 3, delay = 200): Promise<any> =>
-  fetch(endpoint, options)
+export const fetchFn = async (URL, options, retries = 3, delay = 200): Promise<any> =>
+  fetch(URL, options)
     .then((response) => {
       const contentType = response.headers?.get('content-type');
       if (response.ok && contentType.includes('application/json')) {
@@ -9,11 +9,11 @@ export const fetchFn = async (endpoint, options, retries = 3, delay = 200): Prom
       }
       if (retries > 0) {
         console.info(
-          `${response.status} status code.\tEndpoint: ${endpoint}.\t(${retries} retr${
+          `${response.status} status code.\tURL: ${URL}.\t(${retries} retr${
             retries > 1 ? 'ies' : 'y'
           } left)`
         );
-        setTimeout(() => fetchFn(endpoint, options, retries - 1, delay * 2));
+        setTimeout(() => fetchFn(URL, options, retries - 1, delay * 2));
       } else {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
