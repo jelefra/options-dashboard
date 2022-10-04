@@ -11,7 +11,7 @@ const getRedisData = async (req: NextApiRequest, res: NextApiResponse) => {
         const client = createClient();
         await client.connect();
         const value = await client.get(key);
-        return { key, value };
+        return { key, value: JSON.parse(value) };
       })
     );
 
