@@ -12,7 +12,7 @@ const CloseTradePriceInput = ({ batchId, closeTradePrices, setCloseTradePrices }
       body: JSON.stringify({ name: batchId, value }),
     });
 
-  const formatValue = (value) => decimalTwo(parseFloat(value) || 0);
+  const formatValue = (value) => value && decimalTwo(parseFloat(value) || 0);
 
   const act = async (e) => {
     const value = formatValue(e.target.value);
@@ -50,7 +50,7 @@ const CloseTradePriceInput = ({ batchId, closeTradePrices, setCloseTradePrices }
       min="0"
       step="0.01"
       placeholder="0.00"
-      value={closeTradePrices[batchId] || ''}
+      value={formatValue(closeTradePrices[batchId]) || ''}
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyPress={handleKeyPress}
