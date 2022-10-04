@@ -10,16 +10,16 @@ const agent = new https.Agent({
   rejectUnauthorized: false,
 });
 
-const ledger = async (req: NextApiRequest, res: NextApiResponse) => {
+const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();
   await client.connect();
-  const { id } = req.query;
-  if (typeof id === 'string') {
-    const URL = `https://localhost:5000/v1/api/portfolio/${id}/ledger`;
+  const { endpoint, id } = req.query;
+  if (typeof endpoint === 'string' && typeof id === 'string') {
+    const URL = `https://localhost:5000/v1/api/portfolio/${id}/${endpoint}`;
     const ledger = await get({
       client,
       URL,
-      keyName: id,
+      keyName: `${endpoint}-${id}`,
       expiry: THIRTY_DAYS_IN_SECONDS,
       fetchFnOptions: { agent },
     });
@@ -27,4 +27,4 @@ const ledger = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-export default ledger;
+export default ibkr;

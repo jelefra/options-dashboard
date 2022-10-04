@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import Container from '../components/Container';
 import UpcomingEarnings from '../components/UpcomingEarnings';
 import AllocationSummary from '../components/AllocationSummary';
-import FetchLedgers from '../components/FetchLedgers';
+import FetchIBKRData from '../components/FetchIBKRData';
 import Currencies from '../components/Currencies';
 
 import { CurrentTickerPrices, ForexRates, Ledgers, TradeData, TransactionData } from '../types';
@@ -43,10 +43,10 @@ const Home = () => {
     fetchAllTickerPrices().catch(console.error);
 
     const fetchLedgers = async () => {
-      const accountIds = Object.values(accounts)
-        .map(({ id }) => id)
+      const ledgerKeys = Object.values(accounts)
+        .map(({ id }) => `ledger-${id}`)
         .join(',');
-      const response = await fetch(`/api/getRedisData?keys=${accountIds}`);
+      const response = await fetch(`/api/getRedisData?keys=${ledgerKeys}`);
       const data = await response.json();
       setLedgers(data.values);
     };
@@ -67,7 +67,7 @@ const Home = () => {
           transactions={transactions}
         />
       )}
-      <FetchLedgers />
+      <FetchIBKRData />
       {showCurrencies && (
         <Currencies
           currentTickerPrices={currentTickerPrices}
