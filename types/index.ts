@@ -215,7 +215,7 @@ export type ExchangeRateResponse = { rates: ForexRates };
 
 export type CurrentTickerPrices = { [key: string]: number };
 
-export type EarningsDates = { [key: string]: string };
+export type EarningsDates = { [key: string]: { date: string; confirmed: boolean } };
 
 export type Ledgers = { [key: string]: Ledger };
 
