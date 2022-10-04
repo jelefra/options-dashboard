@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import processData from '../utils/processData';
 import { pctZero } from '../utils/format';
 
-import { CurrentTickerPrices, ForexRates, TradeData, TransactionData } from '../types';
+import { CurrentTickerPrices, ForexRates, Ledgers, TradeData, TransactionData } from '../types';
 
 import tickers from '../data/tickers';
 
@@ -19,7 +19,7 @@ const Currencies = ({
   transactions,
 }: {
   currentTickerPrices: CurrentTickerPrices;
-  ledgers: { [key: string]: string };
+  ledgers: Ledgers;
   rates: ForexRates;
   trades: TradeData[];
   transactions: TransactionData[];
@@ -47,11 +47,9 @@ const Currencies = ({
     }
   }
 
-  for (let ledgerStr of Object.values(ledgers)) {
-    const ledger = JSON.parse(ledgerStr);
+  for (let ledger of Object.values(ledgers)) {
     for (let entry of Object.entries(ledger)) {
       const [currency, data] = entry;
-      // @ts-ignore
       const { cashbalance } = data;
       if (currency !== 'BASE') {
         currencyAmounts[currency] = currencyAmounts[currency] || 0;

@@ -216,3 +216,41 @@ export type ExchangeRateResponse = { rates: ForexRates };
 export type CurrentTickerPrices = { [key: string]: number };
 
 export type EarningsDates = { [key: string]: string };
+
+export type Ledgers = { [key: string]: Ledger };
+
+type Ledger = {
+  [key: string]: CurrencyLedger;
+};
+
+type CurrencyLedger = {
+  commoditymarketvalue: number;
+  futuremarketvalue: number;
+  settledcash: number;
+  exchangerate: number;
+  sessionid: number;
+  cashbalance: number;
+  corporatebondsmarketvalue: number;
+  warrantsmarketvalue: number;
+  netliquidationvalue: number;
+  interest: number;
+  unrealizedpnl: number;
+  stockmarketvalue: number;
+  moneyfunds: number;
+  currency: string;
+  realizedpnl: number;
+  funds: number;
+  acctcode: string;
+  issueroptionsmarketvalue: number;
+  key: 'LedgerList';
+  timestamp: number;
+  severity: number;
+  stockoptionmarketvalue: number;
+  futuresonlypnl: number;
+  tbondsmarketvalue: number;
+  futureoptionmarketvalue: number;
+  cashbalancefxsegment: number;
+  secondkey: string;
+  tbillsmarketvalue: number;
+  dividends: number;
+};
