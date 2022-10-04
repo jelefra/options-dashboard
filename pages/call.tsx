@@ -75,9 +75,9 @@ const Call = () => {
   useEffect(() => {
     setIsLoading(true);
     const fetchCallCloseTradePrices = async () => {
-      const response = await fetch(`/api/closeTradePrices?ids=${callIds}`);
+      const response = await fetch(`/api/getRedisData?keys=${callIds}`);
       const data = await response.json();
-      setCloseTradePrices(data.closeTradePrices);
+      setCloseTradePrices(data.values);
     };
     fetchCallCloseTradePrices().catch(console.error);
 
