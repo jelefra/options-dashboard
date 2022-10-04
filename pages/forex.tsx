@@ -11,13 +11,13 @@ import accounts from '../data/accounts';
 import { decimalTwo, dateLongTerm, pctOne, thousands } from '../utils/format';
 
 import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
-import { BankData, ForexRow } from '../types';
+import { BankData, ForexRates, ForexRow } from '../types';
 
 import styles from '../styles/Table.module.css';
 
 const Forex = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [rates, setRates] = useState<{ [key: string]: number }>(null);
+  const [rates, setRates] = useState<ForexRates>(null);
 
   useEffect(() => {
     setIsLoading(true);

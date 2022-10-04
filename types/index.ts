@@ -165,6 +165,8 @@ export type BankData = {
 
 export type BankActivityTypes = 'Deposit' | 'Conversion';
 
+export type ForexRates = { [key: string]: number };
+
 export type ForexRow = {
   account: string;
   amount: number;
@@ -209,7 +211,7 @@ export type IEXCloudStockResponse = { latestPrice: number };
 
 export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; monthlyUsage: number };
 
-export type ExchangeRateResponse = { rates: { [key: string]: number } };
+export type ExchangeRateResponse = { rates: ForexRates };
 
 export type CurrentTickerPrices = { [key: string]: number };
 

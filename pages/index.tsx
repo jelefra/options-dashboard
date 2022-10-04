@@ -7,7 +7,7 @@ import AllocationSummary from '../components/AllocationSummary';
 import FetchLedgers from '../components/FetchLedgers';
 import Currencies from '../components/Currencies';
 
-import { CurrentTickerPrices, TradeData, TransactionData } from '../types';
+import { CurrentTickerPrices, ForexRates, TradeData, TransactionData } from '../types';
 import { removeNullValues } from '../utils';
 
 import data from '../data/upcomingEarnings';
@@ -20,7 +20,7 @@ import transactionsData from '../data/transactions.csv';
 const NOW = dayjs();
 
 const Home = () => {
-  const [rates, setRates] = useState<{ [key: string]: number }>(null);
+  const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
   const [ledgers, setLedgers] = useState<{ [key: string]: string }>({});
 

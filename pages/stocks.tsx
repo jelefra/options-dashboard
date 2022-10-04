@@ -9,6 +9,7 @@ import { removeNullValues } from '../utils';
 import {
   CurrentTickerPrices,
   StocksRow,
+  ForexRates,
   StocksRowTotal,
   TradeData,
   TransactionData,
@@ -53,7 +54,7 @@ const calcPutOnlyPremiumGBP = (stock, rates) => {
 
 const Stocks = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [rates, setRates] = useState<{ [key: string]: number }>(null);
+  const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
 
   useEffect(() => {

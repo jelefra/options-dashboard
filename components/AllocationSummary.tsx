@@ -4,7 +4,7 @@ import processData from '../utils/processData';
 import { isCurrentPut } from '../utils';
 import { thousandsGBP } from '../utils/format';
 
-import { CurrentTickerPrices, PutData, TradeData, TransactionData } from '../types';
+import { CurrentTickerPrices, ForexRates, PutData, TradeData, TransactionData } from '../types';
 
 import cashGBP from '../data/cash';
 import tickers from '../data/tickers';
@@ -20,7 +20,7 @@ const AllocationSummary = ({
   transactions,
 }: {
   currentTickerPrices: CurrentTickerPrices;
-  rates: { [key: string]: number };
+  rates: ForexRates;
   trades: TradeData[];
   transactions: TransactionData[];
 }) => {

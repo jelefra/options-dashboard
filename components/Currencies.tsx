@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import processData from '../utils/processData';
 import { pctZero } from '../utils/format';
 
-import { CurrentTickerPrices, TradeData, TransactionData } from '../types';
+import { CurrentTickerPrices, ForexRates, TradeData, TransactionData } from '../types';
 
 import tickers from '../data/tickers';
 
@@ -20,7 +20,7 @@ const Currencies = ({
 }: {
   currentTickerPrices: CurrentTickerPrices;
   ledgers: { [key: string]: string };
-  rates: { [key: string]: number };
+  rates: ForexRates;
   trades: TradeData[];
   transactions: TransactionData[];
 }) => {

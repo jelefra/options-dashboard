@@ -19,6 +19,7 @@ import {
   CallRow,
   CallRowTotal,
   CurrentTickerPrices,
+  ForexRates,
   TradeData,
   TransactionData,
 } from '../types';
@@ -39,7 +40,7 @@ const NOW = dayjs();
 const Call = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
-  const [rates, setRates] = useState<{ [key: string]: number }>(null);
+  const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
 
   useEffect(() => {
