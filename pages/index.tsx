@@ -7,10 +7,12 @@ import AllocationSummary from '../components/AllocationSummary';
 import FetchIBKRData from '../components/FetchIBKRData';
 import Currencies from '../components/Currencies';
 import ForexAPIUsage from '../components/ForexAPIUsage';
+import StocksAPIUsage from '../components/StocksAPIUsage';
 
 import {
   CurrentTickerPrices,
   ForexRates,
+  IEXCloudUsageResponse,
   Ledgers,
   OpenExchangeRatesUsage,
   Summaries,
@@ -34,6 +36,7 @@ const Home = () => {
   const [ledgers, setLedgers] = useState<Ledgers>(null);
   const [summaries, setSummaries] = useState<Summaries>(null);
   const [forexAPIUsage, setForexAPIUsage] = useState<OpenExchangeRatesUsage>(null);
+  const [stocksAPIUsage, setStocksAPIUsage] = useState<IEXCloudUsageResponse>(null);
 
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
@@ -79,6 +82,13 @@ const Home = () => {
       setForexAPIUsage(data.usage);
     };
     fetchForexAPIUsage().catch(console.error);
+
+    const fetchStocksAPIUsage = async () => {
+      const response = await fetch('/api/stocksAPIUsage');
+      const data = await response.json();
+      setStocksAPIUsage(data.usage);
+    };
+    fetchStocksAPIUsage().catch(console.error);
   }, []);
 
   const cash =
@@ -114,6 +124,7 @@ const Home = () => {
         />
       )}
       {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
+      {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}
     </Container>
   );
 };

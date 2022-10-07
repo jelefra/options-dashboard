@@ -8,7 +8,14 @@ const ForexAPIUsage = ({ usage }: { usage: OpenExchangeRatesUsage }) => {
   // days_elapsed = 0 on the first day of the cycle
   const projectionPct = (currentPct / (days_elapsed + 1)) * (days_remaining - 1);
 
-  return <APIUsage title="Forex API usage" currentPct={currentPct} projectionPct={projectionPct} />;
+  return (
+    <APIUsage
+      title="Forex API usage"
+      currentPct={currentPct}
+      projectionPct={projectionPct}
+      daysRemaining={days_remaining}
+    />
+  );
 };
 
 export default ForexAPIUsage;
