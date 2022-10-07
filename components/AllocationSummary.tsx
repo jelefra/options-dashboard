@@ -2,11 +2,10 @@ import dayjs from 'dayjs';
 
 import processData from '../utils/processData';
 import { isCurrentPut } from '../utils';
-import { thousandsGBP } from '../utils/format';
+import { roundDown, thousandsGBP } from '../utils/format';
 
 import { CurrentTickerPrices, ForexRates, PutData, TradeData, TransactionData } from '../types';
 
-import cashGBP from '../data/cash';
 import tickers from '../data/tickers';
 
 import styles from '../styles/Table.module.css';
@@ -14,11 +13,13 @@ import styles from '../styles/Table.module.css';
 const NOW = dayjs();
 
 const AllocationSummary = ({
+  cash,
   currentTickerPrices,
   rates,
   trades,
   transactions,
 }: {
+  cash: number;
   currentTickerPrices: CurrentTickerPrices;
   rates: ForexRates;
   trades: TradeData[];
@@ -65,7 +66,7 @@ const AllocationSummary = ({
 
   const batchesGBP = wheelingGBP + notWheelingGBP;
   const holdingsGBP = batchesGBP + partialBatchesGBP + ITMPutsGBP;
-  const cashTotalGBP = OTMPutsGBP + cashGBP;
+  const cashTotalGBP = OTMPutsGBP + cash;
   const putsGBP = ITMPutsGBP + OTMPutsGBP;
   const totalGBP = holdingsGBP + cashTotalGBP;
 
@@ -107,7 +108,7 @@ const AllocationSummary = ({
           <td>OTM puts</td>
         </tr>
         <tr>
-          <td className={styles.right}>{thousandsGBP(cashGBP)}</td>
+          <td className={styles.right}>{thousandsGBP(roundDown(cash))}</td>
           <td>Cash</td>
         </tr>
         <tr>

@@ -7,7 +7,14 @@ import AllocationSummary from '../components/AllocationSummary';
 import FetchIBKRData from '../components/FetchIBKRData';
 import Currencies from '../components/Currencies';
 
-import { CurrentTickerPrices, ForexRates, Ledgers, TradeData, TransactionData } from '../types';
+import {
+  CurrentTickerPrices,
+  ForexRates,
+  Ledgers,
+  Summaries,
+  TradeData,
+  TransactionData,
+} from '../types';
 import { removeNullValues } from '../utils';
 
 import data from '../data/upcomingEarnings';
@@ -23,6 +30,7 @@ const Home = () => {
   const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
   const [ledgers, setLedgers] = useState<Ledgers>(null);
+  const [summaries, setSummaries] = useState<Summaries>(null);
 
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
@@ -51,9 +59,26 @@ const Home = () => {
       setLedgers(data.values);
     };
     fetchLedgers().catch(console.error);
+
+    const fetchSummaries = async () => {
+      const summaryKeys = Object.values(accounts)
+        .map(({ id }) => `summary-${id}`)
+        .join(',');
+      const response = await fetch(`/api/getRedisData?keys=${summaryKeys}`);
+      const data = await response.json();
+      setSummaries(data.values);
+    };
+    fetchSummaries().catch(console.error);
   }, []);
 
-  const showAllocationSummary = currentTickerPrices && rates;
+  const cash =
+    summaries &&
+    Object.values(summaries).reduce(
+      (cash, { excessliquidity }) => (cash += excessliquidity.amount),
+      0
+    );
+
+  const showAllocationSummary = currentTickerPrices && rates && cash;
   const showCurrencies = currentTickerPrices && ledgers && rates;
 
   return (
@@ -61,6 +86,7 @@ const Home = () => {
       <UpcomingEarnings data={data} now={NOW} />
       {showAllocationSummary && (
         <AllocationSummary
+          cash={cash}
           currentTickerPrices={currentTickerPrices}
           rates={rates}
           trades={trades}
