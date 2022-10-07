@@ -1,21 +1,14 @@
-import { OpenExchangeRatesUsage } from '../types';
+import APIUsage from './APIUsage';
 
-import { pctZero } from '../utils/format';
+import { OpenExchangeRatesUsage } from '../types';
 
 const ForexAPIUsage = ({ usage }: { usage: OpenExchangeRatesUsage }) => {
   const { requests, requests_quota, days_elapsed, days_remaining } = usage;
-  const currentUsage = requests / requests_quota;
+  const currentPct = requests / requests_quota;
   // days_elapsed = 0 on the first day of the cycle
-  const expectedFinalUsage = (currentUsage / (days_elapsed + 1)) * (days_remaining - 1);
-  return (
-    <>
-      <p>Forex API usage</p>
-      <ul>
-        <li>{`Current usage: ${pctZero(currentUsage)}`}</li>
-        <li>{`Expected final usage: ${pctZero(expectedFinalUsage)}`}</li>
-      </ul>
-    </>
-  );
+  const projectionPct = (currentPct / (days_elapsed + 1)) * (days_remaining - 1);
+
+  return <APIUsage title="Forex API usage" currentPct={currentPct} projectionPct={projectionPct} />;
 };
 
 export default ForexAPIUsage;
