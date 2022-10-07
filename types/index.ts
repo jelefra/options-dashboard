@@ -268,3 +268,12 @@ type Summary = {
     severity: number;
   };
 };
+
+export type OpenExchangeRatesUsage = {
+  requests: number;
+  requests_quota: number;
+  requests_remaining: number;
+  days_elapsed: number;
+  days_remaining: number;
+  daily_average: number;
+};
