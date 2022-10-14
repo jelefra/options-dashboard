@@ -8,16 +8,18 @@ const get = async ({
   keyName,
   expiry = ONE_MINUTE_IN_SECONDS,
   fetchFnOptions = {},
+  ignoreCurrentCache = false,
 }: {
   client;
   URL: string;
   keyName: string;
   expiry?: number;
   fetchFnOptions?: object;
+  ignoreCurrentCache?: boolean;
 }) => {
   let data;
   const redisData = await client.get(keyName);
-  if (redisData) {
+  if (redisData && !ignoreCurrentCache) {
     data = JSON.parse(redisData);
   } else {
     data = await fetchFn(URL, fetchFnOptions);

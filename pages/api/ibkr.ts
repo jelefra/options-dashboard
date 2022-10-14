@@ -22,6 +22,7 @@ const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
       keyName: `${endpoint}-${id}`,
       expiry: THIRTY_DAYS_IN_SECONDS,
       fetchFnOptions: { agent },
+      ignoreCurrentCache: true,
     });
     res.status(200).json({ ledger });
   }
