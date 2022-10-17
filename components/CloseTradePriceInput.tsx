@@ -16,7 +16,7 @@ const CloseTradePriceInput = ({ batchId, closeTradePrices, setCloseTradePrices }
 
   const act = async (e) => {
     const value = formatValue(e.target.value);
-    if (value === '0.00') {
+    if (value === '0.00' || value === '') {
       setCloseTradePrices({ ...closeTradePrices, [batchId]: null });
       await deleteKey();
     } else {
