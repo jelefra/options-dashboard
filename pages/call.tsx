@@ -302,6 +302,7 @@ const Call = () => {
                 className={cx(styles.freezeFirstThRow, styles.white, styles.rotate, {
                   [styles.freezeFirstThCell]: index === 0,
                   [styles.freezeSecondThCell]: index === 1,
+                  [styles.return30DPctResidual]: name === 'return30DPctResidual',
                 })}
                 key={index}
               >
