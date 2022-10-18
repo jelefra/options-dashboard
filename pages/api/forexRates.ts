@@ -5,7 +5,7 @@ import get from '../../utils/get';
 
 import { ExchangeRateResponse } from '../../types';
 
-import { SIX_HOURS_IN_SECONDS } from '../../constants';
+import { FIFTEEN_MINUTES_IN_SECONDS } from '../../constants';
 
 const forexRates = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();
@@ -15,7 +15,7 @@ const forexRates = async (req: NextApiRequest, res: NextApiResponse) => {
   const response: ExchangeRateResponse = await get({
     client,
     URL,
-    expiry: SIX_HOURS_IN_SECONDS,
+    expiry: FIFTEEN_MINUTES_IN_SECONDS,
     keyName: 'rates',
   });
   const ratesBaseUSD = response.rates;
