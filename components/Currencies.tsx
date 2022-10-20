@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import processData from '../utils/processData';
-import { pctZero } from '../utils/format';
+import { decimalTwo, pctZero } from '../utils/format';
 
 import { CurrentTickerPrices, ForexRates, Ledgers, TradeData, TransactionData } from '../types';
 
@@ -77,6 +77,7 @@ const Currencies = ({
     <table className={styles.table}>
       <thead>
         <tr>
+          <th />
           {currencies.map((currency, index) => (
             <th key={index}>{currency}</th>
           ))}
@@ -84,8 +85,15 @@ const Currencies = ({
       </thead>
       <tbody>
         <tr>
+          <td>Weight</td>
           {currencies.map((currency, index) => (
             <td key={index}>{pctZero(currenciesPct[currency])}</td>
+          ))}
+        </tr>
+        <tr>
+          <td>Forex rate</td>
+          {currencies.map((currency, index) => (
+            <td key={index}>{rates[currency] !== 1 && decimalTwo(rates[currency])}</td>
           ))}
         </tr>
       </tbody>
