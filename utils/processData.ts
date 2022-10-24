@@ -155,7 +155,7 @@ const processData = (
       }
 
       const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
-      if (expiry.isSameOrAfter(now, 'day')) {
+      if (expiry.isSameOrAfter(now, 'day') && !trade.closeTradePrice) {
         batch.currentCall = {
           account,
           batchCode,
