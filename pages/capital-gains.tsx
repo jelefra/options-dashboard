@@ -139,7 +139,7 @@ const CapitalGains = () => {
         <tr>
           {accountsInfo.map(({ name, currencies }) =>
             currencies.map((currency) => (
-              <th className={styles.columnSize} key={`${name}-${currency}`}>
+              <th className={styles.columnWidth65} key={`${name}-${currency}`}>
                 {currency}
               </th>
             ))

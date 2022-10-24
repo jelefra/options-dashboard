@@ -28,11 +28,7 @@
   border: 1px solid lightgrey;
 }
 
-.columnSize {
-  width: 75px;
-}
-
-.return30DPctResidual {
+.columnWidth65 {
   min-width: 60px;
   max-width: 60px;
 }
