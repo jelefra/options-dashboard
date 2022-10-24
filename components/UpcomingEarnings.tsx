@@ -19,19 +19,21 @@ const UpcomingEarnings = ({ data, now }: { data: EarningsDates; now: Dayjs }) =>
         <th>Ticker</th>
         <th>Earnings date</th>
         <th>Days to earnings</th>
+        <th>Timing</th>
       </tr>
     </thead>
     <tbody>
       {Object.entries(data)
         .sort(([tickerA], [tickerB]) => tickerA.localeCompare(tickerB))
         .filter(([, { date }]) => dayjs(date, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day'))
-        .map(([ticker, { date, confirmed }]) => (
+        .map(([ticker, { date, confirmed, timing }]) => (
           <tr key={ticker}>
             <td className={tickers[ticker].colour}>{ticker}</td>
             <td style={{ color: !confirmed ? 'Gainsboro' : 'inherit' }}>{date}</td>
             <td style={{ color: !confirmed ? 'Gainsboro' : 'inherit' }} className={styles.right}>
               {dayjs(date, INPUT_DATE_FORMAT).add(1, 'day').diff(now, 'day')}
             </td>
+            <td>{timing}</td>
           </tr>
         ))}
     </tbody>
