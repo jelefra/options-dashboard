@@ -8,6 +8,7 @@ import FetchIBKRData from '../components/FetchIBKRData';
 import Currencies from '../components/Currencies';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import StocksAPIUsage from '../components/StocksAPIUsage';
+import ExcessLiquidity from '../components/ExcessLiquidity';
 
 import {
   CurrentTickerPrices,
@@ -123,6 +124,7 @@ const Home = () => {
           transactions={transactions}
         />
       )}
+      {ledgers && <ExcessLiquidity ledgers={ledgers} trades={trades} />}
       {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
       {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}
     </Container>
