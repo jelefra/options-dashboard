@@ -130,8 +130,10 @@ const Home = () => {
         />
       )}
       {withFullLedgers && <ExcessLiquidity ledgers={ledgers} trades={trades} />}
-      {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
-      {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}
+      <div>
+        {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
+        {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}
+      </div>
     </Container>
   );
 };
