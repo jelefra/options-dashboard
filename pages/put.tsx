@@ -67,7 +67,7 @@ const Put = () => {
   useEffect(() => {
     setIsLoading(true);
     const fetchPutCloseTradePrices = async () => {
-      const response = await fetch(`/api/getRedisData?keys=${putIds}`);
+      const response = await fetch(`/api/getRedisKeys?keys=${putIds}`);
       const data = await response.json();
       setCloseTradePrices(data.values);
     };

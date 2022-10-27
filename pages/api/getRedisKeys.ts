@@ -1,7 +1,7 @@
 import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const getRedisData = async (req: NextApiRequest, res: NextApiResponse) => {
+const getRedisKeys = async (req: NextApiRequest, res: NextApiResponse) => {
   const { keys: keysParam } = req.query;
   if (typeof keysParam === 'string') {
     const keys = keysParam.split(',');
@@ -25,4 +25,4 @@ const getRedisData = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-export default getRedisData;
+export default getRedisKeys;

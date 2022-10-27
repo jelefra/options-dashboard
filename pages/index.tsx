@@ -61,7 +61,7 @@ const Home = () => {
       const ledgerKeys = Object.values(accounts)
         .map(({ id }) => `ledger-${id}`)
         .join(',');
-      const response = await fetch(`/api/getRedisData?keys=${ledgerKeys}`);
+      const response = await fetch(`/api/getRedisKeys?keys=${ledgerKeys}`);
       const data = await response.json();
       setLedgers(data.values);
     };
@@ -71,7 +71,7 @@ const Home = () => {
       const summaryKeys = Object.values(accounts)
         .map(({ id }) => `summary-${id}`)
         .join(',');
-      const response = await fetch(`/api/getRedisData?keys=${summaryKeys}`);
+      const response = await fetch(`/api/getRedisKeys?keys=${summaryKeys}`);
       const data = await response.json();
       setSummaries(data.values);
     };
