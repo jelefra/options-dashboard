@@ -5,6 +5,7 @@ import Container from '../components/Container';
 import UpcomingEarnings from '../components/UpcomingEarnings';
 import AllocationSummary from '../components/AllocationSummary';
 import FetchIBKRData from '../components/FetchIBKRData';
+import ClearIBKRData from '../components/ClearIBKRData';
 import Currencies from '../components/Currencies';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import StocksAPIUsage from '../components/StocksAPIUsage';
@@ -115,6 +116,7 @@ const Home = () => {
         />
       )}
       <FetchIBKRData />
+      <ClearIBKRData setLedgers={setLedgers} setSummaries={setSummaries} />
       {showCurrencies && (
         <Currencies
           currentTickerPrices={currentTickerPrices}
