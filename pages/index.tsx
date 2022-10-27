@@ -119,7 +119,7 @@ const Home = () => {
         />
       )}
       <FetchIBKRData />
-      <ClearIBKRData setLedgers={setLedgers} setSummaries={setSummaries} />
+      <ClearIBKRData setters={[setLedgers, setSummaries]} />
       {showCurrencies && (
         <Currencies
           currentTickerPrices={currentTickerPrices}

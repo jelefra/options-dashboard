@@ -2,12 +2,11 @@ import accounts from '../data/accounts';
 
 import styles from '../styles/Button.module.css';
 
-const ClearIBKRData = ({ setLedgers, setSummaries }) => {
+const ClearIBKRData = ({ setters }: { setters: Function[] }) => {
   const deleteIBKRKeys = async () => {
     const keys = Object.values(accounts).flatMap(({ id }) => [`summary-${id}`, `ledger-${id}`]);
     await fetch(`/api/deleteRedisKeys?keys=${keys.join(',')}`);
-    setLedgers(null);
-    setSummaries(null);
+    setters.forEach((fn) => fn(null));
   };
 
   return (
