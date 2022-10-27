@@ -93,15 +93,18 @@ const Home = () => {
     fetchStocksAPIUsage().catch(console.error);
   }, []);
 
+  const withFullLedgers = ledgers && Object.values(ledgers).every(Boolean);
+  const withFullSummaries = summaries && Object.values(summaries).every(Boolean);
+
   const cash =
-    summaries &&
+    withFullSummaries &&
     Object.values(summaries).reduce(
       (cash, { excessliquidity }) => (cash += excessliquidity.amount),
       0
     );
 
   const showAllocationSummary = currentTickerPrices && rates && cash;
-  const showCurrencies = currentTickerPrices && ledgers && rates;
+  const showCurrencies = currentTickerPrices && withFullLedgers && rates;
 
   return (
     <Container>
@@ -126,7 +129,7 @@ const Home = () => {
           transactions={transactions}
         />
       )}
-      {ledgers && <ExcessLiquidity ledgers={ledgers} trades={trades} />}
+      {withFullLedgers && <ExcessLiquidity ledgers={ledgers} trades={trades} />}
       {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
       {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}
     </Container>
