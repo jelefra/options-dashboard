@@ -2,11 +2,20 @@ import accounts from '../data/accounts';
 
 import styles from '../styles/Button.module.css';
 
-const FetchIBKRData = () => {
+const FetchIBKRData = ({
+  IBKRStates,
+}: {
+  IBKRStates: { endpoint: string; value: object; setter: Function }[];
+}) => {
   // Data is stored in Redis and made available to other components.
   const fetchAll = async (id) => {
-    await fetch(`/api/ibkr?endpoint=summary&id=${id}`);
-    await fetch(`/api/ibkr?endpoint=ledger&id=${id}`);
+    await Promise.all(
+      IBKRStates.map(async ({ endpoint, value, setter }) => {
+        const resp = await fetch(`/api/ibkr?endpoint=${endpoint}&id=${id}`);
+        const data = await resp.json();
+        setter({ ...value, [`${endpoint}-${id}`]: data.value });
+      })
+    );
   };
 
   return (

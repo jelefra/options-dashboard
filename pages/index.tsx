@@ -118,7 +118,12 @@ const Home = () => {
           transactions={transactions}
         />
       )}
-      <FetchIBKRData />
+      <FetchIBKRData
+        IBKRStates={[
+          { endpoint: 'ledger', value: ledgers, setter: setLedgers },
+          { endpoint: 'summary', value: summaries, setter: setSummaries },
+        ]}
+      />
       <ClearIBKRData setters={[setLedgers, setSummaries]} />
       {showCurrencies && (
         <Currencies
