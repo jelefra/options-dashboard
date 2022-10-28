@@ -16,7 +16,7 @@ const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
   const { endpoint, id } = req.query;
   if (typeof endpoint === 'string' && typeof id === 'string') {
     const URL = `https://localhost:5000/v1/api/portfolio/${id}/${endpoint}`;
-    const ledger = await get({
+    const value = await get({
       client,
       URL,
       keyName: `${endpoint}-${id}`,
@@ -24,7 +24,7 @@ const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
       fetchFnOptions: { agent },
       ignoreCurrentCache: true,
     });
-    res.status(200).json({ ledger });
+    res.status(200).json({ value });
   }
 };
 
