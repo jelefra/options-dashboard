@@ -4,8 +4,7 @@ import dayjs from 'dayjs';
 import Container from '../components/Container';
 import UpcomingEarnings from '../components/UpcomingEarnings';
 import AllocationSummary from '../components/AllocationSummary';
-import FetchIBKRData from '../components/FetchIBKRData';
-import ClearIBKRData from '../components/ClearIBKRData';
+import ManageIBKRData from '../components/ManageIBKRData';
 import Currencies from '../components/Currencies';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import StocksAPIUsage from '../components/StocksAPIUsage';
@@ -118,13 +117,12 @@ const Home = () => {
           transactions={transactions}
         />
       )}
-      <FetchIBKRData
+      <ManageIBKRData
         IBKRStates={[
           { endpoint: 'ledger', value: ledgers, setter: setLedgers },
           { endpoint: 'summary', value: summaries, setter: setSummaries },
         ]}
       />
-      <ClearIBKRData setters={[setLedgers, setSummaries]} />
       {showCurrencies && (
         <Currencies
           currentTickerPrices={currentTickerPrices}
