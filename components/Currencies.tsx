@@ -78,7 +78,7 @@ const Currencies = ({
       <thead>
         <tr>
           <th />
-          {currencies.map((currency, index) => (
+          {currencies.sort().map((currency, index) => (
             <th key={index}>{currency}</th>
           ))}
         </tr>
