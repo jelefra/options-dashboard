@@ -4,7 +4,7 @@ import https from 'https';
 
 import get from '../../utils/get';
 
-import { THIRTY_DAYS_IN_SECONDS } from '../../constants';
+import { IBKR_CACHE_DURATION } from '../../constants';
 
 const agent = new https.Agent({
   rejectUnauthorized: false,
@@ -20,7 +20,7 @@ const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
       client,
       URL,
       keyName: `${endpoint}-${id}`,
-      expiry: THIRTY_DAYS_IN_SECONDS,
+      expiry: IBKR_CACHE_DURATION,
       fetchFnOptions: { agent },
       ignoreCurrentCache: true,
     });

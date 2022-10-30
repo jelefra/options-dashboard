@@ -122,6 +122,7 @@ const Home = () => {
           { endpoint: 'ledger', value: ledgers, setter: setLedgers },
           { endpoint: 'summary', value: summaries, setter: setSummaries },
         ]}
+        now={NOW}
       />
       {showCurrencies && (
         <Currencies

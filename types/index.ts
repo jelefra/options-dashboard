@@ -222,6 +222,7 @@ export type EarningsDates = {
 export type Ledgers = { [key: string]: Ledger };
 
 type Ledger = {
+  BASE: CurrencyLedger;
   [key: string]: CurrencyLedger;
 };
 
