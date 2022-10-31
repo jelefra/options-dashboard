@@ -97,7 +97,8 @@ const Put = () => {
     { name: 'high', format: decimalTwo },
     { name: 'highPct', format: pctOne },
     { name: 'priceIncreaseGBP', format: thousands },
-    { name: 'return30DPct', format: pctOne },
+    { name: 'return30DPctExpected', format: pctOne },
+    { name: 'return30DPctEffective', format: pctOne },
     { name: 'closeTradePrice' },
     { name: 'return30DPctResidual', format: pctOne },
     { name: 'cashEquivalentGBP', format: thousands },
@@ -148,13 +149,16 @@ const Put = () => {
           const dteTotal = calcDteTotal(expiry, date);
           const low = strike - tradePrice - commission / optionSize;
           const high = stockPrice + tradePrice - commission / optionSize;
-          const netReturn = optionSize * tradePrice - commission;
           const cashEquivalent = optionSize * strike;
+          const netReturn = optionSize * tradePrice - commission;
+          const netReturnPct = netReturn / cashEquivalent;
           const priceIncrease = calcPriceIncrease(current, high, optionSize);
           const difference = calcPutDifference(strike, current, optionSize);
           const effectiveNetReturn = netReturn + difference;
           const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
-          const return30DPct = calcReturnPctForPeriod(effectiveNetReturnPct, dteTotal, 30);
+          const return30DPctExpected = calcReturnPctForPeriod(netReturnPct, dteTotal, 30);
+          const return30DPctEffective =
+            difference && calcReturnPctForPeriod(effectiveNetReturnPct, dteTotal, 30);
 
           const batchId = `${tradeIndex}-${ticker}`;
           const closeTradePrice = closeTradePrices[batchId];
@@ -198,7 +202,8 @@ const Put = () => {
             low,
             lowPct: low / current - 1,
             priceIncreaseGBP,
-            return30DPct,
+            return30DPctExpected,
+            return30DPctEffective,
             return30DPctResidual,
             returnGBP,
             status,

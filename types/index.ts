@@ -109,7 +109,8 @@ export type PutRow = Row &
     closeTradePrice: ReactElement;
     low: number;
     lowPct: number;
-    return30DPct: number;
+    return30DPctExpected: number;
+    return30DPctEffective: number;
     return30DPctResidual: number;
     ticker: string;
   };
