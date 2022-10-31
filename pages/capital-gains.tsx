@@ -32,18 +32,18 @@ const getPurchaseCostFromTransactions = (transactions: TransactionData[]) => {
         batches[batchCode] = batches[batchCode] || {
           batchCode,
           acquisitionCost: 0,
-          quantity: 0,
+          optionSize: 0,
         };
 
         const batch = batches[batchCode];
         const batchCommission = commission / batchCodes.length;
         const batchQuantity = quantity / batchCodes.length;
         const oldAcquisitionCost = batch.acquisitionCost;
-        const oldQuantity = batch.quantity;
+        const oldQuantity = batch.optionSize;
         batch.acquisitionCost =
           (oldAcquisitionCost * oldQuantity + stockPrice * batchQuantity + batchCommission) /
           (oldQuantity + batchQuantity);
-        batch.quantity += batchQuantity;
+        batch.optionSize += batchQuantity;
       }
     }
   }
@@ -61,7 +61,7 @@ const getPurchaseCostFromTrades = (trades: TradeData[]) => {
       batches[batchCode] = {
         batchCode,
         acquisitionCost: strike,
-        quantity: optionSize,
+        optionSize,
       };
     }
   }

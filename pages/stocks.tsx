@@ -158,7 +158,7 @@ const Stocks = () => {
   const { batches, stocks } = processData(NOW, transactions, trades, currentTickerPrices);
 
   for (let batch of Object.values(batches)) {
-    const { currentCall, netCumulativePremium, acquisitionCost, exitValue, quantity, ticker } =
+    const { acquisitionCost, currentCall, exitValue, netCumulativePremium, optionSize, ticker } =
       batch;
 
     if (exitValue) {
@@ -172,7 +172,7 @@ const Stocks = () => {
       stock.acquisitionCost += acquisitionCost;
       stock.exitValue += exitValue;
       stock.premium += netCumulativePremium;
-      stock.quantity += quantity;
+      stock.quantity += optionSize;
     } else {
       stocks[ticker].wheeling = stocks[ticker].wheeling || {
         activeCalls: 0,
@@ -184,14 +184,14 @@ const Stocks = () => {
 
       const { strike } = currentCall || {};
       const current = currentTickerPrices[ticker];
-      const missedUpside = strike ? Math.max(current - strike, 0) * quantity : 0;
+      const missedUpside = strike ? Math.max(current - strike, 0) * optionSize : 0;
 
       const stock = stocks[ticker].wheeling;
       stock.activeCalls += currentCall ? 1 : 0;
       stock.missedUpside += missedUpside;
       stock.acquisitionCost += acquisitionCost;
       stock.premium += netCumulativePremium;
-      stock.quantity += quantity;
+      stock.quantity += optionSize;
     }
   }
 

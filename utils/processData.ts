@@ -77,8 +77,8 @@ const processData = (
             acquisitionCost: 0,
             batchCode,
             netCumulativePremium: 0,
+            optionSize: 0,
             origin: 'Purchase',
-            quantity: 0,
             ticker,
           };
 
@@ -86,7 +86,7 @@ const processData = (
           const batchQuantity =
             factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT)) / batchCodes.length;
           batch.acquisitionCost += (stockPrice * quantity + commission) / batchCodes.length;
-          batch.quantity += batchQuantity;
+          batch.optionSize += batchQuantity;
         }
       } else if (buildStocks) {
         stocks[ticker].partialBatch = stocks[ticker].partialBatch || {
@@ -135,7 +135,7 @@ const processData = (
           acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
           netCumulativePremium,
           origin: 'Put',
-          quantity: optionSize,
+          optionSize: optionSize,
           ticker,
         };
       } else if (buildStocks) {

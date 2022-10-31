@@ -141,7 +141,7 @@ export type CallRow = Row &
 export type BatchCost = {
   acquisitionCost: number;
   batchCode: string;
-  quantity: number;
+  optionSize: number;
 };
 
 export type Batch = BatchCost & {

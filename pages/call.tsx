@@ -158,11 +158,11 @@ const Call = () => {
               batchCode,
               currentCall,
               netCumulativePremium,
-              quantity,
+              optionSize,
               ticker,
             } = batchData;
             const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
-            const { colour, currency, optionSize } = tickers[ticker];
+            const { colour, currency } = tickers[ticker];
             const forexRate = rates[currency];
             const current = currentTickerPrices[ticker];
 
@@ -179,7 +179,7 @@ const Call = () => {
             const returnCurrent = (current - netCost) * optionSize;
             const returnIfAssigned = (strike - netCost) * optionSize;
             const returnLastCall = optionSize * tradePrice - commission;
-            const valueCurrent = quantity * current;
+            const valueCurrent = optionSize * current;
             const valueIfAssigned = strike * optionSize;
 
             const returnGBP = Math.min(returnCurrent, returnIfAssigned || Infinity) / forexRate;

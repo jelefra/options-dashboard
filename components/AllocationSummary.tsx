@@ -28,15 +28,15 @@ const AllocationSummary = ({
   const { batches, stocks } = processData(NOW, transactions, trades, currentTickerPrices);
 
   const { wheelingGBP, notWheelingGBP } = Object.values(batches).reduce(
-    (total, { ticker, quantity, exitValue, currentCall = {} }) => {
+    (total, { currentCall = {}, exitValue, optionSize, ticker }) => {
       const { currency } = tickers[ticker];
       const current = currentTickerPrices[ticker];
       const { strike } = currentCall;
       if (strike) {
         const missedUpside = strike ? Math.max(current - strike, 0) : 0;
-        total.wheelingGBP += (quantity * (current - missedUpside)) / rates[currency];
+        total.wheelingGBP += (optionSize * (current - missedUpside)) / rates[currency];
       } else if (!exitValue) {
-        total.notWheelingGBP += (quantity * current) / rates[currency];
+        total.notWheelingGBP += (optionSize * current) / rates[currency];
       }
       return total;
     },

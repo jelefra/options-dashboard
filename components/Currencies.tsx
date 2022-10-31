@@ -29,11 +29,11 @@ const Currencies = ({
   const currencyAmounts: { [key: string]: number } = {};
 
   for (let batch of Object.values(batches)) {
-    const { quantity, ticker } = batch;
+    const { optionSize, ticker } = batch;
     const { currency } = tickers[ticker];
     const current = currentTickerPrices[ticker];
     currencyAmounts[currency] = currencyAmounts[currency] || 0;
-    currencyAmounts[currency] += quantity * current;
+    currencyAmounts[currency] += optionSize * current;
   }
 
   for (let stock of Object.values(stocks)) {
