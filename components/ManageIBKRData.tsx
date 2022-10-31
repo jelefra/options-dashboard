@@ -1,4 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs';
+import cx from 'classnames';
 
 import { Ledgers, Summaries } from '../types';
 
@@ -60,10 +61,16 @@ const ManageIBKRData = ({
             }}
             key={id}
           >
-            <button className={styles.button} onClick={() => fetchAccountData(id)}>
+            <button
+              className={cx(styles.button, styles.primary)}
+              onClick={() => fetchAccountData(id)}
+            >
               Fetch {name}
             </button>
-            <button className={styles.button} onClick={() => deleteAccountData(id)}>
+            <button
+              className={cx(styles.button, styles.destructive)}
+              onClick={() => deleteAccountData(id)}
+            >
               Clear
             </button>
             {ledgersState.value && <small>{message}</small>}

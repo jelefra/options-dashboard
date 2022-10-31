@@ -1,14 +1,28 @@
 .button {
   cursor: pointer;
-  color: white;
-  background-color: DimGrey;
   border-width: 0;
   margin: 0.5rem 1rem;
   padding: 0.5rem 0.75rem;
   border-radius: 0.25rem;
   width: fit-content;
 }
-.button:hover {
+
+.primary {
+  color: white;
+  background-color: DimGrey;
+}
+
+.primary:hover {
   color: white;
   background-color: Grey;
+}
+
+.destructive {
+  color: white;
+  background-color: Tomato;
+}
+
+.destructive:hover {
+  color: white;
+  background-color: Coral;
 }
