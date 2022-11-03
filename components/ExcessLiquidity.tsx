@@ -15,11 +15,20 @@ const NOW = dayjs();
 const ExcessLiquidity = ({ ledgers, trades }: { ledgers: Ledgers; trades: TradeData[] }) => {
   const currencies = Array.from(
     new Set(
-      Object.values(ledgers).flatMap((ledger) =>
-        Object.keys(ledger).filter((currency) => currency !== 'BASE')
-      )
+      Object.values(ledgers)
+        .filter(Boolean)
+        .flatMap((ledger) => Object.keys(ledger).filter((currency) => currency !== 'BASE'))
     )
   ).sort();
+
+  const accountsWithLedgers = Object.entries(ledgers).reduce((filteredAccounts, [key, ledger]) => {
+    if (ledger) {
+      filteredAccounts.push(
+        Object.values(accounts).find((account) => account.id === key.split('-')[1])
+      );
+    }
+    return filteredAccounts;
+  }, []);
 
   const currentPuts = trades.filter((trade) => isCurrentPut(trade, NOW)) as PutData[];
 
@@ -66,7 +75,7 @@ const ExcessLiquidity = ({ ledgers, trades }: { ledgers: Ledgers; trades: TradeD
         </tr>
       </thead>
       <tbody>
-        {Object.values(accounts).map(({ name, id }, index) => {
+        {Object.values(accountsWithLedgers).map(({ name, id }, index) => {
           const [, relevantLedger] = Object.entries(ledgers).find(
             ([ledgerKey]) => id === ledgerKey.split('-')[1]
           );
