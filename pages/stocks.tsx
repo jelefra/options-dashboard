@@ -272,7 +272,7 @@ const Stocks = () => {
               putOnlyPremium) /
               (wheelingQuantity + partialBatchQuantity);
 
-          const returnPct = avgCost ? current / avgCost - 1 : 0;
+          const returnPct = current && avgCost && current / avgCost - 1;
 
           const returnCurrency =
             totalQuantity * current -
@@ -283,7 +283,7 @@ const Stocks = () => {
             wheelingPremium +
             wheeledReturn;
 
-          const returnGBP = returnCurrency / forexRate;
+          const returnGBP = (current || totalQuantity === 0) && returnCurrency / forexRate;
           const valueGBP = calcValueGBP(stock, currentTickerPrices, rates);
 
           const row: StocksRow = {
@@ -342,7 +342,7 @@ const Stocks = () => {
               })}
               key={index}
             >
-              {totals[name]?.value && format(totals[name].value)}
+              {!!totals[name]?.value && format(totals[name].value)}
             </td>
           ))}
         </tr>

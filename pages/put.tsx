@@ -147,7 +147,7 @@ const Put = () => {
           const date = dayjs(trade.date, INPUT_DATE_FORMAT);
           const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
           const dteTotal = calcDteTotal(expiry, date);
-          const low = strike - tradePrice - commission / optionSize;
+          const low = current && strike - tradePrice - commission / optionSize;
           const high = stockPrice + tradePrice - commission / optionSize;
           const cashEquivalent = optionSize * strike;
           const netReturn = optionSize * tradePrice - commission;
@@ -158,7 +158,7 @@ const Put = () => {
           const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
           const return30DPctExpected = calcReturnPctForPeriod(netReturnPct, dteTotal, 30);
           const return30DPctEffective =
-            difference && calcReturnPctForPeriod(effectiveNetReturnPct, dteTotal, 30);
+            current && difference && calcReturnPctForPeriod(effectiveNetReturnPct, dteTotal, 30);
 
           const batchId = `${tradeIndex}-${ticker}`;
           const closeTradePrice = closeTradePrices[batchId];
@@ -173,16 +173,16 @@ const Put = () => {
             30
           );
 
-          const status = strike > current ? 'Assignable' : null;
+          const status = current ? (strike > current ? 'Assignable' : null) : undefined;
 
           const cashEquivalentGBP = cashEquivalent / forexRate;
           const priceIncreaseGBP = priceIncrease / forexRate;
-          const returnGBP = effectiveNetReturn / forexRate;
-          const differenceGBP = difference / forexRate;
+          const returnGBP = current && effectiveNetReturn / forexRate;
+          const differenceGBP = current && difference / forexRate;
 
           const row: PutRow = {
             account,
-            assignmentPct: strike / current - 1,
+            assignmentPct: current ? strike / current - 1 : undefined,
             cashEquivalentGBP,
             closeTradePrice: (
               <CloseTradePriceInput
@@ -198,7 +198,7 @@ const Put = () => {
             dteTotal,
             expiry,
             high,
-            highPct: high / current - 1,
+            highPct: current ? high / current - 1 : undefined,
             low,
             lowPct: low / current - 1,
             priceIncreaseGBP,

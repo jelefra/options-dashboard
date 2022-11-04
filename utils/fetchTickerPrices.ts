@@ -28,7 +28,8 @@ const fetchTickerPrices = async (
         URL,
         keyName: ticker,
       });
-      const latestPrice = response.latestPrice;
+      // Keys with `undefined` values will not be exposed
+      const latestPrice = response?.latestPrice || null;
       return { ticker, latestPrice };
     })
   );

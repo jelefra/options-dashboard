@@ -23,9 +23,11 @@ const get = async ({
     data = JSON.parse(redisData);
   } else {
     data = await fetchFn(URL, fetchFnOptions);
-    await client.set(keyName, JSON.stringify(data), {
-      EX: expiry,
-    });
+    if (data) {
+      await client.set(keyName, JSON.stringify(data), {
+        EX: expiry,
+      });
+    }
   }
   return data;
 };

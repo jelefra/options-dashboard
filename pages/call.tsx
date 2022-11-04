@@ -167,7 +167,7 @@ const Call = () => {
             const current = currentTickerPrices[ticker];
 
             const daysTotal = expiry?.diff(acquisitionDate, 'day');
-            const high = strike + tradePrice - commission / optionSize;
+            const high = current && strike + tradePrice - commission / optionSize;
             const returnPctLastCall =
               (tradePrice * optionSize - commission) / (stockPrice * optionSize);
             const dteLastCall = expiry?.diff(date, 'day');
@@ -200,7 +200,7 @@ const Call = () => {
 
             const row: CallRow = {
               account,
-              assignmentPct: strike / current - 1,
+              assignmentPct: current ? strike / current - 1 : undefined,
               batchCode,
               closeTradePrice: (
                 <CloseTradePriceInput
@@ -227,7 +227,7 @@ const Call = () => {
               returnGBP,
               returnGBPIfAssigned: returnIfAssigned / forexRate,
               returnGBPLastCall,
-              returnPct: Math.min(current, strike || Infinity) / netCost - 1,
+              returnPct: current && Math.min(current, strike || Infinity) / netCost - 1,
               returnPctIfAssigned,
               status: strike < current ? 'Assignable' : null,
               stockPrice,
