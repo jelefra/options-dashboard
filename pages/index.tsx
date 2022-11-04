@@ -93,11 +93,13 @@ const Home = () => {
   }, []);
 
   const withAllLedgers = ledgers && Object.values(ledgers).every(Boolean);
+  const withAllSummaries = summaries && Object.values(summaries).every(Boolean);
   const withOneLedger = ledgers && Object.values(ledgers).some(Boolean);
-  const withFullSummaries = summaries && Object.values(summaries).every(Boolean);
+  const withOneSummary = summaries && Object.values(summaries).some(Boolean);
+  const withIBKRData = ledgers && summaries;
 
   const cash =
-    withFullSummaries &&
+    withAllSummaries &&
     Object.values(summaries).reduce(
       (cash, { excessliquidity }) => (cash += excessliquidity.amount),
       0
@@ -105,6 +107,7 @@ const Home = () => {
 
   const showAllocationSummary = currentTickerPrices && rates && cash;
   const showCurrencies = currentTickerPrices && withAllLedgers && rates;
+  const showExcessLiquidity = withIBKRData && (withOneLedger || withOneSummary);
 
   return (
     <Container>
@@ -134,7 +137,9 @@ const Home = () => {
           transactions={transactions}
         />
       )}
-      {withOneLedger && <ExcessLiquidity ledgers={ledgers} trades={trades} />}
+      {showExcessLiquidity && (
+        <ExcessLiquidity ledgers={ledgers} summaries={summaries} trades={trades} />
+      )}
       <div>
         {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
         {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}

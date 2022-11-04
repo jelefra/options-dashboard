@@ -109,7 +109,7 @@ const AllocationSummary = ({
         </tr>
         <tr>
           <td className={styles.right}>{thousandsGBP(roundDown(cash))}</td>
-          <td>Cash</td>
+          <td>Excess liquidity</td>
         </tr>
         <tr>
           <td>Total</td>
