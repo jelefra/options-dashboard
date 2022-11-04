@@ -68,8 +68,9 @@ const ManageIBKRData = ({
               Fetch {name}
             </button>
             <button
-              className={cx(styles.button, styles.destructive)}
+              className={cx(styles.button, styles.destructive, { [styles.disabled]: !timestamp })}
               onClick={() => deleteAccountData(id)}
+              disabled={!timestamp}
             >
               Clear
             </button>

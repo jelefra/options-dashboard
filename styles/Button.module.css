@@ -26,3 +26,7 @@
   color: white;
   background-color: Coral;
 }
+
+.disabled {
+  cursor: not-allowed;
+}
