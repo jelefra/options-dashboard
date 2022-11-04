@@ -284,7 +284,7 @@ const Call = () => {
                 })}
                 key={index}
               >
-                {totals[name] && format(totals[name])}
+                {!!totals[name] && format(totals[name])}
               </td>
             ))}
         </tr>
