@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 
 import Container from '../components/Container';
-import UpcomingEarnings from '../components/UpcomingEarnings';
+import Earnings from '../components/Earnings';
 import AllocationSummary from '../components/AllocationSummary';
 import ManageIBKRData from '../components/ManageIBKRData';
 import Currencies from '../components/Currencies';
@@ -22,7 +22,7 @@ import {
 } from '../types';
 import { removeNullValues } from '../utils';
 
-import data from '../data/upcomingEarnings';
+import earnings from '../data/earnings';
 import accounts from '../data/accounts';
 // @ts-ignore
 import tradesData from '../data/options.csv';
@@ -108,7 +108,7 @@ const Home = () => {
 
   return (
     <Container>
-      <UpcomingEarnings data={data} now={NOW} />
+      <Earnings data={earnings} now={NOW} />
       {showAllocationSummary && (
         <AllocationSummary
           cash={cash}
