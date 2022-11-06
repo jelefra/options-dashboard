@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint --dir .",
-    "redis": "docker run -p 6379:6379 -d --name options-dashboard redis:7.0.2",
+    "redis:create": "docker run -p 6379:6379 -d --name options-dashboard redis:7.0.2",
+    "redis:start": "docker start options-dashboard",
     "prepare": "husky install"
   },
   "lint-staged": {
