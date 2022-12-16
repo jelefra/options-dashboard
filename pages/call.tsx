@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 
@@ -294,6 +295,10 @@ const Call = () => {
 
   return (
     <>
+      <Head>
+        <title>Call</title>
+        <link rel="icon" href="/call.ico" />
+      </Head>
       <table className={styles.table}>
         <thead>
           <tr>

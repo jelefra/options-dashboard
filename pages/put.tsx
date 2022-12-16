@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -117,151 +118,157 @@ const Put = () => {
   const countOfTrades = trades.filter((trade) => isCurrentPut(trade, NOW)).length;
 
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          {headings.map(({ name }, index) => (
-            <th
-              className={cx(styles.white, styles.freezeFirstThRow, styles.rotate, {
-                [styles.freezeFirstThCell]: index === 0,
-                [styles.freezeSecondThCell]: index === 1,
-                [styles.columnWidth65]: name === 'account' || name === 'return30DPctResidual',
-              })}
-              key={index}
-            >
-              {DISPLAY[name] || name}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {currentPutsSorted.map((trade, tradeIndex) => {
-          const orderedRowValues = headings.map((heading) => ({ ...heading }));
+    <>
+      <Head>
+        <title>Puts</title>
+        <link rel="icon" href="/put.ico" />
+      </Head>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            {headings.map(({ name }, index) => (
+              <th
+                className={cx(styles.white, styles.freezeFirstThRow, styles.rotate, {
+                  [styles.freezeFirstThCell]: index === 0,
+                  [styles.freezeSecondThCell]: index === 1,
+                  [styles.columnWidth65]: name === 'account' || name === 'return30DPctResidual',
+                })}
+                key={index}
+              >
+                {DISPLAY[name] || name}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {currentPutsSorted.map((trade, tradeIndex) => {
+            const orderedRowValues = headings.map((heading) => ({ ...heading }));
 
-          const { account, ticker, tradePrice, strike, commission, stockPrice } = trade;
-          const accountColour = accounts[account].colour;
-          const { optionSize, currency, colour } = tickers[ticker];
-          const current = currentTickerPrices[ticker];
-          const forexRate = rates[currency];
+            const { account, ticker, tradePrice, strike, commission, stockPrice } = trade;
+            const accountColour = accounts[account].colour;
+            const { optionSize, currency, colour } = tickers[ticker];
+            const current = currentTickerPrices[ticker];
+            const forexRate = rates[currency];
 
-          const date = dayjs(trade.date, INPUT_DATE_FORMAT);
-          const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
-          const dteTotal = calcDteTotal(expiry, date);
-          const low = current && strike - tradePrice - commission / optionSize;
-          const high = stockPrice + tradePrice - commission / optionSize;
-          const cashEquivalent = optionSize * strike;
-          const netReturn = optionSize * tradePrice - commission;
-          const netReturnPct = netReturn / cashEquivalent;
-          const priceIncrease = calcPriceIncrease(current, high, optionSize);
-          const difference = calcPutDifference(strike, current, optionSize);
-          const effectiveNetReturn = netReturn + difference;
-          const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
-          const return30DPctExpected = calcReturnPctForPeriod(netReturnPct, dteTotal, 30);
-          const return30DPctEffective =
-            current && difference && calcReturnPctForPeriod(effectiveNetReturnPct, dteTotal, 30);
+            const date = dayjs(trade.date, INPUT_DATE_FORMAT);
+            const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
+            const dteTotal = calcDteTotal(expiry, date);
+            const low = current && strike - tradePrice - commission / optionSize;
+            const high = stockPrice + tradePrice - commission / optionSize;
+            const cashEquivalent = optionSize * strike;
+            const netReturn = optionSize * tradePrice - commission;
+            const netReturnPct = netReturn / cashEquivalent;
+            const priceIncrease = calcPriceIncrease(current, high, optionSize);
+            const difference = calcPutDifference(strike, current, optionSize);
+            const effectiveNetReturn = netReturn + difference;
+            const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
+            const return30DPctExpected = calcReturnPctForPeriod(netReturnPct, dteTotal, 30);
+            const return30DPctEffective =
+              current && difference && calcReturnPctForPeriod(effectiveNetReturnPct, dteTotal, 30);
 
-          const batchId = `${tradeIndex}-${ticker}`;
-          const closeTradePrice = closeTradePrices[batchId];
+            const batchId = `${tradeIndex}-${ticker}`;
+            const closeTradePrice = closeTradePrices[batchId];
 
-          const effectiveCloseNetReturn =
-            closeTradePrice > 0 ? optionSize * closeTradePrice - commission : 0;
-          const effectiveCloseNetReturnPct = effectiveCloseNetReturn / cashEquivalent;
-          const dteCurrent = calcDteCurrent(expiry, NOW);
-          const return30DPctResidual = calcReturnPctForPeriod(
-            effectiveCloseNetReturnPct,
-            dteCurrent,
-            30
-          );
+            const effectiveCloseNetReturn =
+              closeTradePrice > 0 ? optionSize * closeTradePrice - commission : 0;
+            const effectiveCloseNetReturnPct = effectiveCloseNetReturn / cashEquivalent;
+            const dteCurrent = calcDteCurrent(expiry, NOW);
+            const return30DPctResidual = calcReturnPctForPeriod(
+              effectiveCloseNetReturnPct,
+              dteCurrent,
+              30
+            );
 
-          const status = current ? (strike > current ? 'Assignable' : null) : undefined;
+            const status = current ? (strike > current ? 'Assignable' : null) : undefined;
 
-          const cashEquivalentGBP = cashEquivalent / forexRate;
-          const priceIncreaseGBP = priceIncrease / forexRate;
-          const returnGBP = current && effectiveNetReturn / forexRate;
-          const differenceGBP = current && difference / forexRate;
+            const cashEquivalentGBP = cashEquivalent / forexRate;
+            const priceIncreaseGBP = priceIncrease / forexRate;
+            const returnGBP = current && effectiveNetReturn / forexRate;
+            const differenceGBP = current && difference / forexRate;
 
-          const row: PutRow = {
-            account,
-            assignmentPct: current ? strike / current - 1 : undefined,
-            cashEquivalentGBP,
-            closeTradePrice: (
-              <CloseTradePriceInput
-                batchId={batchId}
-                closeTradePrices={closeTradePrices}
-                setCloseTradePrices={setCloseTradePrices}
-              />
-            ),
-            current,
-            date,
-            differenceGBP,
-            dteCurrent,
-            dteTotal,
-            expiry,
-            high,
-            highPct: current ? high / current - 1 : undefined,
-            low,
-            lowPct: low / current - 1,
-            priceIncreaseGBP,
-            return30DPctExpected,
-            return30DPctEffective,
-            return30DPctResidual,
-            returnGBP,
-            status,
-            stockPrice,
-            strike,
-            ticker,
-            tradePrice,
-          };
+            const row: PutRow = {
+              account,
+              assignmentPct: current ? strike / current - 1 : undefined,
+              cashEquivalentGBP,
+              closeTradePrice: (
+                <CloseTradePriceInput
+                  batchId={batchId}
+                  closeTradePrices={closeTradePrices}
+                  setCloseTradePrices={setCloseTradePrices}
+                />
+              ),
+              current,
+              date,
+              differenceGBP,
+              dteCurrent,
+              dteTotal,
+              expiry,
+              high,
+              highPct: current ? high / current - 1 : undefined,
+              low,
+              lowPct: low / current - 1,
+              priceIncreaseGBP,
+              return30DPctExpected,
+              return30DPctEffective,
+              return30DPctResidual,
+              returnGBP,
+              status,
+              stockPrice,
+              strike,
+              ticker,
+              tradePrice,
+            };
 
-          totals.cashEquivalentGBP.value += cashEquivalentGBP;
-          totals.returnGBP.value += returnGBP;
-          totals.differenceGBP.value += differenceGBP;
-          if (status === 'Assignable') {
-            totals.status.value += 1 / countOfTrades;
-          }
+            totals.cashEquivalentGBP.value += cashEquivalentGBP;
+            totals.returnGBP.value += returnGBP;
+            totals.differenceGBP.value += differenceGBP;
+            if (status === 'Assignable') {
+              totals.status.value += 1 / countOfTrades;
+            }
 
-          return (
-            <tr key={tradeIndex}>
-              {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
-                const showZeroValues =
-                  name === 'assignmentPct' ||
-                  name === 'dteCurrent' ||
-                  name === 'highPct' ||
-                  name === 'lowPct';
+            return (
+              <tr key={tradeIndex}>
+                {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
+                  const showZeroValues =
+                    name === 'assignmentPct' ||
+                    name === 'dteCurrent' ||
+                    name === 'highPct' ||
+                    name === 'lowPct';
 
-                return (
-                  <td
-                    className={cx({
-                      [styles[align]]: align === 'right',
-                      [colour]: name === 'ticker',
-                      [accountColour]: name === 'account',
-                      [styles.contrast]: tradeIndex % 2 && index > 1,
-                      [styles.freezeFirstTdColumn]: index === 0,
-                      [styles.freezeSecondTdColumn]: index === 1,
-                    })}
-                    key={index}
-                  >
-                    {(!!row[name] || showZeroValues) && format(row[name])}
-                  </td>
-                );
-              })}
-            </tr>
-          );
-        })}
-        <tr>
-          {headings.map(({ name, format, align = 'right' }, index) => (
-            <td
-              className={cx(styles.total, {
-                [styles[align]]: align === 'right',
-              })}
-              key={index}
-            >
-              {!!totals[name]?.value && (totals[name].format || format)(totals[name].value)}
-            </td>
-          ))}
-        </tr>
-      </tbody>
-    </table>
+                  return (
+                    <td
+                      className={cx({
+                        [styles[align]]: align === 'right',
+                        [colour]: name === 'ticker',
+                        [accountColour]: name === 'account',
+                        [styles.contrast]: tradeIndex % 2 && index > 1,
+                        [styles.freezeFirstTdColumn]: index === 0,
+                        [styles.freezeSecondTdColumn]: index === 1,
+                      })}
+                      key={index}
+                    >
+                      {(!!row[name] || showZeroValues) && format(row[name])}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+          <tr>
+            {headings.map(({ name, format, align = 'right' }, index) => (
+              <td
+                className={cx(styles.total, {
+                  [styles[align]]: align === 'right',
+                })}
+                key={index}
+              >
+                {!!totals[name]?.value && (totals[name].format || format)(totals[name].value)}
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </>
   );
 };
 

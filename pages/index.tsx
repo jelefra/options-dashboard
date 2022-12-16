@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import dayjs from 'dayjs';
 
 import Container from '../components/Container';
@@ -111,6 +112,10 @@ const Home = () => {
 
   return (
     <Container>
+      <Head>
+        <title>Options</title>
+        <link rel="icon" href="/home.ico" />
+      </Head>
       <Earnings data={earnings} now={NOW} />
       {showAllocationSummary && (
         <AllocationSummary

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -47,53 +48,59 @@ const Forex = () => {
   ];
 
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          {headings.map(({ name }, index) => (
-            <th key={index}>{DISPLAY[name] || name}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {bank
-          .filter(({ type }) => type === 'Conversion')
-          .map(({ date, account, amount, commission, currencyPair, rate }, rowIndex) => {
-            const [currencySold, currencyBought] = currencyPair.split('/');
-            const currentRate = rates[currencyBought] / rates[currencySold];
-            const profitAndLoss = amount * (rate - currentRate);
+    <>
+      <Head>
+        <title>Forex</title>
+        <link rel="icon" href="/forex.ico" />
+      </Head>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            {headings.map(({ name }, index) => (
+              <th key={index}>{DISPLAY[name] || name}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {bank
+            .filter(({ type }) => type === 'Conversion')
+            .map(({ date, account, amount, commission, currencyPair, rate }, rowIndex) => {
+              const [currencySold, currencyBought] = currencyPair.split('/');
+              const currentRate = rates[currencyBought] / rates[currencySold];
+              const profitAndLoss = amount * (rate - currentRate);
 
-            const row: ForexRow = {
-              date: dayjs(date, INPUT_DATE_FORMAT),
-              account,
-              amount,
-              rate,
-              currencyPair,
-              currentRate,
-              profitGBP: profitAndLoss / rates[currencyBought] - commission,
-              differencePct: rate / currentRate - 1,
-            };
-            const accountColour = accounts[account].colour;
+              const row: ForexRow = {
+                date: dayjs(date, INPUT_DATE_FORMAT),
+                account,
+                amount,
+                rate,
+                currencyPair,
+                currentRate,
+                profitGBP: profitAndLoss / rates[currencyBought] - commission,
+                differencePct: rate / currentRate - 1,
+              };
+              const accountColour = accounts[account].colour;
 
-            return (
-              <tr key={rowIndex}>
-                {headings.map(({ name, format = (v) => v, align }, index) => (
-                  <td
-                    className={cx({
-                      [styles[align]]: align === 'right',
-                      [accountColour]: name === 'account',
-                      [styles.contrast]: rowIndex % 2 && index !== 1,
-                    })}
-                    key={index}
-                  >
-                    {row[name] !== undefined && format(row[name])}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-      </tbody>
-    </table>
+              return (
+                <tr key={rowIndex}>
+                  {headings.map(({ name, format = (v) => v, align }, index) => (
+                    <td
+                      className={cx({
+                        [styles[align]]: align === 'right',
+                        [accountColour]: name === 'account',
+                        [styles.contrast]: rowIndex % 2 && index !== 1,
+                      })}
+                      key={index}
+                    >
+                      {row[name] !== undefined && format(row[name])}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+        </tbody>
+      </table>
+    </>
   );
 };
 

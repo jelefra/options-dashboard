@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 
@@ -209,145 +210,151 @@ const Stocks = () => {
   };
 
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr className={styles.thirtyPx}>
-          {sectionsWithCounts.map(({ count, name, rowSpan, backgroundColor }, index) => (
-            <th
-              className={cx(styles.freezeFirstThRow, {
-                [styles.freezeFirstThCell]: index === 0,
-              })}
-              style={{ backgroundColor }}
-              colSpan={count}
-              rowSpan={rowSpan}
-              key={index}
-            >
-              {DISPLAY[name] || name}
-            </th>
-          ))}
-        </tr>
-        <tr className={styles.thirtyPx}>
-          {headings.slice(1).map(({ name, section }, index) => (
-            <th
-              className={cx(styles.freezeSecondThRow)}
-              style={{ backgroundColor: sections[section].backgroundColor }}
-              key={index}
-            >
-              {DISPLAY[name] || name}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {orderedStocks.map((stock, rowIndex) => {
-          const { ticker } = stock;
-          const { colour, currency } = tickers[ticker];
-          const current = currentTickerPrices[ticker];
-          const forexRate = rates[currency];
+    <>
+      <Head>
+        <title>Stocks</title>
+        <link rel="icon" href="/stocks.ico" />
+      </Head>
+      <table className={styles.table}>
+        <thead>
+          <tr className={styles.thirtyPx}>
+            {sectionsWithCounts.map(({ count, name, rowSpan, backgroundColor }, index) => (
+              <th
+                className={cx(styles.freezeFirstThRow, {
+                  [styles.freezeFirstThCell]: index === 0,
+                })}
+                style={{ backgroundColor }}
+                colSpan={count}
+                rowSpan={rowSpan}
+                key={index}
+              >
+                {DISPLAY[name] || name}
+              </th>
+            ))}
+          </tr>
+          <tr className={styles.thirtyPx}>
+            {headings.slice(1).map(({ name, section }, index) => (
+              <th
+                className={cx(styles.freezeSecondThRow)}
+                style={{ backgroundColor: sections[section].backgroundColor }}
+                key={index}
+              >
+                {DISPLAY[name] || name}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {orderedStocks.map((stock, rowIndex) => {
+            const { ticker } = stock;
+            const { colour, currency } = tickers[ticker];
+            const current = currentTickerPrices[ticker];
+            const forexRate = rates[currency];
 
-          const partialBatchQuantity = stock.partialBatch?.quantity || 0;
-          const partialBatchAcquisitionCost = stock.partialBatch?.acquisitionCost || 0;
+            const partialBatchQuantity = stock.partialBatch?.quantity || 0;
+            const partialBatchAcquisitionCost = stock.partialBatch?.acquisitionCost || 0;
 
-          const wheeledAcquisitionCost = stock.wheeled?.acquisitionCost;
-          const wheeledQuantity = stock.wheeled?.quantity;
-          const wheeledPremium = stock.wheeled?.premium || 0;
-          const wheeledExitValue = stock.wheeled?.exitValue;
-          const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
-          const wheeledReturn = wheeledPremium + wheeledGrowth || 0;
+            const wheeledAcquisitionCost = stock.wheeled?.acquisitionCost;
+            const wheeledQuantity = stock.wheeled?.quantity;
+            const wheeledPremium = stock.wheeled?.premium || 0;
+            const wheeledExitValue = stock.wheeled?.exitValue;
+            const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
+            const wheeledReturn = wheeledPremium + wheeledGrowth || 0;
 
-          const putOnlyPremium = stock.putOnly?.premium || 0;
+            const putOnlyPremium = stock.putOnly?.premium || 0;
 
-          const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
-          const wheelingAcquisitionCost = stock.wheeling?.acquisitionCost || 0;
-          const wheelingPremium = stock.wheeling?.premium || 0;
-          const wheelingQuantity = stock.wheeling?.quantity || 0;
+            const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
+            const wheelingAcquisitionCost = stock.wheeling?.acquisitionCost || 0;
+            const wheelingPremium = stock.wheeling?.premium || 0;
+            const wheelingQuantity = stock.wheeling?.quantity || 0;
 
-          const totalQuantity = wheelingQuantity + partialBatchQuantity;
-          const avgCost =
-            totalQuantity &&
-            (wheelingAcquisitionCost +
+            const totalQuantity = wheelingQuantity + partialBatchQuantity;
+            const avgCost =
+              totalQuantity &&
+              (wheelingAcquisitionCost +
+                partialBatchAcquisitionCost -
+                wheeledReturn -
+                wheelingPremium -
+                putOnlyPremium) /
+                (wheelingQuantity + partialBatchQuantity);
+
+            const returnPct = current && avgCost && current / avgCost - 1;
+
+            const returnCurrency =
+              totalQuantity * current -
+              wheelingAcquisitionCost -
               partialBatchAcquisitionCost -
-              wheeledReturn -
-              wheelingPremium -
-              putOnlyPremium) /
-              (wheelingQuantity + partialBatchQuantity);
+              wheelingMissedUpside +
+              putOnlyPremium +
+              wheelingPremium +
+              wheeledReturn;
 
-          const returnPct = current && avgCost && current / avgCost - 1;
+            const returnGBP = (current || totalQuantity === 0) && returnCurrency / forexRate;
+            const valueGBP = calcValueGBP(stock, currentTickerPrices, rates);
 
-          const returnCurrency =
-            totalQuantity * current -
-            wheelingAcquisitionCost -
-            partialBatchAcquisitionCost -
-            wheelingMissedUpside +
-            putOnlyPremium +
-            wheelingPremium +
-            wheeledReturn;
+            const row: StocksRow = {
+              activeCalls: stock.wheeling?.activeCalls,
+              avgCost,
+              current,
+              partialBatchAcquisitionCost,
+              partialBatchQuantity,
+              putOnlyPremium,
+              returnGBP,
+              returnPct,
+              ticker,
+              totalQuantity,
+              valueGBP,
+              wheeledAcquisitionCost,
+              wheeledQuantity,
+              wheeledExitValue,
+              wheeledPremium,
+              wheeledPremiumAsPctOfReturn: wheeledPremium / wheeledReturn,
+              wheeledGrowth,
+              wheeledGrowthAsPctOfReturn: wheeledGrowth / wheeledReturn,
+              wheeledReturn,
+              wheeledReturnPct: wheeledReturn / wheeledAcquisitionCost,
+              wheelingAcquisitionCost,
+              wheelingPremium,
+              wheelingQuantity,
+            };
 
-          const returnGBP = (current || totalQuantity === 0) && returnCurrency / forexRate;
-          const valueGBP = calcValueGBP(stock, currentTickerPrices, rates);
+            totals.returnGBP.value += returnGBP;
+            totals.valueGBP.value += valueGBP;
 
-          const row: StocksRow = {
-            activeCalls: stock.wheeling?.activeCalls,
-            avgCost,
-            current,
-            partialBatchAcquisitionCost,
-            partialBatchQuantity,
-            putOnlyPremium,
-            returnGBP,
-            returnPct,
-            ticker,
-            totalQuantity,
-            valueGBP,
-            wheeledAcquisitionCost,
-            wheeledQuantity,
-            wheeledExitValue,
-            wheeledPremium,
-            wheeledPremiumAsPctOfReturn: wheeledPremium / wheeledReturn,
-            wheeledGrowth,
-            wheeledGrowthAsPctOfReturn: wheeledGrowth / wheeledReturn,
-            wheeledReturn,
-            wheeledReturnPct: wheeledReturn / wheeledAcquisitionCost,
-            wheelingAcquisitionCost,
-            wheelingPremium,
-            wheelingQuantity,
-          };
+            return (
+              <tr key={rowIndex}>
+                {headings.map(({ name, format = (v) => v, align = 'right' }, index) => (
+                  <td
+                    className={cx({
+                      [styles[align]]: align === 'right',
+                      [colour]: name === 'ticker',
+                      [styles.contrast]: rowIndex % 2 && index > 0,
+                      [styles.freezeFirstTdColumn]: index === 0,
+                    })}
+                    key={index}
+                  >
+                    {!!row[name] && format(row[name])}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
 
-          totals.returnGBP.value += returnGBP;
-          totals.valueGBP.value += valueGBP;
-
-          return (
-            <tr key={rowIndex}>
-              {headings.map(({ name, format = (v) => v, align = 'right' }, index) => (
-                <td
-                  className={cx({
-                    [styles[align]]: align === 'right',
-                    [colour]: name === 'ticker',
-                    [styles.contrast]: rowIndex % 2 && index > 0,
-                    [styles.freezeFirstTdColumn]: index === 0,
-                  })}
-                  key={index}
-                >
-                  {!!row[name] && format(row[name])}
-                </td>
-              ))}
-            </tr>
-          );
-        })}
-
-        <tr>
-          {headings.map(({ name, format, align = 'right' }, index) => (
-            <td
-              className={cx(styles.total, {
-                [styles[align]]: align === 'right',
-              })}
-              key={index}
-            >
-              {!!totals[name]?.value && format(totals[name].value)}
-            </td>
-          ))}
-        </tr>
-      </tbody>
-    </table>
+          <tr>
+            {headings.map(({ name, format, align = 'right' }, index) => (
+              <td
+                className={cx(styles.total, {
+                  [styles[align]]: align === 'right',
+                })}
+                key={index}
+              >
+                {!!totals[name]?.value && format(totals[name].value)}
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </>
   );
 };
 

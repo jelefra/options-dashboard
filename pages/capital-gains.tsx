@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -126,46 +127,52 @@ const CapitalGains = () => {
   );
 
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          <th rowSpan={2}>Month</th>
-          {accountsInfo.map(({ name, currencies, colour }) => (
-            <th colSpan={currencies.length} className={colour} key={name}>
-              {name}
-            </th>
-          ))}
-        </tr>
-        <tr>
-          {accountsInfo.map(({ name, currencies }) =>
-            currencies.map((currency) => (
-              <th className={styles.columnWidth65} key={`${name}-${currency}`}>
-                {currency}
+    <>
+      <Head>
+        <title>Capital gains</title>
+        <link rel="icon" href="/capital-gains.ico" />
+      </Head>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th rowSpan={2}>Month</th>
+            {accountsInfo.map(({ name, currencies, colour }) => (
+              <th colSpan={currencies.length} className={colour} key={name}>
+                {name}
               </th>
-            ))
-          )}
-        </tr>
-      </thead>
-      <tbody>
-        {Object.entries(gains).map(([month, accountData], rowIndex) => (
-          <tr className={cx({ [styles.contrast]: rowIndex % 2 })} key={month}>
-            <td>{month}</td>
+            ))}
+          </tr>
+          <tr>
             {accountsInfo.map(({ name, currencies }) =>
               currencies.map((currency) => (
-                <td
-                  className={cx(styles.right, {
-                    [styles.contrast]: rowIndex % 2,
-                  })}
-                  key={`${month}-${name}-${currency}`}
-                >
-                  {thousands(accountData[name]?.[currency]?.gain || 0)}
-                </td>
+                <th className={styles.columnWidth65} key={`${name}-${currency}`}>
+                  {currency}
+                </th>
               ))
             )}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {Object.entries(gains).map(([month, accountData], rowIndex) => (
+            <tr className={cx({ [styles.contrast]: rowIndex % 2 })} key={month}>
+              <td>{month}</td>
+              {accountsInfo.map(({ name, currencies }) =>
+                currencies.map((currency) => (
+                  <td
+                    className={cx(styles.right, {
+                      [styles.contrast]: rowIndex % 2,
+                    })}
+                    key={`${month}-${name}-${currency}`}
+                  >
+                    {thousands(accountData[name]?.[currency]?.gain || 0)}
+                  </td>
+                ))
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
   );
 };
 
