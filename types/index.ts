@@ -5,7 +5,7 @@ export type Stock = {
   colour?: string;
   currency: string;
   officialTicker?: string;
-  optionSize: number;
+  optionSize?: number;
   ticker: string;
 };
 
