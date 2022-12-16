@@ -85,12 +85,17 @@ const Stocks = () => {
     align?: 'default' | 'right';
   }[] = [
     { name: 'ticker', section: 'ticker', align: 'default' },
-    { name: 'partialBatchAcquisitionCost', section: 'partialBatch', format: thousands },
-    { name: 'partialBatchQuantity', section: 'partialBatch', format: thousands },
-    { name: 'putOnlyPremium', section: 'putOnly', format: thousands },
+    { name: 'totalQuantity', section: 'summary', format: thousands },
+    { name: 'activeCalls', section: 'summary' },
+    { name: 'avgCost', section: 'summary', format: decimalTwo },
+    { name: 'current', section: 'summary', format: decimalTwo },
+    { name: 'returnPct', section: 'summary', format: pctOne },
+    { name: 'returnGBP', section: 'summary', format: thousands },
+    { name: 'valueGBP', section: 'summary', format: thousands },
     { name: 'wheelingAcquisitionCost', section: 'wheeling', format: thousands },
     { name: 'wheelingQuantity', section: 'wheeling', format: thousands },
     { name: 'wheelingPremium', section: 'wheeling', format: thousands },
+    { name: 'putOnlyPremium', section: 'putOnly', format: thousands },
     { name: 'wheeledAcquisitionCost', section: 'wheeled', format: thousands },
     { name: 'wheeledQuantity', section: 'wheeled' },
     { name: 'wheeledExitValue', section: 'wheeled', format: thousands },
@@ -100,13 +105,8 @@ const Stocks = () => {
     { name: 'wheeledGrowthAsPctOfReturn', section: 'wheeled', format: pctZero },
     { name: 'wheeledReturn', section: 'wheeled', format: thousands },
     { name: 'wheeledReturnPct', section: 'wheeled', format: pctZero },
-    { name: 'totalQuantity', section: 'summary', format: thousands },
-    { name: 'activeCalls', section: 'summary' },
-    { name: 'avgCost', section: 'summary', format: decimalTwo },
-    { name: 'current', section: 'summary', format: decimalTwo },
-    { name: 'returnPct', section: 'summary', format: pctOne },
-    { name: 'returnGBP', section: 'summary', format: thousands },
-    { name: 'valueGBP', section: 'summary', format: thousands },
+    { name: 'partialBatchAcquisitionCost', section: 'partialBatch', format: thousands },
+    { name: 'partialBatchQuantity', section: 'partialBatch', format: thousands },
   ];
 
   type SectionName = 'ticker' | 'partialBatch' | 'putOnly' | 'wheeling' | 'wheeled' | 'summary';
