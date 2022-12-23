@@ -7,6 +7,8 @@ import Earnings from '../components/Earnings';
 import AllocationSummary from '../components/AllocationSummary';
 import ManageIBKRData from '../components/ManageIBKRData';
 import Currencies from '../components/Currencies';
+import Forex from '../components/Forex';
+import Weight from '../components/Weight';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import StocksAPIUsage from '../components/StocksAPIUsage';
 import ExcessLiquidity from '../components/ExcessLiquidity';
@@ -106,8 +108,20 @@ const Home = () => {
       0
     );
 
+  const currencies =
+    ledgers &&
+    [
+      ...new Set(
+        Object.values(ledgers)
+          .filter(Boolean)
+          .flatMap((elem) => Object.keys(elem))
+          .filter((currency) => currency !== 'BASE')
+      ),
+    ].sort();
+
   const showAllocationSummary = currentTickerPrices && rates && cash;
-  const showCurrencies = currentTickerPrices && withAllLedgers && rates;
+  const showCurrencyWeights = currentTickerPrices && withAllLedgers && rates;
+  const showForex = withOneLedger && rates;
   const showExcessLiquidity = withIBKRData && (withOneLedger || withOneSummary);
 
   return (
@@ -133,14 +147,20 @@ const Home = () => {
         ]}
         now={NOW}
       />
-      {showCurrencies && (
-        <Currencies
-          currentTickerPrices={currentTickerPrices}
-          ledgers={ledgers}
-          rates={rates}
-          trades={trades}
-          transactions={transactions}
-        />
+      {(showCurrencyWeights || showForex) && (
+        <Currencies currencies={currencies}>
+          {showCurrencyWeights && (
+            <Weight
+              currencies={currencies}
+              currentTickerPrices={currentTickerPrices}
+              ledgers={ledgers}
+              rates={rates}
+              trades={trades}
+              transactions={transactions}
+            />
+          )}
+          {showForex && <Forex currencies={currencies} rates={rates} />}
+        </Currencies>
       )}
       {showExcessLiquidity && (
         <ExcessLiquidity ledgers={ledgers} summaries={summaries} trades={trades} />
