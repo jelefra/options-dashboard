@@ -14,22 +14,16 @@ import styles from '../styles/Table.module.css';
 const NOW = dayjs();
 
 const ExcessLiquidity = ({
+  currencies,
   ledgers,
   summaries,
   trades,
 }: {
+  currencies: string[];
   ledgers: Ledgers;
   summaries: Summaries;
   trades: TradeData[];
 }) => {
-  const currencies = Array.from(
-    new Set(
-      Object.values(ledgers)
-        .filter(Boolean)
-        .flatMap((ledger) => Object.keys(ledger).filter((currency) => currency !== 'BASE'))
-    )
-  ).sort();
-
   const accountsToDisplay = Object.values(accounts).filter(
     (account) => summaries[`summary-${account.id}`] || ledgers[`ledger-${account.id}`]
   );

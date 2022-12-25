@@ -114,7 +114,7 @@ const Home = () => {
       ...new Set(
         Object.values(ledgers)
           .filter(Boolean)
-          .flatMap((elem) => Object.keys(elem))
+          .flatMap((ledger) => Object.keys(ledger))
           .filter((currency) => currency !== 'BASE')
       ),
     ].sort();
@@ -163,7 +163,12 @@ const Home = () => {
         </Currencies>
       )}
       {showExcessLiquidity && (
-        <ExcessLiquidity ledgers={ledgers} summaries={summaries} trades={trades} />
+        <ExcessLiquidity
+          currencies={currencies}
+          ledgers={ledgers}
+          summaries={summaries}
+          trades={trades}
+        />
       )}
       <div>
         {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
