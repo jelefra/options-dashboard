@@ -296,7 +296,7 @@ const Call = () => {
   return (
     <>
       <Head>
-        <title>Call</title>
+        <title>Calls</title>
         <link rel="icon" href="/call.ico" />
       </Head>
       <table className={styles.table}>
