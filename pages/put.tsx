@@ -153,7 +153,7 @@ const Put = () => {
             const date = dayjs(trade.date, INPUT_DATE_FORMAT);
             const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
             const dteTotal = calcDteTotal(expiry, date);
-            const low = current && strike - tradePrice - commission / optionSize;
+            const low = strike - tradePrice + commission / optionSize;
             const high = stockPrice + tradePrice - commission / optionSize;
             const cashEquivalent = optionSize * strike;
             const netReturn = optionSize * tradePrice - commission;
