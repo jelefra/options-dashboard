@@ -41,8 +41,16 @@
   background-color: #F6F6F6;
 }
 
-.dwarfed {
-  background-color: bisque;
+.warning {
+  background-color: Bisque;
+}
+
+.danger {
+  background-color: LightSalmon;
+}
+
+.info {
+  background-color: LemonChiffon;
 }
 
 .closeTradePriceInput {

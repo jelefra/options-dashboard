@@ -14,6 +14,7 @@ export const DISPLAY = {
   account: 'Account',
   activeCalls: 'Active calls',
   acquisitionCost: 'Acquisition cost',
+  daysToEarnings: 'Days to earnings',
   amount: 'Amount',
   assignmentPct: 'Assignment %',
   avgCost: 'Avg cost',

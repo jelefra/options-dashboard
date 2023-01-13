@@ -12,6 +12,10 @@ import {
   calcPriceIncrease,
   calcReturnPctForPeriod,
   removeNullValues,
+  formatDaysToEarnings,
+  daysToEarningsInfo,
+  daysToEarningsWarning,
+  daysToEarningsDanger,
 } from '../utils';
 import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
@@ -25,7 +29,7 @@ import {
   TransactionData,
 } from '../types';
 
-import { DISPLAY } from '../constants';
+import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
 
 // @ts-ignore
 import tradesData from '../data/options.csv';
@@ -33,6 +37,7 @@ import tradesData from '../data/options.csv';
 import transactionsData from '../data/transactions.csv';
 import tickers from '../data/tickers';
 import accounts from '../data/accounts';
+import earnings from '../data/earnings';
 
 import styles from '../styles/Table.module.css';
 
@@ -112,6 +117,7 @@ const Call = () => {
     { name: 'expiry', format: dateShortTerm, align: 'default' },
     { name: 'dteTotal' },
     { name: 'dteCurrent' },
+    { name: 'daysToEarnings', format: formatDaysToEarnings, align: 'default' },
     { name: 'tradePrice', format: decimalTwo },
     { name: 'stockPrice', format: decimalTwo },
     { name: 'current', format: decimalTwo, scope: 'all' },
@@ -167,6 +173,8 @@ const Call = () => {
             const forexRate = rates[currency];
             const current = currentTickerPrices[ticker];
 
+            const earningsDate = dayjs(earnings[ticker].date, INPUT_DATE_FORMAT);
+            const daysToEarnings = earningsDate.diff(expiry, 'day');
             const daysTotal = expiry?.diff(acquisitionDate, 'day');
             const high = current && strike + tradePrice - commission / optionSize;
             const returnPctLastCall =
@@ -213,6 +221,7 @@ const Call = () => {
               costBasisDrop: netCost / unitAcquisitionCost - 1,
               current,
               date,
+              daysToEarnings,
               daysTotal,
               dteCurrent,
               dteTotal: calcDteTotal(expiry, date),
@@ -252,20 +261,32 @@ const Call = () => {
                     name === 'assignmentPct' ||
                     name === 'dteCurrent' ||
                     name === 'highPct' ||
-                    name === 'costBasisDrop';
+                    name === 'costBasisDrop' ||
+                    name === 'daysToEarnings';
+
+                  const earningsStatus = earnings[ticker].confirmed;
+                  const dayToEarningsClass = name === 'daysToEarnings' && {
+                    [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
+                    [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
+                    [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
+                  };
+
                   return (
                     <td
-                      className={cx({
-                        [styles[align]]: align === 'right',
-                        [colour]: name === 'batchCode',
-                        [accountColour]: name === 'account',
-                        [styles.contrast]: rowIndex % 2 && showContrast,
-                        [styles.freezeFirstTdColumn]: index === 0,
-                        [styles.freezeSecondTdColumn]: index === 1,
-                        [styles.dwarfed]:
-                          current > high &&
-                          (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
-                      })}
+                      className={cx(
+                        {
+                          [styles[align]]: align === 'right',
+                          [colour]: name === 'batchCode',
+                          [accountColour]: name === 'account',
+                          [styles.contrast]: rowIndex % 2 && showContrast,
+                          [styles.freezeFirstTdColumn]: index === 0,
+                          [styles.freezeSecondTdColumn]: index === 1,
+                          [styles.warning]:
+                            current > high &&
+                            (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
+                        },
+                        dayToEarningsClass
+                      )}
                       key={index}
                     >
                       {(!!row[name] || showZeroValues) && format(row[name])}

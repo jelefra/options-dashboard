@@ -27,3 +27,14 @@ export const isCurrentPut = ({ closePrice, expiry, type }: TradeData, now: Dayjs
 
 export const removeNullValues = (obj) =>
   Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== null));
+
+export const formatDaysToEarnings = (n: number) => (Math.abs(n) < 15 ? n : '');
+
+export const daysToEarningsInfo = (daysToEarnings: number, confirmed: boolean) =>
+  daysToEarnings > 0 && daysToEarnings < 15 && !confirmed;
+
+export const daysToEarningsWarning = (daysToEarnings: number, confirmed: boolean) =>
+  daysToEarnings > -15 && daysToEarnings <= 0 && !confirmed;
+
+export const daysToEarningsDanger = (daysToEarnings: number, confirmed: boolean) =>
+  daysToEarnings > -15 && daysToEarnings < 0 && confirmed;

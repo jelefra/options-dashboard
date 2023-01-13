@@ -80,6 +80,7 @@ type Row = {
   assignmentPct: number;
   current: number;
   date: Dayjs;
+  daysToEarnings: number;
   dteCurrent: number;
   dteTotal: number;
   expiry: Dayjs;

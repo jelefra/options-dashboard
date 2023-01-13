@@ -11,6 +11,7 @@ import CloseTradePriceInput from '../components/CloseTradePriceInput';
 import tradesData from '../data/options.csv';
 import tickers from '../data/tickers';
 import accounts from '../data/accounts';
+import earnings from '../data/earnings';
 
 import { dateShortTerm, decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import {
@@ -21,6 +22,10 @@ import {
   calcReturnPctForPeriod,
   isCurrentPut,
   removeNullValues,
+  formatDaysToEarnings,
+  daysToEarningsInfo,
+  daysToEarningsWarning,
+  daysToEarningsDanger,
 } from '../utils';
 
 import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
@@ -87,6 +92,7 @@ const Put = () => {
     { name: 'expiry', format: dateShortTerm, align: 'default' },
     { name: 'dteTotal' },
     { name: 'dteCurrent' },
+    { name: 'daysToEarnings', format: formatDaysToEarnings, align: 'default' },
     { name: 'tradePrice', format: decimalTwo },
     { name: 'stockPrice', format: decimalTwo },
     { name: 'strike', format: decimalTwo },
@@ -153,6 +159,8 @@ const Put = () => {
             const date = dayjs(trade.date, INPUT_DATE_FORMAT);
             const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
             const dteTotal = calcDteTotal(expiry, date);
+            const earningsDate = dayjs(earnings[ticker].date, INPUT_DATE_FORMAT);
+            const daysToEarnings = earningsDate.diff(expiry, 'day');
             const low = strike - tradePrice + commission / optionSize;
             const high = stockPrice + tradePrice - commission / optionSize;
             const cashEquivalent = optionSize * strike;
@@ -199,6 +207,7 @@ const Put = () => {
               ),
               current,
               date,
+              daysToEarnings,
               differenceGBP,
               dteCurrent,
               dteTotal,
@@ -233,18 +242,29 @@ const Put = () => {
                     name === 'assignmentPct' ||
                     name === 'dteCurrent' ||
                     name === 'highPct' ||
-                    name === 'lowPct';
+                    name === 'lowPct' ||
+                    name === 'daysToEarnings';
+
+                  const earningsStatus = earnings[ticker].confirmed;
+                  const dayToEarningsClass = name === 'daysToEarnings' && {
+                    [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
+                    [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
+                    [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
+                  };
 
                   return (
                     <td
-                      className={cx({
-                        [styles[align]]: align === 'right',
-                        [colour]: name === 'ticker',
-                        [accountColour]: name === 'account',
-                        [styles.contrast]: tradeIndex % 2 && index > 1,
-                        [styles.freezeFirstTdColumn]: index === 0,
-                        [styles.freezeSecondTdColumn]: index === 1,
-                      })}
+                      className={cx(
+                        {
+                          [styles[align]]: align === 'right',
+                          [colour]: name === 'ticker',
+                          [accountColour]: name === 'account',
+                          [styles.contrast]: tradeIndex % 2 && index > 1,
+                          [styles.freezeFirstTdColumn]: index === 0,
+                          [styles.freezeSecondTdColumn]: index === 1,
+                        },
+                        dayToEarningsClass
+                      )}
                       key={index}
                     >
                       {(!!row[name] || showZeroValues) && format(row[name])}
