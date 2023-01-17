@@ -44,15 +44,6 @@ const calcValue = (stock, current) => {
   return totalQuantity * current - wheelingMissedUpside;
 };
 
-// Approximate as not using historical conversion rate
-const calcPutOnlyPremiumGBP = (stock, rates) => {
-  const { ticker } = stock;
-  const putOnlyPremium = stock.putOnly?.premium;
-  const { currency } = tickers[ticker];
-  const forexRate = rates[currency];
-  return putOnlyPremium / forexRate;
-};
-
 const Stocks = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [rates, setRates] = useState<ForexRates>(null);
@@ -93,6 +84,7 @@ const Stocks = () => {
     { name: 'returnPct', section: 'summary', format: pctOne },
     { name: 'returnGBP', section: 'summary', format: thousands },
     { name: 'valueGBP', section: 'summary', format: thousands },
+    { name: 'allocation', section: 'summary', format: pctOne },
     { name: 'wheelingAcquisitionCost', section: 'wheeling', format: thousands },
     { name: 'wheelingQuantity', section: 'wheeling', format: thousands },
     { name: 'wheelingPremium', section: 'wheeling', format: thousands },
@@ -196,18 +188,109 @@ const Stocks = () => {
     }
   }
 
-  const orderedStocks = Object.values(stocks).sort((stockA, stockB) =>
-    !(stockA.partialBatch || stockA.wheeling || stockB.partialBatch || stockB.wheeling)
-      ? calcPutOnlyPremiumGBP(stockB, rates) - calcPutOnlyPremiumGBP(stockA, rates)
-      : calcValueGBP(stockB, currentTickerPrices, rates) -
-        calcValueGBP(stockA, currentTickerPrices, rates)
-  );
-
   // eslint-disable-next-line no-unused-vars
   const totals: { [key in keyof StocksRowTotal]: { value: number; format?: Function } } = {
     returnGBP: { value: 0 },
     valueGBP: { value: 0 },
   };
+
+  const stockData: StocksRow[] = Object.values(stocks).map((stock) => {
+    const { ticker } = stock;
+    const { colour, currency } = tickers[ticker];
+    const current = currentTickerPrices[ticker];
+    const forexRate = rates[currency];
+
+    const partialBatchQuantity = stock.partialBatch?.quantity || 0;
+    const partialBatchAcquisitionCost = stock.partialBatch?.acquisitionCost || 0;
+
+    const wheeledAcquisitionCost = stock.wheeled?.acquisitionCost;
+    const wheeledQuantity = stock.wheeled?.quantity;
+    const wheeledPremium = stock.wheeled?.premium || 0;
+    const wheeledExitValue = stock.wheeled?.exitValue;
+    const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
+    const wheeledReturn = wheeledPremium + wheeledGrowth || 0;
+
+    const putOnlyPremium = stock.putOnly?.premium || 0;
+
+    const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
+    const wheelingAcquisitionCost = stock.wheeling?.acquisitionCost || 0;
+    const wheelingPremium = stock.wheeling?.premium || 0;
+    const wheelingQuantity = stock.wheeling?.quantity || 0;
+
+    const totalQuantity = wheelingQuantity + partialBatchQuantity;
+    const avgCost =
+      totalQuantity &&
+      (wheelingAcquisitionCost +
+        partialBatchAcquisitionCost -
+        wheeledReturn -
+        wheelingPremium -
+        putOnlyPremium) /
+        (wheelingQuantity + partialBatchQuantity);
+
+    const returnPct = current && avgCost && current / avgCost - 1;
+
+    const returnCurrency =
+      totalQuantity * current -
+      wheelingAcquisitionCost -
+      partialBatchAcquisitionCost -
+      wheelingMissedUpside +
+      putOnlyPremium +
+      wheelingPremium +
+      wheeledReturn;
+
+    const returnGBP = (current || totalQuantity === 0) && returnCurrency / forexRate;
+    const valueGBP = calcValueGBP(stock, currentTickerPrices, rates);
+
+    totals.returnGBP.value += returnGBP;
+    totals.valueGBP.value += valueGBP;
+
+    return {
+      activeCalls: stock.wheeling?.activeCalls,
+      avgCost,
+      colour,
+      current,
+      partialBatchAcquisitionCost,
+      partialBatchQuantity,
+      putOnlyPremium,
+      // Ballpark as not using historical conversion rate
+      putOnlyPremiumGBP: putOnlyPremium / forexRate,
+      returnGBP,
+      returnPct,
+      ticker,
+      totalQuantity,
+      valueGBP,
+      wheeledAcquisitionCost,
+      wheeledQuantity,
+      wheeledExitValue,
+      wheeledPremium,
+      wheeledPremiumAsPctOfReturn: wheeledPremium / wheeledReturn,
+      wheeledGrowth,
+      wheeledGrowthAsPctOfReturn: wheeledGrowth / wheeledReturn,
+      wheeledReturn,
+      wheeledReturnPct: wheeledReturn / wheeledAcquisitionCost,
+      wheelingAcquisitionCost,
+      wheelingPremium,
+      wheelingMissedUpside: stock.wheeling?.missedUpside || 0,
+      wheelingQuantity,
+    };
+  });
+
+  const rows: StocksRow[] = stockData
+    .map((stockData) => {
+      const valueGBP = stockData.valueGBP;
+      const allocation = valueGBP / totals.valueGBP.value;
+      return { ...stockData, allocation };
+    })
+    .sort((stockA, stockB) =>
+      !(
+        stockA.partialBatchQuantity ||
+        stockA.wheelingQuantity ||
+        stockB.partialBatchQuantity ||
+        stockB.wheelingQuantity
+      )
+        ? stockB.putOnlyPremiumGBP - stockA.putOnlyPremiumGBP
+        : stockB.valueGBP - stockA.valueGBP
+    );
 
   return (
     <>
@@ -245,100 +328,23 @@ const Stocks = () => {
           </tr>
         </thead>
         <tbody>
-          {orderedStocks.map((stock, rowIndex) => {
-            const { ticker } = stock;
-            const { colour, currency } = tickers[ticker];
-            const current = currentTickerPrices[ticker];
-            const forexRate = rates[currency];
-
-            const partialBatchQuantity = stock.partialBatch?.quantity || 0;
-            const partialBatchAcquisitionCost = stock.partialBatch?.acquisitionCost || 0;
-
-            const wheeledAcquisitionCost = stock.wheeled?.acquisitionCost;
-            const wheeledQuantity = stock.wheeled?.quantity;
-            const wheeledPremium = stock.wheeled?.premium || 0;
-            const wheeledExitValue = stock.wheeled?.exitValue;
-            const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
-            const wheeledReturn = wheeledPremium + wheeledGrowth || 0;
-
-            const putOnlyPremium = stock.putOnly?.premium || 0;
-
-            const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
-            const wheelingAcquisitionCost = stock.wheeling?.acquisitionCost || 0;
-            const wheelingPremium = stock.wheeling?.premium || 0;
-            const wheelingQuantity = stock.wheeling?.quantity || 0;
-
-            const totalQuantity = wheelingQuantity + partialBatchQuantity;
-            const avgCost =
-              totalQuantity &&
-              (wheelingAcquisitionCost +
-                partialBatchAcquisitionCost -
-                wheeledReturn -
-                wheelingPremium -
-                putOnlyPremium) /
-                (wheelingQuantity + partialBatchQuantity);
-
-            const returnPct = current && avgCost && current / avgCost - 1;
-
-            const returnCurrency =
-              totalQuantity * current -
-              wheelingAcquisitionCost -
-              partialBatchAcquisitionCost -
-              wheelingMissedUpside +
-              putOnlyPremium +
-              wheelingPremium +
-              wheeledReturn;
-
-            const returnGBP = (current || totalQuantity === 0) && returnCurrency / forexRate;
-            const valueGBP = calcValueGBP(stock, currentTickerPrices, rates);
-
-            const row: StocksRow = {
-              activeCalls: stock.wheeling?.activeCalls,
-              avgCost,
-              current,
-              partialBatchAcquisitionCost,
-              partialBatchQuantity,
-              putOnlyPremium,
-              returnGBP,
-              returnPct,
-              ticker,
-              totalQuantity,
-              valueGBP,
-              wheeledAcquisitionCost,
-              wheeledQuantity,
-              wheeledExitValue,
-              wheeledPremium,
-              wheeledPremiumAsPctOfReturn: wheeledPremium / wheeledReturn,
-              wheeledGrowth,
-              wheeledGrowthAsPctOfReturn: wheeledGrowth / wheeledReturn,
-              wheeledReturn,
-              wheeledReturnPct: wheeledReturn / wheeledAcquisitionCost,
-              wheelingAcquisitionCost,
-              wheelingPremium,
-              wheelingQuantity,
-            };
-
-            totals.returnGBP.value += returnGBP;
-            totals.valueGBP.value += valueGBP;
-
-            return (
-              <tr key={rowIndex}>
-                {headings.map(({ name, format = (v) => v, align = 'right' }, index) => (
-                  <td
-                    className={cx({
-                      [styles[align]]: align === 'right',
-                      [colour]: name === 'ticker',
-                      [styles.contrast]: rowIndex % 2 && index > 0,
-                      [styles.freezeFirstTdColumn]: index === 0,
-                    })}
-                    key={index}
-                  >
-                    {!!row[name] && format(row[name])}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
+          {rows.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {headings.map(({ name, format = (v) => v, align = 'right' }, index) => (
+                <td
+                  className={cx({
+                    [styles[align]]: align === 'right',
+                    [row.colour]: row.colour && name === 'ticker',
+                    [styles.contrast]: rowIndex % 2 && index > 0,
+                    [styles.freezeFirstTdColumn]: index === 0,
+                  })}
+                  key={index}
+                >
+                  {!!row[name] && format(row[name])}
+                </td>
+              ))}
+            </tr>
+          ))}
 
           <tr>
             {headings.map(({ name, format, align = 'right' }, index) => (

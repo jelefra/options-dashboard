@@ -207,11 +207,14 @@ export type StocksRowTotal = {
 
 export type StocksRow = StocksRowTotal & {
   activeCalls: number;
+  allocation?: number;
   avgCost: number;
+  colour: string;
   current: number;
   partialBatchAcquisitionCost: number;
   partialBatchQuantity: number;
   putOnlyPremium: number;
+  putOnlyPremiumGBP: number;
   returnPct: number;
   ticker: string;
   totalQuantity: number;
@@ -225,6 +228,7 @@ export type StocksRow = StocksRowTotal & {
   wheeledReturn: number;
   wheeledReturnPct: number;
   wheelingAcquisitionCost: number;
+  wheelingMissedUpside: number;
   wheelingPremium: number;
   wheelingQuantity: number;
 };
