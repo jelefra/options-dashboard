@@ -6,7 +6,7 @@ dayjs.extend(customParseFormat);
 
 import { factorStockSplit } from './factorStockSplit';
 
-import { Batch, CurrentTickerPrices, TradeData, TransactionData } from '../types';
+import { Batch, CurrentTickerPrices, Stock, TradeData, TransactionData } from '../types';
 
 import { INPUT_DATE_FORMAT } from '../constants';
 
@@ -21,29 +21,7 @@ const processData = (
   const batches: { [key: string]: Batch } = {};
 
   const stocks: {
-    [key: string]: {
-      ticker: string;
-      partialBatch?: {
-        acquisitionCost: number;
-        quantity: number;
-      };
-      putOnly?: {
-        premium: number;
-      };
-      wheeled?: {
-        exitValue?: number;
-        acquisitionCost: number;
-        premium: number;
-        quantity: number;
-      };
-      wheeling?: {
-        activeCalls: number;
-        acquisitionCost: number;
-        premium: number;
-        quantity: number;
-        missedUpside: number;
-      };
-    };
+    [key: string]: Stock;
   } = Object.fromEntries(
     Object.keys(currentTickerPrices).map((ticker) => [ticker, { ticker: ticker }])
   );

@@ -3,10 +3,30 @@ import { Dayjs } from 'dayjs';
 
 export type Stock = {
   colour?: string;
-  currency: string;
+  currency?: string;
   officialTicker?: string;
   optionSize?: number;
   ticker: string;
+  partialBatch?: {
+    acquisitionCost: number;
+    quantity: number;
+  };
+  putOnly?: {
+    premium: number;
+  };
+  wheeled?: {
+    acquisitionCost: number;
+    exitValue?: number;
+    premium: number;
+    quantity: number;
+  };
+  wheeling?: {
+    activeCalls: number;
+    acquisitionCost: number;
+    missedUpside: number;
+    premium: number;
+    quantity: number;
+  };
 };
 
 type Operation = {
