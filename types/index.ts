@@ -2,8 +2,9 @@ import { ReactElement } from 'react';
 import { Dayjs } from 'dayjs';
 
 export type Stock = {
-  colour?: string;
-  currency?: string;
+  colour: string;
+  currency: string;
+  current?: number;
   officialTicker?: string;
   optionSize?: number;
   ticker: string;

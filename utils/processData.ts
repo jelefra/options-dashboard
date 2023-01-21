@@ -23,7 +23,13 @@ const processData = (
   const stocks: {
     [key: string]: Stock;
   } = Object.fromEntries(
-    Object.keys(currentTickerPrices).map((ticker) => [ticker, { ticker: ticker }])
+    Object.keys(currentTickerPrices).map((ticker) => {
+      const { colour, currency, optionSize } = tickers[ticker];
+      return [
+        ticker,
+        { colour, currency, current: currentTickerPrices[ticker], optionSize, ticker },
+      ];
+    })
   );
 
   const buildStocks = Object.keys(stocks).length > 0;
