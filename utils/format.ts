@@ -19,3 +19,5 @@ export const thousands = (x: number) => x && x.toLocaleString().split('.')[0];
 export const thousandsGBP = (x: number) => x && `£\u00A0${x.toLocaleString().split('.')[0]}`;
 
 export const roundDown = (x: number, multiple = 100) => Math.floor(x / multiple) * multiple;
+
+export const hoursToDays = (h: number) => (h <= 0 ? Math.ceil(h / 24) - 1 : Math.floor(h / 24));
