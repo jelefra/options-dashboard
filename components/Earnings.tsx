@@ -46,7 +46,7 @@ const Earnings = ({ data, now }: { data: EarningsDates; now: Dayjs }) => (
               <td style={style} className={styles.right}>
                 {daysToEarnings}
               </td>
-              <td style={style}>{confirmed ? timing : ''}</td>
+              <td style={style}>{!mute ? timing : ''}</td>
             </tr>
           );
         })}
