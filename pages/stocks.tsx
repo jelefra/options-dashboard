@@ -286,7 +286,7 @@ const Stocks = () => {
         stockB.partialBatch?.quantity ||
         stockB.wheeling?.quantity
       )
-        ? stockB.putOnly?.premiumGBP - stockA.putOnly?.premiumGBP
+        ? stockB.returnGBP - stockA.returnGBP
         : stockB.valueGBP - stockA.valueGBP
     );
 
