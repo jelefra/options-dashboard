@@ -81,12 +81,16 @@ const processData = (
         partialBatch.acquisitionCost += stockPrice * quantity + commission;
         partialBatch.quantity += factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
       }
+    } else if (type === 'Sale') {
+      if (batchCodesStr) {
+        // TODO
+        // ...
+      } else if (buildStocks) {
+        const partialBatch = stocks[ticker].partialBatch;
+        partialBatch.acquisitionCost -= stockPrice * quantity + commission;
+        partialBatch.quantity -= factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
+      }
     }
-
-    // TODO
-    // if (type === 'Sale' && batchCodes) {
-    //   ...
-    // }
   }
 
   for (let trade of trades) {
