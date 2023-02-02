@@ -12,7 +12,6 @@ export const IBKR_CACHE_DURATION = THIRTY_DAYS_IN_SECONDS;
 
 export const DISPLAY = {
   account: 'Account',
-  activeCalls: 'Active calls',
   acquisitionCost: 'Acquisition cost',
   allocation: 'Allocation',
   daysToEarnings: 'Days to earnings',
@@ -79,6 +78,7 @@ export const DISPLAY = {
   wheeledReturn: 'Return',
   wheeledReturnPct: '%',
   wheeling: 'Wheeling',
+  wheelingActiveCalls: 'Active calls',
   wheelingAcquisitionCost: 'Acquisition cost',
   wheelingPremium: 'Premium',
   wheelingQuantity: 'Quantity',

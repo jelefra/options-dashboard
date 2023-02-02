@@ -6,11 +6,13 @@ import dayjs from 'dayjs';
 import processData from '../utils/processData';
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import { removeNullValues } from '../utils';
+import flatten from '../utils/flatten';
 
 import {
   CurrentTickerPrices,
-  StocksRow,
   ForexRates,
+  StockEnriched,
+  StocksHeadings,
   StocksRowTotal,
   TradeData,
   TransactionData,
@@ -71,14 +73,14 @@ const Stocks = () => {
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
   const headings: {
-    name: keyof StocksRow;
+    name: keyof StocksHeadings;
     section: SectionName;
     format?: Function;
     align?: 'default' | 'right';
   }[] = [
     { name: 'ticker', section: 'ticker', align: 'default' },
     { name: 'totalQuantity', section: 'summary', format: thousands },
-    { name: 'activeCalls', section: 'summary' },
+    { name: 'wheelingActiveCalls', section: 'summary' },
     { name: 'avgCost', section: 'summary', format: decimalTwo },
     { name: 'current', section: 'summary', format: decimalTwo },
     { name: 'returnPct', section: 'summary', format: pctOne },
@@ -161,11 +163,11 @@ const Stocks = () => {
         quantity: 0,
         premium: 0,
       };
-      const stock = stocks[ticker].wheeled;
-      stock.acquisitionCost += acquisitionCost;
-      stock.exitValue += exitValue;
-      stock.premium += netCumulativePremium;
-      stock.quantity += optionSize;
+      const wheeled = stocks[ticker].wheeled;
+      wheeled.acquisitionCost += acquisitionCost;
+      wheeled.exitValue += exitValue;
+      wheeled.premium += netCumulativePremium;
+      wheeled.quantity += optionSize;
     } else {
       stocks[ticker].wheeling = stocks[ticker].wheeling || {
         activeCalls: 0,
@@ -179,12 +181,12 @@ const Stocks = () => {
       const current = currentTickerPrices[ticker];
       const missedUpside = strike ? Math.max(current - strike, 0) * optionSize : 0;
 
-      const stock = stocks[ticker].wheeling;
-      stock.activeCalls += currentCall ? 1 : 0;
-      stock.missedUpside += missedUpside;
-      stock.acquisitionCost += acquisitionCost;
-      stock.premium += netCumulativePremium;
-      stock.quantity += optionSize;
+      const wheeling = stocks[ticker].wheeling;
+      wheeling.activeCalls += currentCall ? 1 : 0;
+      wheeling.missedUpside += missedUpside;
+      wheeling.acquisitionCost += acquisitionCost;
+      wheeling.premium += netCumulativePremium;
+      wheeling.quantity += optionSize;
     }
   }
 
@@ -194,17 +196,14 @@ const Stocks = () => {
     valueGBP: { value: 0 },
   };
 
-  const stockData: StocksRow[] = Object.values(stocks).map((stock) => {
-    const { ticker } = stock;
-    const { colour, currency } = tickers[ticker];
-    const current = currentTickerPrices[ticker];
+  const stockData: StockEnriched[] = Object.values(stocks).map((stock) => {
+    const { currency, current } = stock;
     const forexRate = rates[currency];
 
     const partialBatchQuantity = stock.partialBatch?.quantity || 0;
     const partialBatchAcquisitionCost = stock.partialBatch?.acquisitionCost || 0;
 
     const wheeledAcquisitionCost = stock.wheeled?.acquisitionCost;
-    const wheeledQuantity = stock.wheeled?.quantity;
     const wheeledPremium = stock.wheeled?.premium || 0;
     const wheeledExitValue = stock.wheeled?.exitValue;
     const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
@@ -245,50 +244,49 @@ const Stocks = () => {
     totals.valueGBP.value += valueGBP;
 
     return {
-      activeCalls: stock.wheeling?.activeCalls,
+      ...stock,
       avgCost,
-      colour,
       current,
-      partialBatchAcquisitionCost,
-      partialBatchQuantity,
-      putOnlyPremium,
-      // Ballpark as not using historical conversion rate
-      putOnlyPremiumGBP: putOnlyPremium / forexRate,
       returnGBP,
       returnPct,
-      ticker,
       totalQuantity,
       valueGBP,
-      wheeledAcquisitionCost,
-      wheeledQuantity,
-      wheeledExitValue,
-      wheeledPremium,
-      wheeledPremiumAsPctOfReturn: wheeledPremium / wheeledReturn,
-      wheeledGrowth,
-      wheeledGrowthAsPctOfReturn: wheeledGrowth / wheeledReturn,
-      wheeledReturn,
-      wheeledReturnPct: wheeledReturn / wheeledAcquisitionCost,
-      wheelingAcquisitionCost,
-      wheelingPremium,
-      wheelingMissedUpside: stock.wheeling?.missedUpside || 0,
-      wheelingQuantity,
+      ...(stock.partialBatch && {
+        partialBatch: { ...stock.partialBatch },
+      }),
+      ...(stock.putOnly && {
+        putOnly: { ...stock.putOnly, premiumGBP: putOnlyPremium / forexRate },
+      }),
+      ...(stock.wheeled && {
+        wheeled: {
+          ...stock.wheeled,
+          growth: wheeledGrowth,
+          growthAsPctOfReturn: wheeledGrowth / wheeledReturn,
+          premiumAsPctOfReturn: wheeledPremium / wheeledReturn,
+          return: wheeledReturn,
+          returnPct: wheeledReturn / wheeledAcquisitionCost,
+        },
+      }),
+      ...(stock.wheeling && {
+        wheeling: { ...stock.wheeling },
+      }),
     };
   });
 
-  const rows: StocksRow[] = stockData
+  const rows: StockEnriched[] = stockData
     .map((stockData) => {
       const valueGBP = stockData.valueGBP;
-      const allocation = valueGBP / totals.valueGBP.value;
-      return { ...stockData, allocation };
+      stockData.allocation = valueGBP / totals.valueGBP.value;
+      return stockData;
     })
     .sort((stockA, stockB) =>
       !(
-        stockA.partialBatchQuantity ||
-        stockA.wheelingQuantity ||
-        stockB.partialBatchQuantity ||
-        stockB.wheelingQuantity
+        stockA.partialBatch?.quantity ||
+        stockA.wheeling?.quantity ||
+        stockB.partialBatch?.quantity ||
+        stockB.wheeling?.quantity
       )
-        ? stockB.putOnlyPremiumGBP - stockA.putOnlyPremiumGBP
+        ? stockB.putOnly?.premiumGBP - stockA.putOnly?.premiumGBP
         : stockB.valueGBP - stockA.valueGBP
     );
 
@@ -340,7 +338,7 @@ const Stocks = () => {
                   })}
                   key={index}
                 >
-                  {!!row[name] && format(row[name])}
+                  {!!flatten(row)[name] && format(flatten(row)[name])}
                 </td>
               ))}
             </tr>

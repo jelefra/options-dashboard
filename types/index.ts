@@ -30,6 +30,25 @@ export type Stock = {
   };
 };
 
+export type StockEnriched = Stock & {
+  allocation?: number;
+  avgCost: number;
+  returnGBP: number;
+  returnPct: number;
+  totalQuantity: number;
+  valueGBP: number;
+  putOnly?: {
+    premiumGBP: number;
+  };
+  wheeled?: {
+    growth: number;
+    growthAsPctOfReturn: number;
+    premiumAsPctOfReturn: number;
+    return: number;
+    returnPct: number;
+  };
+};
+
 type Operation = {
   account: string;
   commission: number;
@@ -206,9 +225,9 @@ export type StocksRowTotal = {
   valueGBP: number;
 };
 
-export type StocksRow = StocksRowTotal & {
-  activeCalls: number;
-  allocation?: number;
+// Ideally would be defined programmatically from the keys of flatten(row)
+export type StocksHeadings = StocksRowTotal & {
+  allocation: number;
   avgCost: number;
   colour: string;
   current: number;
@@ -229,6 +248,7 @@ export type StocksRow = StocksRowTotal & {
   wheeledReturn: number;
   wheeledReturnPct: number;
   wheelingAcquisitionCost: number;
+  wheelingActiveCalls: number;
   wheelingMissedUpside: number;
   wheelingPremium: number;
   wheelingQuantity: number;
