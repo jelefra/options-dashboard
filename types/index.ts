@@ -179,18 +179,15 @@ export type CallRow = Row &
     unitAcquisitionCost: number;
   };
 
-export type BatchCost = {
+export type Batch = {
   acquisitionCost: number;
-  batchCode: string;
-  optionSize: number;
-};
-
-export type Batch = BatchCost & {
   account: string;
   acquisitionDate: Dayjs;
+  batchCode: string;
   currentCall?: Call;
   exitValue?: number;
   netCumulativePremium: number;
+  optionSize: number;
   origin: 'Purchase' | 'Put';
   ticker: string;
 };

@@ -18,7 +18,7 @@ const processData = ({
   trades,
   currentTickerPrices = {},
 }: {
-  now: Dayjs;
+  now?: Dayjs;
   transactions: TransactionData[];
   trades: TradeData[];
   currentTickerPrices?: CurrentTickerPrices;
@@ -148,7 +148,7 @@ const processData = ({
       }
 
       const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
-      if (expiry.isSameOrAfter(now, 'day') && !trade.closeTradePrice) {
+      if (now && expiry.isSameOrAfter(now, 'day') && !trade.closeTradePrice) {
         batch.currentCall = {
           account,
           batchCode,
