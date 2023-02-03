@@ -12,12 +12,17 @@ import { INPUT_DATE_FORMAT } from '../constants';
 
 import tickers from '../data/tickers';
 
-const processData = (
-  now: Dayjs,
-  transactions: TransactionData[],
-  trades: TradeData[],
-  currentTickerPrices: CurrentTickerPrices = {}
-) => {
+const processData = ({
+  now,
+  transactions,
+  trades,
+  currentTickerPrices = {},
+}: {
+  now: Dayjs;
+  transactions: TransactionData[];
+  trades: TradeData[];
+  currentTickerPrices?: CurrentTickerPrices;
+}) => {
   const batches: { [key: string]: Batch } = {};
 
   const stocks: {

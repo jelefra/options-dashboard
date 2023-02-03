@@ -24,7 +24,7 @@ const Weight = ({
   trades: TradeData[];
   transactions: TransactionData[];
 }) => {
-  const { batches, stocks } = processData(NOW, transactions, trades, currentTickerPrices);
+  const { batches, stocks } = processData({ now: NOW, transactions, trades, currentTickerPrices });
 
   const currencyAmounts: { [key: string]: number } = {};
 

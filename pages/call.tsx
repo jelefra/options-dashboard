@@ -70,7 +70,7 @@ const Call = () => {
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
   const trades: TradeData[] = tradesData.map(removeNullValues);
 
-  const { batches } = processData(NOW, transactions, trades);
+  const { batches } = processData({ now: NOW, transactions, trades });
 
   const batchesWithCalls = Object.entries(batches)
     .filter(([, batch]) => batch.currentCall)

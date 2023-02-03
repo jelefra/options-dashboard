@@ -150,7 +150,7 @@ const Stocks = () => {
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
 
-  const { batches, stocks } = processData(NOW, transactions, trades, currentTickerPrices);
+  const { batches, stocks } = processData({ now: NOW, transactions, trades, currentTickerPrices });
 
   for (let batch of Object.values(batches)) {
     const { acquisitionCost, currentCall, exitValue, netCumulativePremium, optionSize, ticker } =
