@@ -13,31 +13,26 @@ import { INPUT_DATE_FORMAT } from '../constants';
 import tickers from '../data/tickers';
 
 const processData = ({
-  now,
   transactions,
   trades,
   currentTickerPrices = {},
+  now,
 }: {
-  now?: Dayjs;
   transactions: TransactionData[];
   trades: TradeData[];
   currentTickerPrices?: CurrentTickerPrices;
+  now?: Dayjs;
 }) => {
   const batches: { [key: string]: Batch } = {};
 
   const stocks: {
     [key: string]: Stock;
   } = Object.fromEntries(
-    Object.keys(currentTickerPrices).map((ticker) => {
-      const { colour, currency, optionSize } = tickers[ticker];
-      return [
-        ticker,
-        { colour, currency, current: currentTickerPrices[ticker], optionSize, ticker },
-      ];
-    })
+    Object.entries(tickers).map(([ticker, stock]) => [
+      ticker,
+      { ...stock, current: currentTickerPrices[ticker] },
+    ])
   );
-
-  const buildStocks = Object.keys(stocks).length > 0;
 
   for (let transaction of transactions) {
     const {
@@ -77,7 +72,7 @@ const processData = ({
           batch.acquisitionCost += (stockPrice * quantity + commission) / batchCodes.length;
           batch.optionSize += batchQuantity;
         }
-      } else if (buildStocks) {
+      } else {
         stocks[ticker].partialBatch = stocks[ticker].partialBatch || {
           acquisitionCost: 0,
           quantity: 0,
@@ -90,7 +85,7 @@ const processData = ({
       if (batchCodesStr) {
         // TODO
         // ...
-      } else if (buildStocks) {
+      } else {
         const partialBatch = stocks[ticker].partialBatch;
         partialBatch.acquisitionCost -= stockPrice * quantity + commission;
         partialBatch.quantity -= factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
@@ -131,7 +126,7 @@ const processData = ({
           optionSize: optionSize,
           ticker,
         };
-      } else if (buildStocks) {
+      } else {
         // Put only (including current assignable puts)
         stocks[ticker].putOnly = stocks[ticker].putOnly || { premium: 0 };
         stocks[ticker].putOnly.premium +=

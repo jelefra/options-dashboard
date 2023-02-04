@@ -47,7 +47,7 @@ const Call = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
   const [rates, setRates] = useState<ForexRates>(null);
-  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>({});
 
   useEffect(() => {
     setIsLoading(true);
@@ -70,7 +70,7 @@ const Call = () => {
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
   const trades: TradeData[] = tradesData.map(removeNullValues);
 
-  const { batches } = processData({ now: NOW, transactions, trades });
+  const { batches } = processData({ transactions, trades, currentTickerPrices, now: NOW });
 
   const batchesWithCalls = Object.entries(batches)
     .filter(([, batch]) => batch.currentCall)

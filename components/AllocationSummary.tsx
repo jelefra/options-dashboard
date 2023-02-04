@@ -25,7 +25,7 @@ const AllocationSummary = ({
   trades: TradeData[];
   transactions: TransactionData[];
 }) => {
-  const { batches, stocks } = processData({ now: NOW, transactions, trades, currentTickerPrices });
+  const { batches, stocks } = processData({ transactions, trades, currentTickerPrices, now: NOW });
 
   const { wheelingGBP, notWheelingGBP } = Object.values(batches).reduce(
     (total, { currentCall = {}, exitValue, optionSize, ticker }) => {
