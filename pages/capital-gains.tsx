@@ -7,9 +7,10 @@ dayjs.extend(customParseFormat);
 import processData from '../utils/processData';
 import { dateMediumTerm, thousands } from '../utils/format';
 import { removeNullValues } from '../utils';
+import { factorStockSplit } from '../utils/factorStockSplit';
 
 import { INPUT_DATE_FORMAT } from '../constants';
-import { Account, TradeData, TransactionData } from '../types';
+import { Account, Stock, TradeData, TransactionData } from '../types';
 
 // @ts-ignore
 import tradesData from '../data/options.csv';
@@ -64,6 +65,70 @@ const CapitalGains = () => {
     if (type === 'Call' && closePrice > strike) {
       const { acquisitionCost } = batches[batchCode];
       gains[tradeMonth][account][currency].gain += strike * optionSize - acquisitionCost;
+    }
+  }
+
+  const stocks: {
+    [key: string]: {
+      [key: string]: Stock;
+    };
+  } = {};
+  for (let transaction of transactions) {
+    const {
+      account,
+      batchCodes: batchCodesStr,
+      commission,
+      date,
+      quantity,
+      stockPrice,
+      ticker,
+      type,
+    } = transaction;
+
+    const { colour, currency } = tickers[ticker];
+    stocks[account] = stocks[account] || {};
+    stocks[account][ticker] = stocks[account][ticker] || {
+      colour,
+      currency,
+      ticker,
+    };
+
+    if (type === 'Purchase') {
+      if (batchCodesStr) {
+        // TODO
+        // ...
+      } else {
+        stocks[account][ticker].partialBatch = stocks[account][ticker].partialBatch || {
+          acquisitionCost: 0,
+          quantity: 0,
+        };
+        const partialBatch = stocks[account][ticker].partialBatch;
+        partialBatch.acquisitionCost += quantity * stockPrice + commission;
+        partialBatch.quantity += factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
+      }
+    }
+
+    if (type === 'Sale') {
+      if (batchCodesStr) {
+        // TODO
+        // ...
+      } else {
+        const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
+
+        const saleAmount = quantity * stockPrice - commission;
+        const partialBatch = stocks[account][ticker].partialBatch;
+        const acquisitionCost = (partialBatch.acquisitionCost / partialBatch.quantity) * quantity;
+        const gain = saleAmount - acquisitionCost;
+
+        gains[tradeMonth] = gains[tradeMonth] || {};
+        gains[tradeMonth][account] = gains[tradeMonth][account] || {};
+        gains[tradeMonth][account][currency] = gains[tradeMonth][account][currency] || {};
+        gains[tradeMonth][account][currency].gain =
+          (gains[tradeMonth][account][currency].gain || 0) + gain;
+
+        partialBatch.acquisitionCost -= stockPrice * quantity + commission;
+        partialBatch.quantity -= factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
+      }
     }
   }
 

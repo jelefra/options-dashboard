@@ -88,7 +88,7 @@ const processData = ({
         // ...
       } else {
         const partialBatch = stocks[ticker].partialBatch;
-        partialBatch.acquisitionCost -= stockPrice * quantity + commission;
+        partialBatch.acquisitionCost -= stockPrice * quantity - commission;
         partialBatch.quantity -= factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
       }
     }
