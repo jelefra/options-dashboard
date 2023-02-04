@@ -5,8 +5,6 @@ import { pctZero } from '../utils/format';
 
 import { CurrentTickerPrices, ForexRates, Ledgers, TradeData, TransactionData } from '../types';
 
-import tickers from '../data/tickers';
-
 const NOW = dayjs();
 
 const Weight = ({
@@ -29,21 +27,20 @@ const Weight = ({
   const currencyAmounts: { [key: string]: number } = {};
 
   for (let batch of Object.values(batches)) {
-    const { optionSize, ticker } = batch;
-    const { currency } = tickers[ticker];
+    const { currency, current, optionSize } = batch;
     currencyAmounts[currency] = currencyAmounts[currency] || 0;
-    currencyAmounts[currency] += optionSize * currentTickerPrices[ticker];
+    currencyAmounts[currency] += optionSize * current;
   }
 
   for (let stock of Object.values(stocks)) {
     if (stock.partialBatch) {
       const {
-        ticker,
+        currency,
+        current,
         partialBatch: { quantity },
       } = stock;
-      const { currency } = tickers[ticker];
       currencyAmounts[currency] = currencyAmounts[currency] || 0;
-      currencyAmounts[currency] += quantity * currentTickerPrices[ticker];
+      currencyAmounts[currency] += quantity * current;
     }
   }
 

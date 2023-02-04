@@ -11,6 +11,7 @@ import flatten from '../utils/flatten';
 import {
   CurrentTickerPrices,
   ForexRates,
+  Stock,
   StockEnriched,
   StocksHeadings,
   StocksRowTotal,
@@ -24,21 +25,23 @@ import { DISPLAY } from '../constants';
 import tradesData from '../data/options.csv';
 // @ts-ignore
 import transactionsData from '../data/transactions.csv';
-import tickers from '../data/tickers';
 
 import styles from '../styles/Table.module.css';
 
 const NOW = dayjs();
 
-const calcValueGBP = (stock, currentTickerPrices, rates) => {
-  const { ticker } = stock;
-  const value = calcValue(stock, currentTickerPrices[ticker]);
-  const { currency } = tickers[ticker];
+const calcValueGBP = (
+  stock: Stock,
+  currentTickerPrices: CurrentTickerPrices,
+  rates: ForexRates
+) => {
+  const { currency, current } = stock;
+  const value = calcValue(stock, current);
   const forexRate = rates[currency];
   return value / forexRate;
 };
 
-const calcValue = (stock, current) => {
+const calcValue = (stock: Stock, current: number) => {
   const partialBatchQuantity = stock.partialBatch?.quantity || 0;
   const wheelingQuantity = stock.wheeling?.quantity || 0;
   const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
@@ -153,8 +156,15 @@ const Stocks = () => {
   const { batches, stocks } = processData({ transactions, trades, currentTickerPrices, now: NOW });
 
   for (let batch of Object.values(batches)) {
-    const { acquisitionCost, currentCall, exitValue, netCumulativePremium, optionSize, ticker } =
-      batch;
+    const {
+      acquisitionCost,
+      current,
+      currentCall,
+      exitValue,
+      netCumulativePremium,
+      optionSize,
+      ticker,
+    } = batch;
 
     if (exitValue) {
       stocks[ticker].wheeled = stocks[ticker].wheeled || {
@@ -178,7 +188,6 @@ const Stocks = () => {
       };
 
       const { strike } = currentCall || {};
-      const current = currentTickerPrices[ticker];
       const missedUpside = strike ? Math.max(current - strike, 0) * optionSize : 0;
 
       const wheeling = stocks[ticker].wheeling;

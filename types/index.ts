@@ -184,6 +184,9 @@ export type Batch = {
   account: string;
   acquisitionDate: Dayjs;
   batchCode: string;
+  colour: string;
+  currency: string;
+  current?: number;
   currentCall?: Call;
   exitValue?: number;
   netCumulativePremium: number;

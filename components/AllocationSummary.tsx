@@ -28,9 +28,7 @@ const AllocationSummary = ({
   const { batches, stocks } = processData({ transactions, trades, currentTickerPrices, now: NOW });
 
   const { wheelingGBP, notWheelingGBP } = Object.values(batches).reduce(
-    (total, { currentCall = {}, exitValue, optionSize, ticker }) => {
-      const { currency } = tickers[ticker];
-      const current = currentTickerPrices[ticker];
+    (total, { current, currentCall = {}, currency, exitValue, optionSize }) => {
       const { strike } = currentCall;
       if (strike) {
         const missedUpside = strike ? Math.max(current - strike, 0) : 0;
@@ -43,12 +41,13 @@ const AllocationSummary = ({
     { wheelingGBP: 0, notWheelingGBP: 0 }
   );
 
-  const partialBatchesGBP = Object.values(stocks).reduce((total, { ticker, partialBatch = {} }) => {
-    const { currency } = tickers[ticker];
-    const current = currentTickerPrices[ticker];
-    const quantity = partialBatch.quantity || 0;
-    return (total += (quantity * current) / rates[currency]);
-  }, 0);
+  const partialBatchesGBP = Object.values(stocks).reduce(
+    (total, { currency, current, partialBatch = {} }) => {
+      const quantity = partialBatch.quantity || 0;
+      return (total += (quantity * current) / rates[currency]);
+    },
+    0
+  );
 
   const currentPuts = trades.filter((trade) => isCurrentPut(trade, NOW)) as PutData[];
 

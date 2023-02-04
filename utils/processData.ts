@@ -49,7 +49,7 @@ const processData = ({
     if (type === 'Purchase') {
       if (batchCodesStr) {
         const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
-        const { optionSize } = tickers[ticker];
+        const { colour, currency, optionSize } = tickers[ticker];
 
         for (let batchCode of batchCodes) {
           batches[batchCode] = batches[batchCode] || {
@@ -61,6 +61,9 @@ const processData = ({
             acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
             acquisitionCost: 0,
             batchCode,
+            colour,
+            currency,
+            current: currentTickerPrices[ticker],
             netCumulativePremium: 0,
             optionSize,
             origin: 'Purchase',
@@ -107,7 +110,7 @@ const processData = ({
       type,
     } = trade;
 
-    const { optionSize } = tickers[ticker];
+    const { colour, currency, optionSize } = tickers[ticker];
 
     const netCumulativePremium =
       (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
@@ -116,9 +119,12 @@ const processData = ({
       if (closePrice && closePrice < strike) {
         batches[batchCode] = {
           account,
-          batchCode,
           acquisitionCost: strike * optionSize,
           acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
+          batchCode,
+          colour,
+          currency,
+          current: currentTickerPrices[ticker],
           netCumulativePremium,
           origin: 'Put',
           optionSize,

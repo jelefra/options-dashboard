@@ -35,7 +35,6 @@ import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
 import tradesData from '../data/options.csv';
 // @ts-ignore
 import transactionsData from '../data/transactions.csv';
-import tickers from '../data/tickers';
 import accounts from '../data/accounts';
 import earnings from '../data/earnings';
 
@@ -163,15 +162,16 @@ const Call = () => {
               acquisitionCost,
               acquisitionDate,
               batchCode,
+              colour,
+              currency,
+              current,
               currentCall,
               netCumulativePremium,
               optionSize,
               ticker,
             } = batchData;
             const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
-            const { colour, currency } = tickers[ticker];
             const forexRate = rates[currency];
-            const current = currentTickerPrices[ticker];
 
             const earningsDate = dayjs(earnings[ticker].date, INPUT_DATE_FORMAT);
             const daysToEarnings = earningsDate.diff(expiry, 'day');
