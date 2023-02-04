@@ -49,6 +49,7 @@ const processData = ({
     if (type === 'Purchase') {
       if (batchCodesStr) {
         const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
+        const { optionSize } = tickers[ticker];
 
         for (let batchCode of batchCodes) {
           batches[batchCode] = batches[batchCode] || {
@@ -61,16 +62,13 @@ const processData = ({
             acquisitionCost: 0,
             batchCode,
             netCumulativePremium: 0,
-            optionSize: 0,
+            optionSize,
             origin: 'Purchase',
             ticker,
           };
 
           const batch = batches[batchCode];
-          const batchQuantity =
-            factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT)) / batchCodes.length;
           batch.acquisitionCost += (stockPrice * quantity + commission) / batchCodes.length;
-          batch.optionSize += batchQuantity;
         }
       } else {
         stocks[ticker].partialBatch = stocks[ticker].partialBatch || {
@@ -123,7 +121,7 @@ const processData = ({
           acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
           netCumulativePremium,
           origin: 'Put',
-          optionSize: optionSize,
+          optionSize,
           ticker,
         };
       } else {
