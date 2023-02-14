@@ -36,9 +36,14 @@
   border-right: 2px solid Grey;
 }
 
-.columnWidth65 {
-  min-width: 60px;
-  max-width: 60px;
+.columnWidthMd {
+  min-width: 67px;
+  max-width: 67px;
+}
+
+.columnWidthLg {
+  min-width: 90px;
+  max-width: 90px;
 }
 
 .right {

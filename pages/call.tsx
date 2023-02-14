@@ -328,7 +328,17 @@ const Call = () => {
                 className={cx(styles.freezeFirstThRow, styles.white, styles.rotate, {
                   [styles.freezeFirstThCell]: index === 0,
                   [styles.freezeSecondThCell]: index === 1,
-                  [styles.columnWidth65]: name === 'account' || name === 'return30DPctResidual',
+                  [styles.columnWidthMd]:
+                    name === 'account' ||
+                    name === 'return30DPctResidual' ||
+                    name === 'returnPct' ||
+                    name === 'returnGBP' ||
+                    name === 'valueGBP' ||
+                    name === 'current' ||
+                    name === 'assignmentPct' ||
+                    name === 'high' ||
+                    name === 'highPct',
+                  [styles.columnWidthLg]: name === 'status',
                 })}
                 key={index}
               >

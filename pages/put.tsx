@@ -137,7 +137,7 @@ const Put = () => {
                 className={cx(styles.white, styles.freezeFirstThRow, styles.rotate, {
                   [styles.freezeFirstThCell]: index === 0,
                   [styles.freezeSecondThCell]: index === 1,
-                  [styles.columnWidth65]: name === 'account' || name === 'return30DPctResidual',
+                  [styles.columnWidthMd]: name === 'account' || name === 'return30DPctResidual',
                 })}
                 key={index}
               >

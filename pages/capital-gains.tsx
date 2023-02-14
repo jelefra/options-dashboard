@@ -303,7 +303,7 @@ const CapitalGains = () => {
               Object.entries(currenciesCapitalGains).map(([currency, currencyCapitalGains]) => (
                 <th
                   colSpan={Object.values(currencyCapitalGains).filter(Boolean).length}
-                  className={cx(styles.columnWidth65, styles.leftEdge, styles.rightEdge)}
+                  className={cx(styles.leftEdge, styles.rightEdge)}
                   key={`${account}-${currency}`}
                 >
                   {currency}
