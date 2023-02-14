@@ -113,6 +113,7 @@ export type Account = {
   capitalGains: boolean;
   colour: string;
   currencies: string[];
+  tickers?: string[];
 };
 
 type Row = {

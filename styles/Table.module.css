@@ -28,6 +28,14 @@
   border: 1px solid lightgrey;
 }
 
+.table th.leftEdge, .table td.leftEdge {
+  border-left: 2px solid Grey;
+}
+
+.table th.rightEdge, .table td.rightEdge {
+  border-right: 2px solid Grey;
+}
+
 .columnWidth65 {
   min-width: 60px;
   max-width: 60px;
