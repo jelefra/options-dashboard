@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import cx from 'classnames';
 import cloneDeep from 'lodash.clonedeep';
 import dayjs from 'dayjs';
@@ -7,23 +8,33 @@ dayjs.extend(customParseFormat);
 import minMax from 'dayjs/plugin/minMax';
 dayjs.extend(minMax);
 
-import { dateMediumTerm, thousands } from '../utils/format';
-import { removeNullValues } from '../utils';
-import { factorStockSplit } from '../utils/factorStockSplit';
+import { dateMediumTerm, thousands } from '../../utils/format';
+import { removeNullValues } from '../../utils';
+import { factorStockSplit } from '../../utils/factorStockSplit';
 
-import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
-import { Account, TradeData, TransactionData } from '../types';
+import { DISPLAY, INPUT_DATE_FORMAT } from '../../constants';
+import { Account, TradeData, TransactionData } from '../../types';
 
 // @ts-ignore
-import tradesData from '../data/options.csv';
+import tradesData from '../../data/options.csv';
 // @ts-ignore
-import transactionsData from '../data/transactions.csv';
-import tickers from '../data/tickers';
-import accounts from '../data/accounts';
+import transactionsData from '../../data/transactions.csv';
+import tickers from '../../data/tickers';
+import accounts from '../../data/accounts';
 
-import styles from '../styles/Table.module.css';
+import styles from '../../styles/Table.module.css';
 
 const CapitalGains = () => {
+  const { year } = useRouter().query;
+
+  if (!year) {
+    return <p>Loading</p>;
+  }
+
+  if (typeof year === 'string' && isNaN(Number(year))) {
+    return <p>Invalid URL</p>;
+  }
+
   const applicableAccounts: {
     [key: string]: Account;
   } = Object.fromEntries(Object.entries(accounts).filter(([, { capitalGains }]) => capitalGains));
@@ -76,8 +87,13 @@ const CapitalGains = () => {
 
   const now = dayjs();
   const numberOfMonths = now.diff(dateFirstOperation, 'month');
-  const months = [...Array(numberOfMonths + 2).keys()].map((elem) =>
-    dateMediumTerm(dayjs(dateFirstOperation).add(elem, 'month'))
+  const months = [...Array(numberOfMonths + 2).keys()].map((n) =>
+    dateMediumTerm(dayjs(dateFirstOperation).add(n, 'month'))
+  );
+
+  const financialYearStartDay = dayjs(`06/04/${Number(year) - 1}`, INPUT_DATE_FORMAT);
+  const financialYearMonths = [...Array(13).keys()].map((n) =>
+    dateMediumTerm(dayjs(financialYearStartDay).add(n, 'month'))
   );
 
   type CapitalGains = {
@@ -332,7 +348,7 @@ const CapitalGains = () => {
           </tr>
         </thead>
         <tbody>
-          {months.map((month, rowIndex) => (
+          {financialYearMonths.map((month, rowIndex) => (
             <tr className={cx(styles.row, { [styles.contrast]: rowIndex % 2 })} key={month}>
               <td>{month}</td>
               {Object.entries(hasGains).map(([account, currenciesCapitalGains]) =>
@@ -347,7 +363,7 @@ const CapitalGains = () => {
                         })}
                         key={`${account}-${currency}-${id}`}
                       >
-                        {thousands(capitalGains[month][account][currency][id]) || 0}
+                        {thousands(capitalGains[month]?.[account]?.[currency]?.[id]) || 0}
                       </td>
                     ))
                 )
