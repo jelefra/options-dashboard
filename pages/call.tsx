@@ -328,6 +328,7 @@ const Call = () => {
                 className={cx(styles.freezeFirstThRow, styles.white, styles.rotate, {
                   [styles.freezeFirstThCell]: index === 0,
                   [styles.freezeSecondThCell]: index === 1,
+                  [styles.columnWidthSm]: name === 'priceIncreaseGBP',
                   [styles.columnWidthMd]:
                     name === 'account' ||
                     name === 'return30DPctResidual' ||
