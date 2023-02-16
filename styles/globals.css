@@ -11,6 +11,10 @@ a {
   text-decoration: none;
 }
 
+.mute {
+  color: Gainsboro;
+}
+
 * {
   box-sizing: border-box;
 }

@@ -3,6 +3,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
+import cx from 'classnames';
 
 import { hoursToDays } from '../utils/format';
 
@@ -37,16 +38,13 @@ const Earnings = ({ data, now }: { data: EarningsDates; now: Dayjs }) => (
             dayjs(date, INPUT_DATE_FORMAT).add(1, 'day').diff(now, 'hour')
           );
           const mute = !confirmed || daysToEarnings < 0;
-          const style = { color: mute ? 'Gainsboro' : 'inherit' };
 
           return (
             <tr key={ticker}>
               <td className={tickers[ticker].colour}>{ticker}</td>
-              <td style={style}>{date}</td>
-              <td style={style} className={styles.right}>
-                {daysToEarnings}
-              </td>
-              <td style={style}>{!mute ? timing : ''}</td>
+              <td className={cx({ mute })}>{date}</td>
+              <td className={cx(styles.right, { mute })}>{daysToEarnings}</td>
+              <td>{!mute ? timing : ''}</td>
             </tr>
           );
         })}
