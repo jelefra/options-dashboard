@@ -116,7 +116,7 @@ const Call = () => {
     { name: 'expiry', format: dateShortTerm, align: 'default' },
     { name: 'dteTotal' },
     { name: 'dteCurrent' },
-    { name: 'daysToEarnings', format: formatDaysToEarnings, align: 'default' },
+    { name: 'daysToEarnings', format: formatDaysToEarnings },
     { name: 'tradePrice', format: decimalTwo },
     { name: 'stockPrice', format: decimalTwo },
     { name: 'current', format: decimalTwo, scope: 'all' },
