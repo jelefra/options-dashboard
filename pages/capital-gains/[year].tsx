@@ -87,7 +87,7 @@ const CapitalGains = () => {
 
   const now = dayjs();
   const numberOfMonths = now.diff(dateFirstOperation, 'month');
-  const months = [...Array(numberOfMonths + 2).keys()].map((n) =>
+  const months = [...Array(numberOfMonths + 1).keys()].map((n) =>
     dateMediumTerm(dayjs(dateFirstOperation).add(n, 'month'))
   );
 
@@ -99,10 +99,8 @@ const CapitalGains = () => {
   type CapitalGains = {
     put: number;
     call: number;
-    ITMCallGain: number;
-    ITMCallLoss: number;
-    saleGain: number;
-    saleLoss: number;
+    ITMCall: number;
+    sale: number;
     total: number;
   };
 
@@ -110,7 +108,10 @@ const CapitalGains = () => {
     // account
     [key: string]: {
       // currency
-      [key: string]: CapitalGains;
+      [key: string]: {
+        gains: CapitalGains;
+        losses: CapitalGains;
+      };
     };
   };
 
@@ -121,13 +122,20 @@ const CapitalGains = () => {
         currencies.map((currency) => [
           currency,
           {
-            put: 0,
-            call: 0,
-            ITMCallGain: 0,
-            ITMCallLoss: 0,
-            saleGain: 0,
-            saleLoss: 0,
-            total: 0,
+            gains: {
+              put: 0,
+              call: 0,
+              ITMCall: 0,
+              sale: 0,
+              total: 0,
+            },
+            losses: {
+              put: 0,
+              call: 0,
+              ITMCall: 0,
+              sale: 0,
+              total: 0,
+            },
           },
         ])
       ),
@@ -169,8 +177,14 @@ const CapitalGains = () => {
     if (type === 'Put') {
       const { currency, optionSize } = tickers[ticker];
       const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
-      const gain = (tradePrice - closeTradePrice) * optionSize - (commission + closeCommission);
-      capitalGains[tradeMonth][account][currency].put += gain;
+
+      const gain = tradePrice * optionSize - commission;
+      capitalGains[tradeMonth][account][currency].gains.put += gain;
+      capitalGains[tradeMonth][account][currency].gains.total += gain;
+
+      const costToClose = closeTradePrice * optionSize + closeCommission;
+      capitalGains[tradeMonth][account][currency].losses.put -= costToClose;
+      capitalGains[tradeMonth][account][currency].losses.total -= costToClose;
 
       if (closePrice && closePrice < strike) {
         stocks[account][ticker].acquisitionCost += strike * optionSize + commission;
@@ -195,11 +209,12 @@ const CapitalGains = () => {
       const gain = saleAmount - acquisitionCost;
 
       if (gain > 0) {
-        capitalGains[tradeMonth][account][currency].saleGain += gain;
+        capitalGains[tradeMonth][account][currency].gains.sale += gain;
+        capitalGains[tradeMonth][account][currency].gains.total += gain;
       } else {
-        capitalGains[tradeMonth][account][currency].saleLoss += gain;
+        capitalGains[tradeMonth][account][currency].losses.sale += gain;
+        capitalGains[tradeMonth][account][currency].losses.total += gain;
       }
-      capitalGains[tradeMonth][account][currency].total += gain;
 
       stock.acquisitionCost -= stockPrice * quantity;
       stock.quantity -= quantity;
@@ -222,24 +237,28 @@ const CapitalGains = () => {
 
     const { currency, optionSize } = tickers[ticker];
     const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
-    const gain = (tradePrice - closeTradePrice) * optionSize - (commission + closeCommission);
+
+    const gain = tradePrice * optionSize - commission;
+    const costToClose = closeTradePrice * optionSize + closeCommission;
+    const key = capitalGains[tradeMonth][account][currency];
 
     if (type === 'Call') {
-      capitalGains[tradeMonth][account][currency].call += gain;
+      key.gains.call += gain;
+      key.gains.total += gain;
+      key.losses.call -= costToClose;
+      key.losses.total -= costToClose;
     }
-    capitalGains[tradeMonth][account][currency].total += gain;
 
     if (type === 'Call' && closePrice > strike) {
       const acquisitionCost =
         (stocks[account][ticker].acquisitionCost / stocks[account][ticker].quantity) * optionSize;
       if (acquisitionCost < strike * optionSize + commission) {
-        capitalGains[tradeMonth][account][currency].ITMCallGain +=
-          strike * optionSize - acquisitionCost;
+        key.gains.ITMCall += strike * optionSize - acquisitionCost;
+        key.gains.total += strike * optionSize - acquisitionCost;
       } else {
-        capitalGains[tradeMonth][account][currency].ITMCallLoss +=
-          strike * optionSize - acquisitionCost;
+        key.losses.ITMCall += strike * optionSize - acquisitionCost;
+        key.losses.total += strike * optionSize - acquisitionCost;
       }
-      capitalGains[tradeMonth][account][currency].total += strike * optionSize - acquisitionCost;
 
       stocks[account][ticker].acquisitionCost -= strike * optionSize;
       stocks[account][ticker].quantity -= optionSize;
@@ -266,7 +285,11 @@ const CapitalGains = () => {
       Object.fromEntries(
         currencies.reduce((currenciesCapitalGains, currency) => {
           const hasValue = (key) =>
-            Object.values(capitalGains).some((gains) => gains[account][currency][key] !== 0);
+            Object.values(capitalGains).some(
+              (gains) =>
+                gains[account][currency].gains[key] !== 0 ||
+                gains[account][currency].losses[key] !== 0
+            );
           return hasValue('total')
             ? [
                 ...currenciesCapitalGains,
@@ -275,10 +298,8 @@ const CapitalGains = () => {
                   {
                     put: hasValue('put'),
                     call: hasValue('call'),
-                    ITMCallGain: hasValue('ITMCallGain'),
-                    ITMCallLoss: hasValue('ITMCallLoss'),
-                    saleGain: hasValue('saleGain'),
-                    saleLoss: hasValue('saleLoss'),
+                    ITMCall: hasValue('ITMCall'),
+                    sale: hasValue('sale'),
                     total: hasValue('total'),
                   },
                 ],
@@ -288,6 +309,46 @@ const CapitalGains = () => {
       ),
     ])
   );
+
+  const total = Object.entries(capitalGains)
+    .filter(([month]) => financialYearMonths.includes(month))
+    .flatMap(([, gains]) => Object.entries(gains))
+    .reduce((summary, [account, currencies]) => {
+      Object.entries(currencies).forEach(([currencyCode, types]) => {
+        Object.entries(types).forEach(([type, categories]) => {
+          for (const category in categories) {
+            summary[account][currencyCode][type][category] += categories[category];
+          }
+        });
+      });
+      return summary;
+    }, cloneDeep(accountsCapitalGainsSkeleton));
+
+  const displayTotal = (
+    { key1, key2 }: { key1: string; key2?: string },
+    className: string = undefined
+  ) => {
+    return Object.entries(hasGains).map(([account, currenciesCapitalGains]) =>
+      Object.entries(currenciesCapitalGains).map(([currency, currencyCapitalGains]) =>
+        Object.entries(currencyCapitalGains)
+          .filter(([, value]) => value)
+          .map(([id], index, source) => (
+            <td
+              className={cx(className, styles.total, styles.right, {
+                [styles.leftEdge]: index === 0,
+                [styles.rightEdge]: index === source.length - 1,
+              })}
+              key={`${account}-${currency}-${id}`}
+            >
+              {thousands(
+                (total[account][currency][key1][id] || 0) +
+                  (total[account][currency][key2]?.[id] || 0)
+              )}
+            </td>
+          ))
+      )
+    );
+  };
 
   return (
     <>
@@ -357,19 +418,40 @@ const CapitalGains = () => {
                     .filter(([, value]) => value)
                     .map(([id], index, source) => (
                       <td
-                        className={cx(styles.right, {
+                        className={cx(styles.right, styles.columnWidthSm, {
                           [styles.leftEdge]: index === 0,
                           [styles.rightEdge]: index === source.length - 1,
                         })}
                         key={`${account}-${currency}-${id}`}
                       >
-                        {thousands(capitalGains[month]?.[account]?.[currency]?.[id]) || 0}
+                        {thousands(
+                          (capitalGains[month]?.[account]?.[currency]?.gains[id] || 0) +
+                            (capitalGains[month]?.[account]?.[currency]?.losses[id] || 0)
+                        )}
                       </td>
                     ))
                 )
               )}
             </tr>
           ))}
+          <tr>
+            <td className={styles.total}>
+              <strong>Gains</strong>
+            </td>
+            {displayTotal({ key1: 'gains' })}
+          </tr>
+          <tr>
+            <td className={styles.total}>
+              <strong>Losses</strong>
+            </td>
+            {displayTotal({ key1: 'losses' }, 'mute')}
+          </tr>
+          <tr>
+            <td className={styles.total}>
+              <strong>Total</strong>
+            </td>
+            {displayTotal({ key1: 'gains', key2: 'losses' }, 'mute')}
+          </tr>
         </tbody>
       </table>
     </>
