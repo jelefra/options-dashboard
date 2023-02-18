@@ -158,7 +158,9 @@ const CapitalGains = () => {
     const { account, commission, date, quantity, stockPrice, ticker, type } = transaction;
 
     if (type === 'Purchase') {
-      stocks[account][ticker].acquisitionCost += quantity * stockPrice + commission;
+      const { currency } = tickers[ticker];
+      stocks[account][ticker].acquisitionCost +=
+        quantity * stockPrice + commission * rates[currency];
       stocks[account][ticker].quantity += factorStockSplit(
         ticker,
         quantity,
@@ -185,18 +187,19 @@ const CapitalGains = () => {
       const { currency, optionSize } = tickers[ticker];
       const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
 
-      const gain = tradePrice * optionSize - commission;
+      const gain = tradePrice * optionSize - commission * rates[currency];
       capitalGains[tradeMonth][account][currency].gains.put += gain;
       capitalGains[tradeMonth][account][currency].gains.total += gain;
       capitalGains[tradeMonth][account].BASE.gains.total += gain / rates[currency];
 
-      const costToClose = closeTradePrice * optionSize + closeCommission;
+      const costToClose = closeTradePrice * optionSize + closeCommission * rates[currency];
       capitalGains[tradeMonth][account][currency].losses.put -= costToClose;
       capitalGains[tradeMonth][account][currency].losses.total -= costToClose;
       capitalGains[tradeMonth][account].BASE.losses.total -= costToClose / rates[currency];
 
       if (closePrice && closePrice < strike) {
-        stocks[account][ticker].acquisitionCost += strike * optionSize + commission;
+        stocks[account][ticker].acquisitionCost +=
+          strike * optionSize + commission * rates[currency];
         stocks[account][ticker].quantity += factorStockSplit(
           ticker,
           optionSize,
@@ -212,7 +215,7 @@ const CapitalGains = () => {
     if (type === 'Sale') {
       const { currency } = tickers[ticker];
       const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
-      const saleAmount = quantity * stockPrice - commission;
+      const saleAmount = quantity * stockPrice - commission * rates[currency];
       const stock = stocks[account][ticker];
       const acquisitionCost = (stock.acquisitionCost / stock.quantity) * quantity;
       const gain = saleAmount - acquisitionCost;
@@ -249,8 +252,8 @@ const CapitalGains = () => {
     const { currency, optionSize } = tickers[ticker];
     const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
 
-    const gain = tradePrice * optionSize - commission;
-    const costToClose = closeTradePrice * optionSize + closeCommission;
+    const gain = tradePrice * optionSize - commission * rates[currency];
+    const costToClose = closeTradePrice * optionSize + closeCommission * rates[currency];
     const key = capitalGains[tradeMonth][account];
 
     if (type === 'Call') {
@@ -265,7 +268,7 @@ const CapitalGains = () => {
     if (type === 'Call' && closePrice > strike) {
       const acquisitionCost =
         (stocks[account][ticker].acquisitionCost / stocks[account][ticker].quantity) * optionSize;
-      if (acquisitionCost < strike * optionSize + commission) {
+      if (acquisitionCost < strike * optionSize + commission * rates[currency]) {
         key[currency].gains.ITMCall += strike * optionSize - acquisitionCost;
         key[currency].gains.total += strike * optionSize - acquisitionCost;
         key.BASE.gains.total += (strike * optionSize - acquisitionCost) / rates[currency];
