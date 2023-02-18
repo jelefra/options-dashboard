@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import cx from 'classnames';
@@ -13,7 +14,7 @@ import { removeNullValues } from '../../utils';
 import { factorStockSplit } from '../../utils/factorStockSplit';
 
 import { DISPLAY, INPUT_DATE_FORMAT } from '../../constants';
-import { Account, TradeData, TransactionData } from '../../types';
+import { Account, ForexRates, TradeData, TransactionData } from '../../types';
 
 // @ts-ignore
 import tradesData from '../../data/options.csv';
@@ -25,15 +26,29 @@ import accounts from '../../data/accounts';
 import styles from '../../styles/Table.module.css';
 
 const CapitalGains = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [rates, setRates] = useState<ForexRates>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchForexRates = async () => {
+      const response = await fetch('/api/forexRates');
+      const data = await response.json();
+      setRates(data.rates);
+    };
+    fetchForexRates().catch(console.error);
+    setIsLoading(false);
+  }, []);
+
   const { year } = useRouter().query;
 
-  if (!year) {
-    return <p>Loading</p>;
-  }
+  if (!year || isLoading) return <p>Loading</p>;
 
   if (typeof year === 'string' && isNaN(Number(year))) {
     return <p>Invalid URL</p>;
   }
+
+  if (!rates) return <p>Data missing.</p>;
 
   const applicableAccounts: {
     [key: string]: Account;
@@ -46,7 +61,7 @@ const CapitalGains = () => {
     .map(removeNullValues)
     .filter(({ account }) => applicableAccounts[account]);
 
-  const accountsData: {
+  const accountsWithCurrencies: {
     [key: string]: Account;
   } = [...transactions, ...trades].reduce((accounts, { account, ticker }) => {
     const accountTickers = accounts[account].tickers;
@@ -73,7 +88,7 @@ const CapitalGains = () => {
       };
     };
   } = Object.fromEntries(
-    Object.entries(accountsData).map(([account, { tickers }]) => [
+    Object.entries(accountsWithCurrencies).map(([account, { tickers }]) => [
       account,
       Object.fromEntries(
         tickers.map((ticker) => [ticker, { ticker, quantity: 0, acquisitionCost: 0 }])
@@ -115,27 +130,19 @@ const CapitalGains = () => {
     };
   };
 
+  for (const account in accountsWithCurrencies) {
+    accountsWithCurrencies[account].currencies.push('BASE');
+  }
+
   const accountsCapitalGainsSkeleton: AccountsCapitalGains = Object.fromEntries(
-    Object.entries(accountsData).map(([account, { currencies }]) => [
+    Object.entries(accountsWithCurrencies).map(([account, { currencies }]) => [
       account,
       Object.fromEntries(
         currencies.map((currency) => [
           currency,
           {
-            gains: {
-              put: 0,
-              call: 0,
-              ITMCall: 0,
-              sale: 0,
-              total: 0,
-            },
-            losses: {
-              put: 0,
-              call: 0,
-              ITMCall: 0,
-              sale: 0,
-              total: 0,
-            },
+            gains: { put: 0, call: 0, ITMCall: 0, sale: 0, total: 0 },
+            losses: { put: 0, call: 0, ITMCall: 0, sale: 0, total: 0 },
           },
         ])
       ),
@@ -181,10 +188,12 @@ const CapitalGains = () => {
       const gain = tradePrice * optionSize - commission;
       capitalGains[tradeMonth][account][currency].gains.put += gain;
       capitalGains[tradeMonth][account][currency].gains.total += gain;
+      capitalGains[tradeMonth][account].BASE.gains.total += gain / rates[currency];
 
       const costToClose = closeTradePrice * optionSize + closeCommission;
       capitalGains[tradeMonth][account][currency].losses.put -= costToClose;
       capitalGains[tradeMonth][account][currency].losses.total -= costToClose;
+      capitalGains[tradeMonth][account].BASE.losses.total -= costToClose / rates[currency];
 
       if (closePrice && closePrice < strike) {
         stocks[account][ticker].acquisitionCost += strike * optionSize + commission;
@@ -211,9 +220,11 @@ const CapitalGains = () => {
       if (gain > 0) {
         capitalGains[tradeMonth][account][currency].gains.sale += gain;
         capitalGains[tradeMonth][account][currency].gains.total += gain;
+        capitalGains[tradeMonth][account].BASE.gains.total += gain / rates[currency];
       } else {
         capitalGains[tradeMonth][account][currency].losses.sale += gain;
         capitalGains[tradeMonth][account][currency].losses.total += gain;
+        capitalGains[tradeMonth][account].BASE.losses.total += gain / rates[currency];
       }
 
       stock.acquisitionCost -= stockPrice * quantity;
@@ -240,24 +251,28 @@ const CapitalGains = () => {
 
     const gain = tradePrice * optionSize - commission;
     const costToClose = closeTradePrice * optionSize + closeCommission;
-    const key = capitalGains[tradeMonth][account][currency];
+    const key = capitalGains[tradeMonth][account];
 
     if (type === 'Call') {
-      key.gains.call += gain;
-      key.gains.total += gain;
-      key.losses.call -= costToClose;
-      key.losses.total -= costToClose;
+      key[currency].gains.call += gain;
+      key[currency].gains.total += gain;
+      key.BASE.gains.total += gain / rates[currency];
+      key[currency].losses.call -= costToClose;
+      key[currency].losses.total -= costToClose;
+      key.BASE.losses.total -= costToClose / rates[currency];
     }
 
     if (type === 'Call' && closePrice > strike) {
       const acquisitionCost =
         (stocks[account][ticker].acquisitionCost / stocks[account][ticker].quantity) * optionSize;
       if (acquisitionCost < strike * optionSize + commission) {
-        key.gains.ITMCall += strike * optionSize - acquisitionCost;
-        key.gains.total += strike * optionSize - acquisitionCost;
+        key[currency].gains.ITMCall += strike * optionSize - acquisitionCost;
+        key[currency].gains.total += strike * optionSize - acquisitionCost;
+        key.BASE.gains.total += (strike * optionSize - acquisitionCost) / rates[currency];
       } else {
-        key.losses.ITMCall += strike * optionSize - acquisitionCost;
-        key.losses.total += strike * optionSize - acquisitionCost;
+        key[currency].losses.ITMCall += strike * optionSize - acquisitionCost;
+        key[currency].losses.total += strike * optionSize - acquisitionCost;
+        key.BASE.losses.total += (strike * optionSize - acquisitionCost) / rates[currency];
       }
 
       stocks[account][ticker].acquisitionCost -= strike * optionSize;
@@ -280,7 +295,7 @@ const CapitalGains = () => {
       };
     };
   } = Object.fromEntries(
-    Object.entries(accountsData).map(([account, { currencies }]) => [
+    Object.entries(accountsWithCurrencies).map(([account, { currencies }]) => [
       account,
       Object.fromEntries(
         currencies.reduce((currenciesCapitalGains, currency) => {
@@ -337,6 +352,7 @@ const CapitalGains = () => {
               className={cx(className, styles.total, styles.right, {
                 [styles.leftEdge]: index === 0,
                 [styles.rightEdge]: index === source.length - 1,
+                [styles.thick]: currency === 'BASE',
               })}
               key={`${account}-${currency}-${id}`}
             >
@@ -421,6 +437,7 @@ const CapitalGains = () => {
                         className={cx(styles.right, styles.columnWidthSm, {
                           [styles.leftEdge]: index === 0,
                           [styles.rightEdge]: index === source.length - 1,
+                          [styles.thick]: currency === 'BASE',
                         })}
                         key={`${account}-${currency}-${id}`}
                       >

@@ -111,3 +111,7 @@
 .thirtyPx {
   height: 30px;
 }
+
+.thick {
+  font-weight: bold;
+}
