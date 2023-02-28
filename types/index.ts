@@ -210,6 +210,8 @@ export type BankActivityTypes = 'Deposit' | 'Conversion';
 
 export type ForexRates = { [key: string]: number };
 
+export type HistoricalForexRates = { [key: string]: ForexRates };
+
 export type ForexRow = {
   account: string;
   amount: number;

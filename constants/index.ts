@@ -9,6 +9,7 @@ export const FIFTEEN_MINUTES_IN_SECONDS = 15 * 60;
 export const ONE_HOUR_IN_SECONDS = 60 * 60;
 export const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
 export const IBKR_CACHE_DURATION = THIRTY_DAYS_IN_SECONDS;
+export const TEN_YEARS_IN_SECONDS = 10 * 365 * 24 * 60 * 60;
 
 export const DISPLAY = {
   account: 'Account',
