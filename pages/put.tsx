@@ -159,7 +159,7 @@ const Put = () => {
             const date = dayjs(trade.date, INPUT_DATE_FORMAT);
             const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
             const dteTotal = calcDteTotal(expiry, date);
-            const earningsDate = dayjs(earnings[ticker].date, INPUT_DATE_FORMAT);
+            const earningsDate = dayjs(earnings[ticker]?.date, INPUT_DATE_FORMAT);
             const daysToEarnings = earningsDate.diff(expiry, 'day');
             const low = strike - tradePrice + commission / optionSize;
             const high = stockPrice + tradePrice - commission / optionSize;
@@ -245,7 +245,7 @@ const Put = () => {
                     name === 'lowPct' ||
                     name === 'daysToEarnings';
 
-                  const earningsStatus = earnings[ticker].confirmed;
+                  const earningsStatus = earnings[ticker]?.confirmed;
                   const dayToEarningsClass = name === 'daysToEarnings' && {
                     [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
                     [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
