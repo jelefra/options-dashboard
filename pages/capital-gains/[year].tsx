@@ -114,7 +114,7 @@ const CapitalGains = () => {
 
   const now = dayjs();
   const numberOfMonths = now.diff(dateFirstOperation, 'month');
-  const months = [...Array(numberOfMonths + 1).keys()].map((n) =>
+  const months = [...Array(numberOfMonths + 2).keys()].map((n) =>
     dateMediumTerm(dayjs(dateFirstOperation).add(n, 'month'))
   );
 
