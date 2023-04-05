@@ -1,8 +1,8 @@
 export const INPUT_DATE_FORMAT = 'DD/MM/YYYY';
 
-export const DATE_SHORT_TERM = 'D MMM';
-export const DATE_MEDIUM_TERM = 'MMMM YY';
-export const DATE_LONG_TERM = 'D MMM YY';
+export const DATE_SHORT_HORIZON = 'D MMM';
+export const DATE_MEDIUM_HORIZON = 'MMMM YY';
+export const DATE_LONG_HORIZON = 'D MMM YY';
 
 export const ONE_MINUTE_IN_SECONDS = 60;
 export const FIFTEEN_MINUTES_IN_SECONDS = 15 * 60;

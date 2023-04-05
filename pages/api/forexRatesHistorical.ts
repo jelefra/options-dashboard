@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from 'redis';
 import cloneDeep from 'lodash.clonedeep';
+import dayjs from 'dayjs';
 
 import { removeNullValues } from '../../utils';
 import get from '../../utils/get';
@@ -13,7 +14,7 @@ import tradesData from '../../data/options.csv';
 import transactionsData from '../../data/transactions.csv';
 import tickers from '../../data/tickers';
 
-import { TEN_YEARS_IN_SECONDS } from '../../constants';
+import { INPUT_DATE_FORMAT, TEN_YEARS_IN_SECONDS } from '../../constants';
 
 const formatDateForAPI = (dateInBritishFormat): string => {
   const [dd, mm, yyyy] = dateInBritishFormat.split('/');
@@ -26,8 +27,15 @@ const constructURL = (date: string) =>
   }`;
 
 const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) => {
-  const transactions: TransactionData[] = transactionsData.map(removeNullValues);
-  const trades: TradeData[] = tradesData.map(removeNullValues);
+  const { from } = req.query;
+
+  const filterFn =
+    typeof from === 'string'
+      ? ({ date }) => dayjs(date, INPUT_DATE_FORMAT).isSameOrAfter(dayjs(from, INPUT_DATE_FORMAT))
+      : () => true;
+
+  const transactions: TransactionData[] = transactionsData.map(removeNullValues).filter(filterFn);
+  const trades: TradeData[] = tradesData.map(removeNullValues).filter(filterFn);
 
   const mutate = (dates, date, currency) => {
     dates[date] = Array.from(new Set([...(dates[date] || []), currency]));

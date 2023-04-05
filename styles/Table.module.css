@@ -36,6 +36,10 @@
   border-right: 2px solid Grey;
 }
 
+.table tr.topEdge {
+  border-top: 2px solid Grey;
+}
+
 .columnWidthSm {
   min-width: 50px;
 }
@@ -114,4 +118,8 @@
 
 .thick {
   font-weight: bold;
+}
+
+.italic {
+  font-style: italic;
 }

@@ -1,12 +1,12 @@
 import { Dayjs } from 'dayjs';
 
-import { DATE_SHORT_TERM, DATE_MEDIUM_TERM, DATE_LONG_TERM } from '../constants';
+import { DATE_SHORT_HORIZON, DATE_MEDIUM_HORIZON, DATE_LONG_HORIZON } from '../constants';
 
-export const dateShortTerm = (day: Dayjs) => day.format(DATE_SHORT_TERM);
+export const dateShortTerm = (day: Dayjs) => day.format(DATE_SHORT_HORIZON);
 
-export const dateMediumTerm = (day: Dayjs) => day.format(DATE_MEDIUM_TERM);
+export const dateMediumTerm = (day: Dayjs) => day.format(DATE_MEDIUM_HORIZON);
 
-export const dateLongTerm = (day: Dayjs) => day.format(DATE_LONG_TERM);
+export const dateLongTerm = (day: Dayjs) => day.format(DATE_LONG_HORIZON);
 
 export const decimalTwo = (x: number) => x.toFixed(2);
 
