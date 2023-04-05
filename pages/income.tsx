@@ -255,7 +255,7 @@ const Income = () => {
                           [styles.leftEdge]: index === 0,
                           [styles.rightEdge]: index === source.length - 1,
                           [styles.thick]: currency === 'BASE',
-                          [styles.italic]: currency === 'BASE' && !historicalForexRates,
+                          [styles.italic]: !historicalForexRates,
                         })}
                         key={`${month}-${account}-${currency}-${type}`}
                       >
@@ -280,7 +280,7 @@ const Income = () => {
                         [styles.leftEdge]: index === 0,
                         [styles.rightEdge]: index === source.length - 1,
                         [styles.thick]: currency === 'BASE',
-                        [styles.italic]: currency === 'BASE' && !historicalForexRates,
+                        [styles.italic]: !historicalForexRates,
                       })}
                       key={`${account}-${currency}-${id}`}
                     >
