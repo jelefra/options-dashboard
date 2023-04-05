@@ -36,9 +36,9 @@ const CapitalGains = () => {
       const response = await fetch('/api/forexRates');
       const data = await response.json();
       setRates(data.rates);
+      setIsLoading(false);
     };
     fetchForexRates().catch(console.error);
-    setIsLoading(false);
   }, []);
 
   const applicableAccounts: {
@@ -58,9 +58,9 @@ const CapitalGains = () => {
       const response = await fetch('/api/forexRatesHistorical');
       const data = await response.json();
       setHistoricalForexRates(data.historicalRates);
+      setIsLoading(false);
     };
     fetchForexRatesHistorical().catch(console.error);
-    setIsLoading(false);
   }, []);
 
   const { year } = useRouter().query;
@@ -71,7 +71,7 @@ const CapitalGains = () => {
     return <p>Invalid URL</p>;
   }
 
-  if (!rates) return <p>Data missing.</p>;
+  if (!rates && !historicalForexRates) return <p>Data missing.</p>;
 
   const accountsWithCurrencies: {
     [key: string]: Account;
@@ -171,8 +171,8 @@ const CapitalGains = () => {
 
     if (type === 'Purchase') {
       const { currency } = tickers[ticker];
-      stocks[account][ticker].acquisitionCost +=
-        quantity * stockPrice + commission * historicalForexRates?.[date]?.[currency];
+      const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
+      stocks[account][ticker].acquisitionCost += quantity * stockPrice + commission * forexRate;
       stocks[account][ticker].quantity += factorStockSplit(
         ticker,
         quantity,
@@ -198,23 +198,20 @@ const CapitalGains = () => {
     if (type === 'Put') {
       const { currency, optionSize } = tickers[ticker];
       const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
+      const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
 
-      const gain = tradePrice * optionSize - commission * historicalForexRates?.[date]?.[currency];
+      const gain = tradePrice * optionSize - commission * forexRate;
       capitalGains[tradeMonth][account][currency].gains.put += gain;
       capitalGains[tradeMonth][account][currency].gains.total += gain;
-      capitalGains[tradeMonth][account].BASE.gains.total +=
-        gain / historicalForexRates?.[date]?.[currency];
+      capitalGains[tradeMonth][account].BASE.gains.total += gain / forexRate;
 
-      const costToClose =
-        closeTradePrice * optionSize + closeCommission * historicalForexRates?.[date]?.[currency];
+      const costToClose = closeTradePrice * optionSize + closeCommission * forexRate;
       capitalGains[tradeMonth][account][currency].losses.put -= costToClose;
       capitalGains[tradeMonth][account][currency].losses.total -= costToClose;
-      capitalGains[tradeMonth][account].BASE.losses.total -=
-        costToClose / historicalForexRates?.[date]?.[currency];
+      capitalGains[tradeMonth][account].BASE.losses.total -= costToClose / forexRate;
 
       if (closePrice && closePrice < strike) {
-        stocks[account][ticker].acquisitionCost +=
-          strike * optionSize + commission * historicalForexRates?.[date]?.[currency];
+        stocks[account][ticker].acquisitionCost += strike * optionSize + commission * forexRate;
         stocks[account][ticker].quantity += factorStockSplit(
           ticker,
           optionSize,
@@ -230,8 +227,8 @@ const CapitalGains = () => {
     if (type === 'Sale') {
       const { currency } = tickers[ticker];
       const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
-      const saleAmount =
-        quantity * stockPrice - commission * historicalForexRates?.[date]?.[currency];
+      const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
+      const saleAmount = quantity * stockPrice - commission * forexRate;
       const stock = stocks[account][ticker];
       const acquisitionCost = (stock.acquisitionCost / stock.quantity) * quantity;
       const gain = saleAmount - acquisitionCost;
@@ -239,13 +236,11 @@ const CapitalGains = () => {
       if (gain > 0) {
         capitalGains[tradeMonth][account][currency].gains.sale += gain;
         capitalGains[tradeMonth][account][currency].gains.total += gain;
-        capitalGains[tradeMonth][account].BASE.gains.total +=
-          gain / historicalForexRates?.[date]?.[currency];
+        capitalGains[tradeMonth][account].BASE.gains.total += gain / forexRate;
       } else {
         capitalGains[tradeMonth][account][currency].losses.sale += gain;
         capitalGains[tradeMonth][account][currency].losses.total += gain;
-        capitalGains[tradeMonth][account].BASE.losses.total +=
-          gain / historicalForexRates?.[date]?.[currency];
+        capitalGains[tradeMonth][account].BASE.losses.total += gain / forexRate;
       }
 
       stock.acquisitionCost -= stockPrice * quantity;
@@ -269,37 +264,32 @@ const CapitalGains = () => {
 
     const { currency, optionSize } = tickers[ticker];
     const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
+    const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
 
-    const gain = tradePrice * optionSize - commission * historicalForexRates?.[date]?.[currency];
-    const costToClose =
-      closeTradePrice * optionSize + closeCommission * historicalForexRates?.[date]?.[currency];
+    const gain = tradePrice * optionSize - commission * forexRate;
+    const costToClose = closeTradePrice * optionSize + closeCommission * forexRate;
     const key = capitalGains[tradeMonth][account];
 
     if (type === 'Call') {
       key[currency].gains.call += gain;
       key[currency].gains.total += gain;
-      key.BASE.gains.total += gain / historicalForexRates?.[date]?.[currency];
+      key.BASE.gains.total += gain / forexRate;
       key[currency].losses.call -= costToClose;
       key[currency].losses.total -= costToClose;
-      key.BASE.losses.total -= costToClose / historicalForexRates?.[date]?.[currency];
+      key.BASE.losses.total -= costToClose / forexRate;
     }
 
     if (type === 'Call' && closePrice > strike) {
       const acquisitionCost =
         (stocks[account][ticker].acquisitionCost / stocks[account][ticker].quantity) * optionSize;
-      if (
-        acquisitionCost <
-        strike * optionSize + commission * historicalForexRates?.[date]?.[currency]
-      ) {
+      if (acquisitionCost < strike * optionSize + commission * forexRate) {
         key[currency].gains.ITMCall += strike * optionSize - acquisitionCost;
         key[currency].gains.total += strike * optionSize - acquisitionCost;
-        key.BASE.gains.total +=
-          (strike * optionSize - acquisitionCost) / historicalForexRates?.[date]?.[currency];
+        key.BASE.gains.total += (strike * optionSize - acquisitionCost) / forexRate;
       } else {
         key[currency].losses.ITMCall += strike * optionSize - acquisitionCost;
         key[currency].losses.total += strike * optionSize - acquisitionCost;
-        key.BASE.losses.total +=
-          (strike * optionSize - acquisitionCost) / historicalForexRates?.[date]?.[currency];
+        key.BASE.losses.total += (strike * optionSize - acquisitionCost) / forexRate;
       }
 
       stocks[account][ticker].acquisitionCost -= strike * optionSize;
@@ -380,6 +370,7 @@ const CapitalGains = () => {
                 [styles.leftEdge]: index === 0,
                 [styles.rightEdge]: index === source.length - 1,
                 [styles.thick]: currency === 'BASE',
+                [styles.italic]: !historicalForexRates,
               })}
               key={`${account}-${currency}-${id}`}
             >
@@ -465,6 +456,7 @@ const CapitalGains = () => {
                           [styles.leftEdge]: index === 0,
                           [styles.rightEdge]: index === source.length - 1,
                           [styles.thick]: currency === 'BASE',
+                          [styles.italic]: !historicalForexRates,
                         })}
                         key={`${account}-${currency}-${id}`}
                       >
@@ -478,7 +470,7 @@ const CapitalGains = () => {
               )}
             </tr>
           ))}
-          <tr>
+          <tr className={styles.topEdge}>
             <td className={styles.total}>
               <strong>Gains</strong>
             </td>
