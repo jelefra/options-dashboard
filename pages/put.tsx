@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
+import Loading from '../components/Loading';
 import CloseTradePriceInput from '../components/CloseTradePriceInput';
 
 // @ts-ignore
@@ -47,42 +48,39 @@ const Put = () => {
   );
   const putIds = currentPutsSorted.map(({ ticker }, index) => `${index}-${ticker}`).join(',');
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
   const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchForexRates = async () => {
       const response = await fetch('/api/forexRates');
       const data = await response.json();
       setRates(data.rates);
     };
-    fetchForexRates().catch(console.error);
 
     const fetchPutTickerPrices = async () => {
       const response = await fetch(`/api/putTickerPrices?now=${String(NOW)}`);
       const data = await response.json();
       setCurrentTickerPrices(data.currentTickerPrices);
     };
-    fetchPutTickerPrices().catch(console.error);
-    setIsLoading(false);
+
+    Promise.all([fetchForexRates(), fetchPutTickerPrices()])
+      .then(() => setIsLoading(false))
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchPutCloseTradePrices = async () => {
       const response = await fetch(`/api/getRedisKeys?keys=${putIds}`);
       const data = await response.json();
       setCloseTradePrices(data.values);
     };
     fetchPutCloseTradePrices().catch(console.error);
-
-    setIsLoading(false);
   }, [putIds]);
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Loading />;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
   const headings: { name: keyof PutRow; format?: Function; align?: 'default' | 'right' }[] = [

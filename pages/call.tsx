@@ -3,6 +3,7 @@ import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 
+import Loading from '../components/Loading';
 import CloseTradePriceInput from '../components/CloseTradePriceInput';
 
 import processData from '../utils/processData';
@@ -43,27 +44,27 @@ import styles from '../styles/Table.module.css';
 const NOW = dayjs();
 
 const Call = () => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
   const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>({});
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchForexRates = async () => {
       const response = await fetch('/api/forexRates');
       const data = await response.json();
       setRates(data.rates);
     };
-    fetchForexRates().catch(console.error);
 
     const fetchCallTickerPrices = async () => {
       const response = await fetch('/api/callTickerPrices');
       const data = await response.json();
       setCurrentTickerPrices(data.currentTickerPrices);
     };
-    fetchCallTickerPrices().catch(console.error);
-    setIsLoading(false);
+
+    Promise.all([fetchForexRates(), fetchCallTickerPrices()])
+      .then(() => setIsLoading(false))
+      .catch(console.error);
   }, []);
 
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
@@ -79,18 +80,15 @@ const Call = () => {
   const callIds = batchesWithCalls.map(([batchCode]) => batchCode).join(',');
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchCallCloseTradePrices = async () => {
       const response = await fetch(`/api/getRedisKeys?keys=${callIds}`);
       const data = await response.json();
       setCloseTradePrices(data.values);
     };
     fetchCallCloseTradePrices().catch(console.error);
-
-    setIsLoading(false);
   }, [callIds]);
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Loading />;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
   const batchesWithoutCalls = Object.entries(batches)
@@ -328,18 +326,7 @@ const Call = () => {
                 className={cx(styles.freezeFirstThRow, styles.white, styles.rotate, {
                   [styles.freezeFirstThCell]: index === 0,
                   [styles.freezeSecondThCell]: index === 1,
-                  [styles.columnWidthSm]: name === 'priceIncreaseGBP',
-                  [styles.columnWidthMd]:
-                    name === 'account' ||
-                    name === 'return30DPctResidual' ||
-                    name === 'returnPct' ||
-                    name === 'returnGBP' ||
-                    name === 'valueGBP' ||
-                    name === 'current' ||
-                    name === 'assignmentPct' ||
-                    name === 'high' ||
-                    name === 'highPct',
-                  [styles.columnWidthLg]: name === 'status',
+                  [styles.columnWidthMd]: name === 'account' || name === 'return30DPctResidual',
                 })}
                 key={index}
               >

@@ -5,6 +5,8 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
+import Loading from '../components/Loading';
+
 // @ts-ignore
 import bankData from '../data/bank.csv';
 import accounts from '../data/accounts';
@@ -17,21 +19,20 @@ import { BankData, ForexRates, ForexRow } from '../types';
 import styles from '../styles/Table.module.css';
 
 const Forex = () => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [rates, setRates] = useState<ForexRates>(null);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchForexRates = async () => {
       const response = await fetch('/api/forexRates');
       const data = await response.json();
       setRates(data.rates);
+      setIsLoading(false);
     };
     fetchForexRates().catch(console.error);
-    setIsLoading(false);
   }, []);
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Loading />;
   if (!rates) return <p>Data missing.</p>;
 
   const bank: BankData[] = bankData;

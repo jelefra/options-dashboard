@@ -9,6 +9,8 @@ dayjs.extend(customParseFormat);
 import minMax from 'dayjs/plugin/minMax';
 dayjs.extend(minMax);
 
+import Loading from '../../components/Loading';
+
 import { dateMediumTerm, thousands } from '../../utils/format';
 import { removeNullValues } from '../../utils';
 import { factorStockSplit } from '../../utils/factorStockSplit';
@@ -31,7 +33,6 @@ const CapitalGains = () => {
   const [historicalForexRates, setHistoricalForexRates] = useState<HistoricalForexRates>(null);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchForexRates = async () => {
       const response = await fetch('/api/forexRates');
       const data = await response.json();
@@ -65,7 +66,7 @@ const CapitalGains = () => {
 
   const { year } = useRouter().query;
 
-  if (!year || isLoading) return <p>Loading</p>;
+  if (!year || isLoading) return <Loading />;
 
   if (typeof year === 'string' && isNaN(Number(year))) {
     return <p>Invalid URL</p>;

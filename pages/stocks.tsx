@@ -3,6 +3,8 @@ import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 
+import Loading from '../components/Loading';
+
 import processData from '../utils/processData';
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import { removeNullValues } from '../utils';
@@ -50,29 +52,29 @@ const calcValue = (stock: Stock, current: number) => {
 };
 
 const Stocks = () => {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchForexRates = async () => {
       const response = await fetch('/api/forexRates');
       const data = await response.json();
       setRates(data.rates);
     };
-    fetchForexRates().catch(console.error);
 
     const fetchAllTickerPrices = async () => {
       const response = await fetch(`/api/allTickerPrices?now=${String(NOW)}`);
       const data = await response.json();
       setCurrentTickerPrices(data.currentTickerPrices);
     };
-    fetchAllTickerPrices().catch(console.error);
-    setIsLoading(false);
+
+    Promise.all([fetchForexRates(), fetchAllTickerPrices()])
+      .then(() => setIsLoading(false))
+      .catch(console.error);
   }, []);
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Loading />;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
   const headings: {

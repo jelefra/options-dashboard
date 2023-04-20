@@ -7,6 +7,8 @@ dayjs.extend(customParseFormat);
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
 
+import Loading from '../components/Loading';
+
 import { dateMediumTerm, thousands } from '../utils/format';
 import { removeNullValues } from '../utils';
 
@@ -29,7 +31,6 @@ const Income = () => {
   const [historicalForexRates, setHistoricalForexRates] = useState<HistoricalForexRates>(null);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchForexRates = async () => {
       const response = await fetch('/api/forexRates');
       const data = await response.json();
@@ -54,7 +55,7 @@ const Income = () => {
     fetchForexRatesHistorical().catch(console.error);
   }, [from]);
 
-  if (isLoading) return <p>Loading</p>;
+  if (isLoading) return <Loading />;
   if (!rates) return <p>Data missing.</p>;
 
   const trades: TradeData[] = tradesData
