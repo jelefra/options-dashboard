@@ -12,6 +12,7 @@ import Weight from '../components/Weight';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import StocksAPIUsage from '../components/StocksAPIUsage';
 import ExcessLiquidity from '../components/ExcessLiquidity';
+import BatchCodes from '../components/BatchCodes';
 
 import {
   CurrentTickerPrices,
@@ -174,6 +175,7 @@ const Home = () => {
         {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
         {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}
       </div>
+      <BatchCodes trades={trades} transactions={transactions} />
     </Container>
   );
 };
