@@ -330,3 +330,20 @@ export type OpenExchangeRatesUsage = {
   days_remaining: number;
   daily_average: number;
 };
+
+export type Position = {
+  position: number;
+  mktPrice: number;
+  mktValue: number;
+  currency: string;
+  avgCost: number;
+  avgPrice: number;
+  unrealizedPnl: number;
+  expiry: string;
+  putOrCall: 'P' | 'C' | null;
+  multiplier: number;
+  strike: number;
+  ticker: string;
+  fullName: string;
+  assetClass: string;
+};

@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-export const fetchFn = async (URL, options, retries = 3, delay = 200): Promise<any> =>
+export const fetchFn = async ({ URL, options, retries = 3, delay = 200 }): Promise<any> =>
   fetch(URL, options)
     .then((response) => {
       const contentType = response.headers?.get('content-type');
@@ -13,7 +13,7 @@ export const fetchFn = async (URL, options, retries = 3, delay = 200): Promise<a
             retries > 1 ? 'ies' : 'y'
           } left)`
         );
-        setTimeout(() => fetchFn(URL, options, retries - 1, delay * 2));
+        setTimeout(() => fetchFn({ URL, options, retries: retries - 1, delay: delay * 2 }));
       } else {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }

@@ -4,6 +4,7 @@ import { ONE_MINUTE_IN_SECONDS } from '../constants';
 
 const get = async ({
   client,
+  fetchFunction = fetchFn,
   URL,
   keyName,
   expiry = ONE_MINUTE_IN_SECONDS,
@@ -11,6 +12,7 @@ const get = async ({
   ignoreCurrentCache = false,
 }: {
   client;
+  fetchFunction?: Function;
   URL: string;
   keyName: string;
   expiry?: number;
@@ -22,7 +24,7 @@ const get = async ({
   if (redisData && !ignoreCurrentCache) {
     data = JSON.parse(redisData);
   } else {
-    data = await fetchFn(URL, fetchFnOptions);
+    data = await fetchFunction({ URL, options: fetchFnOptions });
     if (data) {
       await client.set(keyName, JSON.stringify(data), {
         EX: expiry,

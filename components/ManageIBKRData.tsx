@@ -17,13 +17,14 @@ const ManageIBKRData = ({
   now: Dayjs;
 }) => {
   const fetchAccountData = async (id) => {
-    await Promise.all(
-      IBKRStates.map(async ({ endpoint, value, setter }) => {
+    await Promise.all([
+      ...IBKRStates.map(async ({ endpoint, value, setter }) => {
         const resp = await fetch(`/api/ibkr?endpoint=${endpoint}&id=${id}`);
         const data = await resp.json();
         setter({ ...value, [`${endpoint}-${id}`]: data.value });
-      })
-    );
+      }),
+      await fetch(`/api/ibkr?endpoint=positions&id=${id}`),
+    ]);
   };
 
   const deleteAccountData = async (id) => {
