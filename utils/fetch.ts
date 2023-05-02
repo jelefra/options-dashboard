@@ -13,7 +13,7 @@ export const fetchFn = async ({ URL, options, retries = 3, delay = 200 }): Promi
             retries > 1 ? 'ies' : 'y'
           } left)`
         );
-        setTimeout(() => fetchFn({ URL, options, retries: retries - 1, delay: delay * 2 }));
+        setTimeout(() => fetchFn({ URL, options, retries: retries - 1, delay: delay * 2 }), delay);
       } else {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
