@@ -116,6 +116,10 @@ export type Account = {
   tickers?: string[];
 };
 
+export type Accounts = {
+  [key: string]: Account;
+};
+
 type Row = {
   account: string;
   assignmentPct: number;
@@ -151,6 +155,7 @@ export type PutRow = Row &
     closeTradePrice: ReactElement;
     low: number;
     lowPct: number;
+    optionReturnPct: number;
     return30DPctExpected: number;
     return30DPctEffective: number;
     return30DPctResidual: number;
@@ -170,6 +175,7 @@ export type CallRow = Row &
     costBasisDrop: number;
     daysTotal: number;
     netCost: number;
+    optionReturnPct: number;
     return1YPctIfAssigned: number;
     return30DPctIfAssigned: number;
     return30DPctLastCall: number;

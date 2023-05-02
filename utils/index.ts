@@ -3,7 +3,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
 
 import { INPUT_DATE_FORMAT } from '../constants';
-import { TradeData } from '../types';
+import { Accounts, Position, TradeData, TradeType } from '../types';
 
 export const calcDteCurrent = (expiryDate: Dayjs, now: Dayjs) =>
   expiryDate?.add(1, 'day').diff(now, 'day');
@@ -38,3 +38,20 @@ export const daysToEarningsWarning = (daysToEarnings: number, confirmed: boolean
 
 export const daysToEarningsDanger = (daysToEarnings: number, confirmed: boolean) =>
   daysToEarnings > -15 && daysToEarnings < 0 && confirmed;
+
+export const getPositionsKeys = (accounts: Accounts) =>
+  Object.values(accounts)
+    .map(({ id }) => `positions-${id}`)
+    .join(',');
+
+export const getPosition = (
+  positions: Position[],
+  ticker,
+  expiry: Dayjs,
+  strike: number,
+  type: TradeType
+) =>
+  positions.length &&
+  positions.find(
+    (position) => position?.fullName === `${ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
+  );

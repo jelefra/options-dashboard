@@ -12,6 +12,8 @@ import {
   calcDteTotal,
   calcPriceIncrease,
   calcReturnPctForPeriod,
+  getPosition,
+  getPositionsKeys,
   removeNullValues,
   formatDaysToEarnings,
   daysToEarningsInfo,
@@ -26,6 +28,7 @@ import {
   CallRowTotal,
   CurrentTickerPrices,
   ForexRates,
+  Position,
   TradeData,
   TransactionData,
 } from '../types';
@@ -48,6 +51,9 @@ const Call = () => {
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
   const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>({});
+  const [positions, setPositions] = useState<Position[]>([]);
+
+  const positionsKeys = getPositionsKeys(accounts);
 
   useEffect(() => {
     const fetchForexRates = async () => {
@@ -88,6 +94,15 @@ const Call = () => {
     fetchCallCloseTradePrices().catch(console.error);
   }, [callIds]);
 
+  useEffect(() => {
+    const fetchPositions = async () => {
+      const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
+      const data: { values: { [key: string]: Position[] } } = await response.json();
+      setPositions(Object.values(data.values).flatMap((position) => position));
+    };
+    fetchPositions().catch(console.error);
+  }, [positionsKeys]);
+
   if (isLoading) return <Loading />;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
@@ -116,6 +131,7 @@ const Call = () => {
     { name: 'dteCurrent' },
     { name: 'daysToEarnings', format: formatDaysToEarnings },
     { name: 'tradePrice', format: decimalTwo },
+    { name: 'optionReturnPct', format: pctOne },
     { name: 'stockPrice', format: decimalTwo },
     { name: 'current', format: decimalTwo, scope: 'all' },
     { name: 'strike', format: decimalTwo },
@@ -205,6 +221,9 @@ const Call = () => {
               30
             );
 
+            const position = getPosition(positions, ticker, expiry, strike, 'Call');
+            const optionReturnPct = 1 - position?.mktPrice / tradePrice;
+
             const row: CallRow = {
               account,
               assignmentPct: current ? strike / current - 1 : undefined,
@@ -227,6 +246,7 @@ const Call = () => {
               high,
               highPct: high / current - 1,
               netCost,
+              optionReturnPct,
               priceIncreaseGBP: priceIncrease / forexRate,
               return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
               return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),

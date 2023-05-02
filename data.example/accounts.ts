@@ -1,8 +1,6 @@
-import { Account } from '../types';
+import { Accounts } from '../types';
 
-const accounts: {
-  [key: string]: Account;
-} = {
+const accounts: Accounts = {
   Account1: {
     name: 'Account1',
     id: 'U1234567',

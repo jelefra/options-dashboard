@@ -43,6 +43,7 @@ export const DISPLAY = {
   low: 'Low',
   lowPct: 'Low %',
   netCost: 'Net cost',
+  optionReturnPct: 'Option return %',
   partialBatch: 'Partial batch',
   partialBatchAcquisitionCost: 'Acquisition cost',
   partialBatchQuantity: 'Quantity',

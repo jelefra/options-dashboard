@@ -21,6 +21,8 @@ import {
   calcPriceIncrease,
   calcPutDifference,
   calcReturnPctForPeriod,
+  getPosition,
+  getPositionsKeys,
   isCurrentPut,
   removeNullValues,
   formatDaysToEarnings,
@@ -30,7 +32,15 @@ import {
 } from '../utils';
 
 import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
-import { CurrentTickerPrices, ForexRates, PutData, PutRow, PutRowTotal, TradeData } from '../types';
+import {
+  CurrentTickerPrices,
+  ForexRates,
+  Position,
+  PutData,
+  PutRow,
+  PutRowTotal,
+  TradeData,
+} from '../types';
 
 import styles from '../styles/Table.module.css';
 
@@ -47,11 +57,13 @@ const Put = () => {
     trades.filter((trade) => isCurrentPut(trade, NOW)) as PutData[]
   );
   const putIds = currentPutsSorted.map(({ ticker }, index) => `${index}-${ticker}`).join(',');
+  const positionsKeys = getPositionsKeys(accounts);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
   const [rates, setRates] = useState<ForexRates>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
+  const [positions, setPositions] = useState<Position[]>([]);
 
   useEffect(() => {
     const fetchForexRates = async () => {
@@ -80,6 +92,15 @@ const Put = () => {
     fetchPutCloseTradePrices().catch(console.error);
   }, [putIds]);
 
+  useEffect(() => {
+    const fetchPositions = async () => {
+      const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
+      const data: { values: { [key: string]: Position[] } } = await response.json();
+      setPositions(Object.values(data.values).flatMap((position) => position));
+    };
+    fetchPositions().catch(console.error);
+  }, [positionsKeys]);
+
   if (isLoading) return <Loading />;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
@@ -92,6 +113,7 @@ const Put = () => {
     { name: 'dteCurrent' },
     { name: 'daysToEarnings', format: formatDaysToEarnings, align: 'default' },
     { name: 'tradePrice', format: decimalTwo },
+    { name: 'optionReturnPct', format: pctOne },
     { name: 'stockPrice', format: decimalTwo },
     { name: 'strike', format: decimalTwo },
     { name: 'current', format: decimalTwo },
@@ -148,7 +170,7 @@ const Put = () => {
           {currentPutsSorted.map((trade, tradeIndex) => {
             const orderedRowValues = headings.map((heading) => ({ ...heading }));
 
-            const { account, ticker, tradePrice, strike, commission, stockPrice } = trade;
+            const { account, ticker, tradePrice, strike, commission, stockPrice, type } = trade;
             const accountColour = accounts[account].colour;
             const { optionSize, currency, colour } = tickers[ticker];
             const current = currentTickerPrices[ticker];
@@ -192,6 +214,9 @@ const Put = () => {
             const returnGBP = current && effectiveNetReturn / forexRate;
             const differenceGBP = current && difference / forexRate;
 
+            const position = getPosition(positions, ticker, expiry, strike, type);
+            const optionReturnPct = 1 - position?.mktPrice / tradePrice;
+
             const row: PutRow = {
               account,
               assignmentPct: current ? strike / current - 1 : undefined,
@@ -214,6 +239,7 @@ const Put = () => {
               highPct: current ? high / current - 1 : undefined,
               low,
               lowPct: low / current - 1,
+              optionReturnPct,
               priceIncreaseGBP,
               return30DPctExpected,
               return30DPctEffective,
