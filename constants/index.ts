@@ -11,9 +11,6 @@ export const ONE_DAY_IN_SECONDS = 24 * ONE_HOUR_IN_SECONDS;
 export const THIRTY_DAYS_IN_SECONDS = 30 * ONE_DAY_IN_SECONDS;
 export const TEN_YEARS_IN_SECONDS = 10 * 365 * ONE_DAY_IN_SECONDS;
 
-export const IBKR_CACHE_DURATION = THIRTY_DAYS_IN_SECONDS;
-export const IBKR_POSITIONS_CACHE_DURATION = ONE_DAY_IN_SECONDS;
-
 export const DISPLAY = {
   account: 'Account',
   acquisitionCost: 'Acquisition cost',

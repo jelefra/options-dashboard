@@ -3,7 +3,7 @@ import cx from 'classnames';
 
 import { Ledgers, Summaries } from '../types';
 
-import { IBKR_CACHE_DURATION } from '../constants';
+import { THIRTY_DAYS_IN_SECONDS } from '../constants';
 
 import accounts from '../data/accounts';
 
@@ -48,7 +48,7 @@ const ManageIBKRData = ({
           ledgersState.value[`${ledgersState.endpoint}-${id}`]?.BASE.timestamp;
 
         const message = timestamp
-          ? `${dayjs(new Date((timestamp + IBKR_CACHE_DURATION) * 1000)).diff(now, 'day')} DTE`
+          ? `${dayjs(new Date((timestamp + THIRTY_DAYS_IN_SECONDS) * 1000)).diff(now, 'day')} DTE`
           : 'No data';
 
         return (

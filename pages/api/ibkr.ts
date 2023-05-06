@@ -6,7 +6,7 @@ import get from '../../utils/get';
 import { fetchFn } from '../../utils/fetch';
 import { fetchPositions } from '../../utils/fetchPositions';
 
-import { IBKR_CACHE_DURATION, IBKR_POSITIONS_CACHE_DURATION } from '../../constants';
+import { THIRTY_DAYS_IN_SECONDS, ONE_DAY_IN_SECONDS } from '../../constants';
 
 const agent = new https.Agent({
   rejectUnauthorized: false,
@@ -17,7 +17,7 @@ const fetchFunctions = {
 };
 
 const expiries = {
-  positions: IBKR_POSITIONS_CACHE_DURATION,
+  positions: ONE_DAY_IN_SECONDS,
 };
 
 const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -31,7 +31,7 @@ const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
       fetchFunction: fetchFunctions[endpoint] || fetchFn,
       URL,
       keyName: `${endpoint}-${id}`,
-      expiry: expiries[endpoint] || IBKR_CACHE_DURATION,
+      expiry: expiries[endpoint] || THIRTY_DAYS_IN_SECONDS,
       fetchFnOptions: { agent },
       ignoreCurrentCache: true,
     });
