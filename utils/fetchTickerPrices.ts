@@ -1,6 +1,7 @@
 import { createClient } from 'redis';
 
 import get from './get';
+import { sanitiseIEXLogs } from './index';
 
 import { IEXCloudStockResponse } from '../types';
 
@@ -27,6 +28,7 @@ const fetchTickerPrices = async (
         client,
         URL,
         keyName: ticker,
+        logSanitiser: sanitiseIEXLogs,
       });
       // Keys with `undefined` values will not be exposed
       const latestPrice = response?.latestPrice || null;

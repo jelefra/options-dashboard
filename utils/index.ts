@@ -58,3 +58,6 @@ export const getPosition = (
       position?.fullName ===
       `${tickers[ticker]?.IBKRTicker || ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
   );
+
+export const sanitiseIEXLogs = (URL) => URL.replace(/pk_\w+/, 'pk_***');
+export const sanitiseOpenExchangeRatesLogs = (URL) => URL.replace(/app_id=\w+/, 'app_id=***');

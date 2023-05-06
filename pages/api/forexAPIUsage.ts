@@ -2,6 +2,7 @@ import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import get from '../../utils/get';
+import { sanitiseOpenExchangeRatesLogs } from '../../utils';
 
 import { FIFTEEN_MINUTES_IN_SECONDS } from '../../constants';
 
@@ -14,6 +15,7 @@ const forexAPIUsage = async (req: NextApiRequest, res: NextApiResponse) => {
     URL,
     keyName: 'forexAPIUsage',
     expiry: FIFTEEN_MINUTES_IN_SECONDS,
+    logSanitiser: sanitiseOpenExchangeRatesLogs,
   });
   res.status(200).json({ usage: response.data.usage });
 };

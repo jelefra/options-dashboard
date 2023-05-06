@@ -1,6 +1,12 @@
 import fetch from 'node-fetch';
 
-export const fetchFn = async ({ URL, options, retries = 3, delay = 200 }): Promise<any> =>
+export const fetchFn = async ({
+  URL,
+  options,
+  logSanitiser = (URL) => URL,
+  retries = 3,
+  delay = 200,
+}): Promise<any> =>
   fetch(URL, options)
     .then((response) => {
       const contentType = response.headers?.get('content-type');
@@ -9,11 +15,14 @@ export const fetchFn = async ({ URL, options, retries = 3, delay = 200 }): Promi
       }
       if (retries > 0) {
         console.info(
-          `${response.status} status code.\tURL: ${URL}.\t(${retries} retr${
+          `${response.status} status code\t${retries} retr${
             retries > 1 ? 'ies' : 'y'
-          } left)`
+          } left\tURL: ${logSanitiser(URL)}`
         );
-        setTimeout(() => fetchFn({ URL, options, retries: retries - 1, delay: delay * 2 }), delay);
+        setTimeout(
+          () => fetchFn({ URL, options, logSanitiser, retries: retries - 1, delay: delay * 2 }),
+          delay
+        );
       } else {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
