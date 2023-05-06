@@ -32,9 +32,9 @@ export const fetchPositions = async ({
         if (!isFullResponse) {
           if (retries > 0) {
             console.info(
-              `${response.status} status code.\tURL: ${URL}.\t(${retries} retr${
+              `Positions response not complete\t${retries} retr${
                 retries > 1 ? 'ies' : 'y'
-              } left)`
+              } left\tURL: ${URL}`
             );
             setTimeout(
               () =>
@@ -52,6 +52,7 @@ export const fetchPositions = async ({
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
         }
+        console.info(`Positions response complete. Fetching page ${page + 1}\tURL: ${URL}`);
         return fetchPositions({
           URL,
           options,
@@ -61,9 +62,9 @@ export const fetchPositions = async ({
       }
       if (retries > 0) {
         console.info(
-          `${response.status} status code.\tURL: ${URL}.\t(${retries} retr${
+          `${response.status} status code\t${retries} retr${
             retries > 1 ? 'ies' : 'y'
-          } left)`
+          } left\tURL: ${URL}`
         );
         setTimeout(
           () =>
