@@ -40,6 +40,7 @@ const Home = () => {
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
   const [ledgers, setLedgers] = useState<Ledgers>(null);
   const [summaries, setSummaries] = useState<Summaries>(null);
+  const [positions, setPositions] = useState<Summaries>(null);
   const [forexAPIUsage, setForexAPIUsage] = useState<OpenExchangeRatesUsage>(null);
   const [stocksAPIUsage, setStocksAPIUsage] = useState<IEXCloudUsageResponse>(null);
 
@@ -80,6 +81,16 @@ const Home = () => {
       setSummaries(data.values);
     };
     fetchSummaries().catch(console.error);
+
+    const fetchPositions = async () => {
+      const positionsKeys = Object.values(accounts)
+        .map(({ id }) => `positions-${id}`)
+        .join(',');
+      const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
+      const data = await response.json();
+      setPositions(data.values);
+    };
+    fetchPositions().catch(console.error);
 
     const fetchForexAPIUsage = async () => {
       const response = await fetch('/api/forexAPIUsage');
@@ -145,6 +156,7 @@ const Home = () => {
         IBKRStates={[
           { endpoint: 'ledger', value: ledgers, setter: setLedgers },
           { endpoint: 'summary', value: summaries, setter: setSummaries },
+          { endpoint: 'positions', value: positions, setter: setPositions },
         ]}
         now={NOW}
       />

@@ -23,7 +23,6 @@ const ManageIBKRData = ({
         const data = await resp.json();
         setter({ ...value, [`${endpoint}-${id}`]: data.value });
       }),
-      await fetch(`/api/ibkr?endpoint=positions&id=${id}`),
     ]);
   };
 
