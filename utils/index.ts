@@ -4,6 +4,7 @@ dayjs.extend(isSameOrAfter);
 
 import { INPUT_DATE_FORMAT } from '../constants';
 import { Accounts, Position, TradeData, TradeType } from '../types';
+import tickers from '../data/tickers';
 
 export const calcDteCurrent = (expiryDate: Dayjs, now: Dayjs) =>
   expiryDate?.add(1, 'day').diff(now, 'day');
@@ -53,5 +54,7 @@ export const getPosition = (
 ) =>
   positions.length &&
   positions.find(
-    (position) => position?.fullName === `${ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
+    (position) =>
+      position?.fullName ===
+      `${tickers[ticker]?.IBKRTicker || ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
   );

@@ -7,7 +7,7 @@ import { IEXCloudStockResponse } from '../types';
 import tickers from '../data/tickers';
 
 const constructURL = (ticker: string) =>
-  `https://cloud.iexapis.com/v1/stock/${tickers[ticker].officialTicker || ticker}/quote?token=${
+  `https://cloud.iexapis.com/v1/stock/${tickers[ticker].IEXTicker || ticker}/quote?token=${
     process.env.IEX_PUBLISHABLE_KEY
   }`;
 

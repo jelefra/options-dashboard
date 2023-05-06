@@ -5,7 +5,8 @@ export type Stock = {
   colour: string;
   currency: string;
   current?: number;
-  officialTicker?: string;
+  IEXTicker?: string;
+  IBKRTicker?: string;
   optionSize?: number;
   ticker: string;
   partialBatch?: {

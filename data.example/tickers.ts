@@ -11,7 +11,8 @@ const tickers: {
   },
   BABA: {
     ticker: 'BABA',
-    officialTicker: '09988-HK',
+    IEXTicker: '09988-HK',
+    IBKRTicker: '9988',
     optionSize: 500,
     currency: 'HKD',
     colour: 'cFE6601',
