@@ -131,6 +131,7 @@ const Call = () => {
     { name: 'dteCurrent' },
     { name: 'daysToEarnings', format: formatDaysToEarnings },
     { name: 'tradePrice', format: decimalTwo },
+    { name: 'marketPrice', format: decimalTwo },
     { name: 'optionReturnPct', format: pctOne },
     { name: 'stockPrice', format: decimalTwo },
     { name: 'current', format: decimalTwo, scope: 'all' },
@@ -143,6 +144,7 @@ const Call = () => {
     { name: 'return30DPctLastCall', format: pctOne },
     { name: 'closeTradePrice' },
     { name: 'return30DPctResidual', format: pctOne },
+    { name: 'return30DPctResidualEstimate', format: pctOne },
     { name: 'returnGBPLastCall', format: thousands },
     { name: 'daysTotal' },
     { name: 'returnGBPIfAssigned', format: thousands },
@@ -222,7 +224,15 @@ const Call = () => {
             );
 
             const position = getPosition(positions, ticker, expiry, strike, 'Call');
-            const optionReturnPct = 1 - position?.mktPrice / tradePrice;
+            const marketPrice = position?.mktPrice;
+            const optionReturnPct = 1 - marketPrice / tradePrice;
+            const returnPctResidualEstimate =
+              Math.max(optionSize * marketPrice - commission, 0) / (optionSize * stockPrice);
+            const return30DPctResidualEstimate = calcReturnPctForPeriod(
+              returnPctResidualEstimate,
+              dteCurrent,
+              30
+            );
 
             const row: CallRow = {
               account,
@@ -245,6 +255,7 @@ const Call = () => {
               expiry,
               high,
               highPct: high / current - 1,
+              marketPrice,
               netCost,
               optionReturnPct,
               priceIncreaseGBP: priceIncrease / forexRate,
@@ -252,6 +263,7 @@ const Call = () => {
               return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
               return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
               return30DPctResidual,
+              return30DPctResidualEstimate,
               returnGBP,
               returnGBPIfAssigned: returnIfAssigned / forexRate,
               returnGBPLastCall,
@@ -280,7 +292,8 @@ const Call = () => {
                     name === 'dteCurrent' ||
                     name === 'highPct' ||
                     name === 'costBasisDrop' ||
-                    name === 'daysToEarnings';
+                    name === 'daysToEarnings' ||
+                    name === 'return30DPctResidualEstimate';
 
                   const earningsStatus = earnings[ticker].confirmed;
                   const dayToEarningsClass = name === 'daysToEarnings' && {

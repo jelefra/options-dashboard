@@ -113,6 +113,7 @@ const Put = () => {
     { name: 'dteCurrent' },
     { name: 'daysToEarnings', format: formatDaysToEarnings, align: 'default' },
     { name: 'tradePrice', format: decimalTwo },
+    { name: 'marketPrice', format: decimalTwo },
     { name: 'optionReturnPct', format: pctOne },
     { name: 'stockPrice', format: decimalTwo },
     { name: 'strike', format: decimalTwo },
@@ -128,6 +129,7 @@ const Put = () => {
     { name: 'return30DPctEffective', format: pctOne },
     { name: 'closeTradePrice' },
     { name: 'return30DPctResidual', format: pctOne },
+    { name: 'return30DPctResidualEstimate', format: pctOne },
     { name: 'cashEquivalentGBP', format: thousands },
     { name: 'returnGBP', format: thousands },
     { name: 'differenceGBP', format: thousands },
@@ -215,7 +217,15 @@ const Put = () => {
             const differenceGBP = current && difference / forexRate;
 
             const position = getPosition(positions, ticker, expiry, strike, type);
-            const optionReturnPct = 1 - position?.mktPrice / tradePrice;
+            const marketPrice = position?.mktPrice;
+            const optionReturnPct = 1 - marketPrice / tradePrice;
+            const returnPctResidualEstimate =
+              Math.max(optionSize * marketPrice - commission, 0) / cashEquivalent;
+            const return30DPctResidualEstimate = calcReturnPctForPeriod(
+              returnPctResidualEstimate,
+              dteCurrent,
+              30
+            );
 
             const row: PutRow = {
               account,
@@ -239,11 +249,13 @@ const Put = () => {
               highPct: current ? high / current - 1 : undefined,
               low,
               lowPct: low / current - 1,
+              marketPrice,
               optionReturnPct,
               priceIncreaseGBP,
               return30DPctExpected,
               return30DPctEffective,
               return30DPctResidual,
+              return30DPctResidualEstimate,
               returnGBP,
               status,
               stockPrice,
@@ -267,7 +279,8 @@ const Put = () => {
                     name === 'dteCurrent' ||
                     name === 'highPct' ||
                     name === 'lowPct' ||
-                    name === 'daysToEarnings';
+                    name === 'daysToEarnings' ||
+                    name === 'return30DPctResidualEstimate';
 
                   const earningsStatus = earnings[ticker]?.confirmed;
                   const dayToEarningsClass = name === 'daysToEarnings' && {

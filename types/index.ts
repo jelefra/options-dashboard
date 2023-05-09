@@ -132,7 +132,10 @@ type Row = {
   expiry: Dayjs;
   high: number;
   highPct: number;
+  marketPrice?: number;
   priceIncreaseGBP: number;
+  return30DPctResidual: number;
+  return30DPctResidualEstimate?: number;
   status?: Status;
   stockPrice: number;
   strike: number;
@@ -159,7 +162,6 @@ export type PutRow = Row &
     optionReturnPct: number;
     return30DPctExpected: number;
     return30DPctEffective: number;
-    return30DPctResidual: number;
     ticker: string;
   };
 
@@ -180,7 +182,6 @@ export type CallRow = Row &
     return1YPctIfAssigned: number;
     return30DPctIfAssigned: number;
     return30DPctLastCall: number;
-    return30DPctResidual: number;
     returnGBPIfAssigned: number;
     returnPct: number;
     returnPctIfAssigned: number;
