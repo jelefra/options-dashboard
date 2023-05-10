@@ -4,10 +4,11 @@ export const fetchFn = async ({
   URL,
   options,
   logSanitiser = (URL) => URL,
-  retries = 3,
+  retries = 5,
   delay = 200,
-}): Promise<any> =>
-  fetch(URL, options)
+}): Promise<any> => {
+  console.info(`Fetching ${logSanitiser(URL)}`);
+  return fetch(URL, options)
     .then((response) => {
       const contentType = response.headers?.get('content-type');
       if (response.ok && contentType.includes('application/json')) {
@@ -31,3 +32,4 @@ export const fetchFn = async ({
       console.error(error);
       return null;
     });
+};

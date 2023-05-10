@@ -58,8 +58,6 @@ const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) =
   const historicalForexRates = await Promise.all(
     Object.entries(dates).map(async ([date, currencies], index) => {
       const URL = constructURL(date);
-      // Delay queries to avoid 'Too Many Requests' (429) statuses
-      await new Promise((resolve) => setTimeout(resolve, index * 50));
       const client = createClient();
       await client.connect();
       const response: ExchangeRateResponse = await get({
@@ -67,6 +65,8 @@ const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) =
         URL,
         keyName: `rates-${formatDateForAPI(date)}`,
         expiry: TEN_YEARS_IN_SECONDS,
+        // Delay queries to avoid 'Too Many Requests' (429) statuses
+        initialFetchDelay: index * 100,
       });
       const ratesBaseUSD = response?.rates;
       const ratesBaseGBP = Object.fromEntries(

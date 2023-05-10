@@ -5,6 +5,7 @@ import { FIFTEEN_MINUTES_IN_SECONDS } from '../constants';
 const get = async ({
   client,
   fetchFunction = fetchFn,
+  initialFetchDelay = 0,
   URL,
   keyName,
   expiry = FIFTEEN_MINUTES_IN_SECONDS,
@@ -14,6 +15,7 @@ const get = async ({
 }: {
   client;
   fetchFunction?: Function;
+  initialFetchDelay?: number;
   URL: string;
   keyName: string;
   expiry?: number;
@@ -26,6 +28,7 @@ const get = async ({
   if (redisData && !ignoreCurrentCache) {
     data = JSON.parse(redisData);
   } else {
+    await new Promise((resolve) => setTimeout(resolve, initialFetchDelay));
     data = await fetchFunction({ URL, options: fetchFnOptions, logSanitiser });
     if (data) {
       await client.set(keyName, JSON.stringify(data), {

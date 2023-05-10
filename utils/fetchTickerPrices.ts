@@ -20,8 +20,6 @@ const fetchTickerPrices = async (
   const tickerPrices = await Promise.all(
     tickersToQuery.map(async (ticker, index) => {
       const URL = constructURL(ticker);
-      // Delay queries to avoid 'Too Many Requests' (429) statuses
-      await new Promise((resolve) => setTimeout(resolve, index * 25));
       const client = createClient();
       await client.connect();
       const response: IEXCloudStockResponse = await get({
@@ -29,6 +27,8 @@ const fetchTickerPrices = async (
         URL,
         keyName: ticker,
         logSanitiser: sanitiseIEXLogs,
+        // Delay queries to avoid 'Too Many Requests' (429) statuses
+        initialFetchDelay: index * 100,
       });
       // Keys with `undefined` values will not be exposed
       const latestPrice = response?.latestPrice || null;
