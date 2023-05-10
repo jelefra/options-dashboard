@@ -3,8 +3,6 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 import get from '../../utils/get';
 
-import { FIFTEEN_MINUTES_IN_SECONDS } from '../../constants';
-
 const stocksAPIUsage = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();
   await client.connect();
@@ -13,7 +11,6 @@ const stocksAPIUsage = async (req: NextApiRequest, res: NextApiResponse) => {
     client,
     URL,
     keyName: 'stocksAPIUsage',
-    expiry: FIFTEEN_MINUTES_IN_SECONDS,
   });
   res.status(200).json({ usage: response });
 };

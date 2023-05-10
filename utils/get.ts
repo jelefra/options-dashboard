@@ -1,13 +1,13 @@
 import { fetchFn } from './fetch';
 
-import { ONE_MINUTE_IN_SECONDS } from '../constants';
+import { FIFTEEN_MINUTES_IN_SECONDS } from '../constants';
 
 const get = async ({
   client,
   fetchFunction = fetchFn,
   URL,
   keyName,
-  expiry = ONE_MINUTE_IN_SECONDS,
+  expiry = FIFTEEN_MINUTES_IN_SECONDS,
   fetchFnOptions = {},
   ignoreCurrentCache = false,
   logSanitiser = (URL) => URL,
