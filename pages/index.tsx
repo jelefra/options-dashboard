@@ -13,6 +13,7 @@ import ForexAPIUsage from '../components/ForexAPIUsage';
 import StocksAPIUsage from '../components/StocksAPIUsage';
 import ExcessLiquidity from '../components/ExcessLiquidity';
 import BatchCodes from '../components/BatchCodes';
+import AccountValues from '../components/AccountValues';
 
 import {
   CurrentTickerPrices,
@@ -152,6 +153,7 @@ const Home = () => {
           transactions={transactions}
         />
       )}
+      {withAllLedgers && <AccountValues ledgers={ledgers} />}
       <ManageIBKRData
         IBKRStates={[
           { endpoint: 'ledger', value: ledgers, setter: setLedgers },
