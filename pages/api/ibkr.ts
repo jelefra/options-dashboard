@@ -6,7 +6,7 @@ import get from '../../utils/get';
 import { fetchFn } from '../../utils/fetch';
 import { fetchPositions } from '../../utils/fetchPositions';
 
-import { THIRTY_DAYS_IN_SECONDS, ONE_DAY_IN_SECONDS } from '../../constants';
+import { THIRTY_DAYS_IN_SECONDS, TWELVE_HOURS_IN_SECONDS } from '../../constants';
 
 const agent = new https.Agent({
   rejectUnauthorized: false,
@@ -17,7 +17,7 @@ const fetchFunctions = {
 };
 
 const expiries = {
-  positions: ONE_DAY_IN_SECONDS,
+  positions: TWELVE_HOURS_IN_SECONDS,
 };
 
 const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
