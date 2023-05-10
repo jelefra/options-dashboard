@@ -21,14 +21,15 @@ import {
   calcPriceIncrease,
   calcPutDifference,
   calcReturnPctForPeriod,
+  daysToEarningsDanger,
+  daysToEarningsInfo,
+  daysToEarningsWarning,
+  lowReturn,
+  formatDaysToEarnings,
   getPosition,
   getPositionsKeys,
   isCurrentPut,
   removeNullValues,
-  formatDaysToEarnings,
-  daysToEarningsInfo,
-  daysToEarningsWarning,
-  daysToEarningsDanger,
 } from '../utils';
 
 import { INPUT_DATE_FORMAT, DISPLAY } from '../constants';
@@ -104,7 +105,12 @@ const Put = () => {
   if (isLoading) return <Loading />;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
-  const headings: { name: keyof PutRow; format?: Function; align?: 'default' | 'right' }[] = [
+  const headings: {
+    name: keyof PutRow;
+    format?: Function;
+    align?: 'default' | 'right';
+    filter?: Function;
+  }[] = [
     { name: 'account', align: 'default' },
     { name: 'ticker', align: 'default' },
     { name: 'date', format: dateShortTerm, align: 'default' },
@@ -129,7 +135,7 @@ const Put = () => {
     { name: 'return30DPctEffective', format: pctOne },
     { name: 'closeTradePrice' },
     { name: 'return30DPctResidual', format: pctOne },
-    { name: 'return30DPctResidualEstimate', format: pctOne },
+    { name: 'return30DPctResidualEstimate', format: pctOne, filter: lowReturn },
     { name: 'cashEquivalentGBP', format: thousands },
     { name: 'returnGBP', format: thousands },
     { name: 'differenceGBP', format: thousands },
@@ -273,41 +279,43 @@ const Put = () => {
 
             return (
               <tr key={tradeIndex}>
-                {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
-                  const showZeroValues =
-                    name === 'assignmentPct' ||
-                    name === 'dteCurrent' ||
-                    name === 'highPct' ||
-                    name === 'lowPct' ||
-                    name === 'daysToEarnings' ||
-                    name === 'return30DPctResidualEstimate';
+                {orderedRowValues.map(
+                  ({ name, format = (v) => v, align = 'right', filter = (val) => val }, index) => {
+                    const showZeroValues =
+                      name === 'assignmentPct' ||
+                      name === 'dteCurrent' ||
+                      name === 'highPct' ||
+                      name === 'lowPct' ||
+                      name === 'daysToEarnings' ||
+                      name === 'return30DPctResidualEstimate';
 
-                  const earningsStatus = earnings[ticker]?.confirmed;
-                  const dayToEarningsClass = name === 'daysToEarnings' && {
-                    [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
-                    [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
-                    [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
-                  };
+                    const earningsStatus = earnings[ticker]?.confirmed;
+                    const dayToEarningsClass = name === 'daysToEarnings' && {
+                      [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
+                      [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
+                      [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
+                    };
 
-                  return (
-                    <td
-                      className={cx(
-                        {
-                          [styles[align]]: align === 'right',
-                          [colour]: name === 'ticker',
-                          [accountColour]: name === 'account',
-                          [styles.contrast]: tradeIndex % 2 && index > 1,
-                          [styles.freezeFirstTdColumn]: index === 0,
-                          [styles.freezeSecondTdColumn]: index === 1,
-                        },
-                        dayToEarningsClass
-                      )}
-                      key={index}
-                    >
-                      {(!!row[name] || showZeroValues) && format(row[name])}
-                    </td>
-                  );
-                })}
+                    return (
+                      <td
+                        className={cx(
+                          {
+                            [styles[align]]: align === 'right',
+                            [colour]: name === 'ticker',
+                            [accountColour]: name === 'account',
+                            [styles.contrast]: tradeIndex % 2 && index > 1,
+                            [styles.freezeFirstTdColumn]: index === 0,
+                            [styles.freezeSecondTdColumn]: index === 1,
+                          },
+                          dayToEarningsClass
+                        )}
+                        key={index}
+                      >
+                        {(!!row[name] || showZeroValues) && format(filter(row[name]))}
+                      </td>
+                    );
+                  }
+                )}
               </tr>
             );
           })}

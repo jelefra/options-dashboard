@@ -2,7 +2,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
 
-import { INPUT_DATE_FORMAT } from '../constants';
+import { INPUT_DATE_FORMAT, MINIMUM_RETURN_THRESHOLD } from '../constants';
 import { Accounts, Position, TradeData, TradeType } from '../types';
 import tickers from '../data/tickers';
 
@@ -61,3 +61,5 @@ export const getPosition = (
 
 export const sanitiseIEXLogs = (URL) => URL.replace(/pk_\w+/, 'pk_***');
 export const sanitiseOpenExchangeRatesLogs = (URL) => URL.replace(/app_id=\w+/, 'app_id=***');
+
+export const lowReturn = (pct) => (pct < MINIMUM_RETURN_THRESHOLD ? pct : undefined);

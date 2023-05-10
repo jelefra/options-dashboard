@@ -12,13 +12,14 @@ import {
   calcDteTotal,
   calcPriceIncrease,
   calcReturnPctForPeriod,
-  getPosition,
-  getPositionsKeys,
-  removeNullValues,
-  formatDaysToEarnings,
+  daysToEarningsDanger,
   daysToEarningsInfo,
   daysToEarningsWarning,
-  daysToEarningsDanger,
+  formatDaysToEarnings,
+  getPosition,
+  getPositionsKeys,
+  lowReturn,
+  removeNullValues,
 } from '../utils';
 import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
@@ -116,6 +117,7 @@ const Call = () => {
     format?: Function;
     align?: 'default' | 'right';
     scope?: 'all';
+    filter?: Function;
   }[] = [
     { name: 'account', align: 'default', scope: 'all' },
     { name: 'batchCode', align: 'default', scope: 'all' },
@@ -144,7 +146,7 @@ const Call = () => {
     { name: 'return30DPctLastCall', format: pctOne },
     { name: 'closeTradePrice' },
     { name: 'return30DPctResidual', format: pctOne },
-    { name: 'return30DPctResidualEstimate', format: pctOne },
+    { name: 'return30DPctResidualEstimate', format: pctOne, filter: lowReturn },
     { name: 'returnGBPLastCall', format: thousands },
     { name: 'daysTotal' },
     { name: 'returnGBPIfAssigned', format: thousands },
@@ -285,45 +287,47 @@ const Call = () => {
 
             return (
               <tr key={rowIndex}>
-                {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
-                  const showContrast = name !== 'account' && name !== 'batchCode';
-                  const showZeroValues =
-                    name === 'assignmentPct' ||
-                    name === 'dteCurrent' ||
-                    name === 'highPct' ||
-                    name === 'costBasisDrop' ||
-                    name === 'daysToEarnings' ||
-                    name === 'return30DPctResidualEstimate';
+                {orderedRowValues.map(
+                  ({ name, format = (v) => v, align = 'right', filter = (val) => val }, index) => {
+                    const showContrast = name !== 'account' && name !== 'batchCode';
+                    const showZeroValues =
+                      name === 'assignmentPct' ||
+                      name === 'dteCurrent' ||
+                      name === 'highPct' ||
+                      name === 'costBasisDrop' ||
+                      name === 'daysToEarnings' ||
+                      name === 'return30DPctResidualEstimate';
 
-                  const earningsStatus = earnings[ticker].confirmed;
-                  const dayToEarningsClass = name === 'daysToEarnings' && {
-                    [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
-                    [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
-                    [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
-                  };
+                    const earningsStatus = earnings[ticker].confirmed;
+                    const dayToEarningsClass = name === 'daysToEarnings' && {
+                      [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
+                      [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
+                      [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
+                    };
 
-                  return (
-                    <td
-                      className={cx(
-                        {
-                          [styles[align]]: align === 'right',
-                          [colour]: name === 'batchCode',
-                          [accountColour]: name === 'account',
-                          [styles.contrast]: rowIndex % 2 && showContrast,
-                          [styles.freezeFirstTdColumn]: index === 0,
-                          [styles.freezeSecondTdColumn]: index === 1,
-                          [styles.warning]:
-                            current > high &&
-                            (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
-                        },
-                        dayToEarningsClass
-                      )}
-                      key={index}
-                    >
-                      {(!!row[name] || showZeroValues) && format(row[name])}
-                    </td>
-                  );
-                })}
+                    return (
+                      <td
+                        className={cx(
+                          {
+                            [styles[align]]: align === 'right',
+                            [colour]: name === 'batchCode',
+                            [accountColour]: name === 'account',
+                            [styles.contrast]: rowIndex % 2 && showContrast,
+                            [styles.freezeFirstTdColumn]: index === 0,
+                            [styles.freezeSecondTdColumn]: index === 1,
+                            [styles.warning]:
+                              current > high &&
+                              (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
+                          },
+                          dayToEarningsClass
+                        )}
+                        key={index}
+                      >
+                        {(!!row[name] || showZeroValues) && format(filter(row[name]))}
+                      </td>
+                    );
+                  }
+                )}
               </tr>
             );
           })}
