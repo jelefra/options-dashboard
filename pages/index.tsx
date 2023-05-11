@@ -3,7 +3,7 @@ import Head from 'next/head';
 import dayjs from 'dayjs';
 
 import Container from '../components/Container';
-import Earnings from '../components/Earnings';
+import Tickers from '../components/Tickers';
 import AllocationSummary from '../components/AllocationSummary';
 import ManageIBKRData from '../components/ManageIBKRData';
 import Currencies from '../components/Currencies';
@@ -12,7 +12,6 @@ import Weight from '../components/Weight';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import StocksAPIUsage from '../components/StocksAPIUsage';
 import ExcessLiquidity from '../components/ExcessLiquidity';
-import BatchCodes from '../components/BatchCodes';
 import AccountValues from '../components/AccountValues';
 
 import {
@@ -143,7 +142,7 @@ const Home = () => {
         <title>Options</title>
         <link rel="icon" href="/home.ico" />
       </Head>
-      <Earnings data={earnings} now={NOW} />
+      <Tickers earnings={earnings} now={NOW} trades={trades} transactions={transactions} />
       {showAllocationSummary && (
         <AllocationSummary
           cash={cash}
@@ -189,7 +188,6 @@ const Home = () => {
         {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
         {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}
       </div>
-      <BatchCodes trades={trades} transactions={transactions} />
     </Container>
   );
 };
