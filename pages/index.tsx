@@ -11,8 +11,7 @@ import Forex from '../components/Forex';
 import Weight from '../components/Weight';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import StocksAPIUsage from '../components/StocksAPIUsage';
-import ExcessLiquidity from '../components/ExcessLiquidity';
-import AccountValues from '../components/AccountValues';
+import AccountsComponent from '../components/Accounts';
 
 import {
   CurrentTickerPrices,
@@ -152,7 +151,6 @@ const Home = () => {
           transactions={transactions}
         />
       )}
-      {withAllLedgers && <AccountValues ledgers={ledgers} />}
       <ManageIBKRData
         IBKRStates={[
           { endpoint: 'ledger', value: ledgers, setter: setLedgers },
@@ -177,7 +175,7 @@ const Home = () => {
         </Currencies>
       )}
       {showExcessLiquidity && (
-        <ExcessLiquidity
+        <AccountsComponent
           currencies={currencies}
           ledgers={ledgers}
           summaries={summaries}

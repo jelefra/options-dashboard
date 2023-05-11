@@ -13,7 +13,7 @@ import styles from '../styles/Table.module.css';
 
 const NOW = dayjs();
 
-const ExcessLiquidity = ({
+const AccountsComponent = ({
   currencies,
   ledgers,
   summaries,
@@ -46,7 +46,7 @@ const ExcessLiquidity = ({
       <thead>
         <tr>
           <th />
-          <th>Base</th>
+          <th colSpan={2}>Base</th>
           {currencies.map((currency, index) => (
             <th
               className={cx({ [styles.contrast]: !(index % 2) })}
@@ -59,6 +59,7 @@ const ExcessLiquidity = ({
         </tr>
         <tr>
           <th />
+          <th>Liquidation value</th>
           <th>Excess liquidity</th>
           {currencies.map((currency, index) => {
             // Workaround to avoid "Each child in a list should have a unique "key" prop."
@@ -82,6 +83,9 @@ const ExcessLiquidity = ({
         {Object.values(accountsToDisplay).map(({ name, id }, index) => (
           <tr key={index}>
             <td className={accounts[name].colour}>{name}</td>
+            <td className={styles.right}>
+              {thousands(summaries[`summary-${id}`]?.netliquidation?.amount)}
+            </td>
             <td className={styles.right}>
               {thousands(summaries[`summary-${id}`]?.excessliquidity?.amount)}
             </td>
@@ -117,4 +121,4 @@ const ExcessLiquidity = ({
   );
 };
 
-export default ExcessLiquidity;
+export default AccountsComponent;

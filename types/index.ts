@@ -318,15 +318,13 @@ type CurrencyLedger = {
 
 export type Summaries = { [key: string]: Summary };
 
-// IBKR returns more data besides 'excessliquidity'
+// IBKR returns more data
 type Summary = {
   excessliquidity: {
     amount: number;
-    currency: string;
-    isNull: boolean;
-    timestamp: number;
-    value: null | number;
-    severity: number;
+  };
+  netliquidation: {
+    amount: number;
   };
 };
 
