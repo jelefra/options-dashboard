@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
 import cx from 'classnames';
 
-import { Ledgers, Summaries } from '../types';
+import { Ledgers, Positions, Summaries } from '../types';
 
 import { THIRTY_DAYS_IN_SECONDS } from '../constants';
 
@@ -13,7 +13,7 @@ const ManageIBKRData = ({
   IBKRStates,
   now,
 }: {
-  IBKRStates: { endpoint: string; value: Ledgers | Summaries; setter: Function }[];
+  IBKRStates: { endpoint: string; value: Ledgers | Summaries | Positions; setter: Function }[];
   now: Dayjs;
 }) => {
   const fetchAccountData = async (id) => {

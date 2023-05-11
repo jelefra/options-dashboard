@@ -337,6 +337,8 @@ export type OpenExchangeRatesUsage = {
   daily_average: number;
 };
 
+export type Positions = { [key: string]: Position[] };
+
 export type Position = {
   position: number;
   mktPrice: number;
