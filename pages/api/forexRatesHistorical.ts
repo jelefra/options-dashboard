@@ -3,7 +3,7 @@ import { createClient } from 'redis';
 import cloneDeep from 'lodash.clonedeep';
 import dayjs from 'dayjs';
 
-import { removeNullValues } from '../../utils';
+import { removeNullValues, sanitiseOpenExchangeRatesLogs } from '../../utils';
 import get from '../../utils/get';
 
 import { ExchangeRateResponse, TradeData, TransactionData } from '../../types';
@@ -67,6 +67,7 @@ const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) =
         expiry: TEN_YEARS_IN_SECONDS,
         // Delay queries to avoid 'Too Many Requests' (429) statuses
         initialFetchDelay: index * 100,
+        logSanitiser: sanitiseOpenExchangeRatesLogs,
       });
       const ratesBaseUSD = response?.rates;
       const ratesBaseGBP = Object.fromEntries(

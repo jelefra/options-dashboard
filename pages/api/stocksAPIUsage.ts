@@ -2,6 +2,7 @@ import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import get from '../../utils/get';
+import { sanitiseIEXLogs } from '../../utils';
 
 const stocksAPIUsage = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();
@@ -11,6 +12,7 @@ const stocksAPIUsage = async (req: NextApiRequest, res: NextApiResponse) => {
     client,
     URL,
     keyName: 'stocksAPIUsage',
+    logSanitiser: sanitiseIEXLogs,
   });
   res.status(200).json({ usage: response });
 };

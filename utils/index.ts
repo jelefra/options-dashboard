@@ -59,7 +59,7 @@ export const getPosition = (
       `${tickers[ticker]?.IBKRTicker || ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
   );
 
-export const sanitiseIEXLogs = (URL) => URL.replace(/pk_\w+/, 'pk_***');
+export const sanitiseIEXLogs = (URL) => URL.replace(/(pk_|sk_)\w+/, 'pk_***');
 export const sanitiseOpenExchangeRatesLogs = (URL) => URL.replace(/app_id=\w+/, 'app_id=***');
 
 export const lowReturn = (pct) => (pct < MINIMUM_RETURN_THRESHOLD ? pct : undefined);

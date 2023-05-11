@@ -2,6 +2,7 @@ import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import get from '../../utils/get';
+import { sanitiseOpenExchangeRatesLogs } from '../../utils';
 
 import { ExchangeRateResponse } from '../../types';
 
@@ -14,6 +15,7 @@ const forexRates = async (req: NextApiRequest, res: NextApiResponse) => {
     client,
     URL,
     keyName: 'rates',
+    logSanitiser: sanitiseOpenExchangeRatesLogs,
   });
   const ratesBaseUSD = response.rates;
   const ratesBaseGBP = Object.keys(ratesBaseUSD).reduce((ratesBaseGBP, currency) => {
