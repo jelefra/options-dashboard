@@ -25,6 +25,11 @@ const AllocationSummary = ({
   trades: TradeData[];
   transactions: TransactionData[];
 }) => {
+  const hasMissingTickerPrice = Object.values(currentTickerPrices).some((price) => !price);
+  if (hasMissingTickerPrice) {
+    return <div style={{ padding: '20px' }}>Ticker prices incomplete.</div>;
+  }
+
   const { batches, stocks } = processData({ transactions, trades, currentTickerPrices, now: NOW });
 
   const { wheelingGBP, notWheelingGBP } = Object.values(batches).reduce(
