@@ -13,7 +13,11 @@ const ManageIBKRData = ({
   IBKRStates,
   now,
 }: {
-  IBKRStates: { endpoint: string; value: Ledgers | Summaries | Positions; setter: Function }[];
+  IBKRStates: [
+    { endpoint: string; value: Ledgers; setter: Function },
+    { endpoint: string; value: Summaries; setter: Function },
+    { endpoint: string; value: Positions; setter: Function }
+  ];
   now: Dayjs;
 }) => {
   const fetchAccountData = async (id) => {
@@ -38,11 +42,7 @@ const ManageIBKRData = ({
   return (
     <div style={{ display: 'flex' }}>
       {Object.entries(accounts).map(([name, { id }]) => {
-        const ledgersState = IBKRStates[0] as {
-          endpoint: string;
-          value: Ledgers;
-          setter: Function;
-        };
+        const [ledgersState] = IBKRStates;
         const timestamp =
           ledgersState.value &&
           ledgersState.value[`${ledgersState.endpoint}-${id}`]?.BASE.timestamp;
