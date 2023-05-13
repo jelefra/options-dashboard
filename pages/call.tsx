@@ -164,6 +164,7 @@ const Call = () => {
       returnGBP: 0,
       returnGBPLastCall: 0,
       valueGBP: 0,
+      priceIncreaseGBP: 0,
     };
 
     return (
@@ -235,6 +236,7 @@ const Call = () => {
               dteCurrent,
               30
             );
+            const priceIncreaseGBP = priceIncrease / forexRate;
 
             const row: CallRow = {
               account,
@@ -260,7 +262,7 @@ const Call = () => {
               marketPrice,
               netCost,
               optionReturnPct,
-              priceIncreaseGBP: priceIncrease / forexRate,
+              priceIncreaseGBP,
               return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
               return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
               return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
@@ -282,6 +284,7 @@ const Call = () => {
             totals.returnGBP += returnGBP;
             totals.returnGBPLastCall += returnGBPLastCall;
             totals.valueGBP += valueGBP;
+            totals.priceIncreaseGBP += priceIncreaseGBP;
 
             const accountColour = accounts[account].colour;
 

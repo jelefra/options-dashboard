@@ -166,6 +166,7 @@ export type PutRow = Row &
   };
 
 export type CallRowTotal = {
+  priceIncreaseGBP: number;
   returnGBP: number;
   returnGBPLastCall: number;
   valueGBP: number;
