@@ -36,6 +36,7 @@ import {
   CurrentTickerPrices,
   ForexRates,
   Position,
+  Positions,
   PutData,
   PutRow,
   PutRowTotal,
@@ -95,8 +96,10 @@ const Put = () => {
   useEffect(() => {
     const fetchPositions = async () => {
       const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
-      const data: { values: { [key: string]: Position[] } } = await response.json();
-      setPositions(Object.values(data.values).flatMap((position) => position));
+      const data: { values: Positions } = await response.json();
+      setPositions(
+        Object.values(data.values).flatMap((positionsTimestamped) => positionsTimestamped?.allData)
+      );
     };
     fetchPositions().catch(console.error);
   }, [positionsKeys]);

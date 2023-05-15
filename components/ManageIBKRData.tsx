@@ -3,7 +3,7 @@ import cx from 'classnames';
 
 import { Ledgers, Positions, Summaries } from '../types';
 
-import { THIRTY_DAYS_IN_SECONDS } from '../constants';
+import { IBKR_DEFAULT_EXPIRY, IBKR_POSITIONS_EXPIRY } from '../constants';
 
 import accounts from '../data/accounts';
 
@@ -42,14 +42,20 @@ const ManageIBKRData = ({
   return (
     <div style={{ display: 'flex' }}>
       {Object.entries(accounts).map(([name, { id }]) => {
-        const [ledgersState] = IBKRStates;
-        const timestamp =
-          ledgersState.value &&
-          ledgersState.value[`${ledgersState.endpoint}-${id}`]?.BASE.timestamp;
+        const [ledgersState, , positionsState] = IBKRStates;
+        const ledger = ledgersState.value[`${ledgersState.endpoint}-${id}`];
 
-        const message = timestamp
-          ? `${dayjs(new Date((timestamp + THIRTY_DAYS_IN_SECONDS) * 1000)).diff(now, 'day')} DTE`
-          : 'No data';
+        const generalTS = ledger?.BASE.timestamp;
+        const generalExpiry = generalTS
+          ? `${dayjs(new Date((generalTS + IBKR_DEFAULT_EXPIRY) * 1000)).diff(now, 'day')}d`
+          : 'Ø';
+
+        const positionsTS = positionsState.value[`${positionsState.endpoint}-${id}`]?.timestamp;
+        const positionsExpiry = positionsTS
+          ? `${dayjs(new Date((positionsTS + IBKR_POSITIONS_EXPIRY) * 1000)).diff(now, 'hours')}h`
+          : 'Ø';
+
+        const message = ledger ? `${generalExpiry} / ${positionsExpiry}` : generalExpiry;
 
         return (
           <div
@@ -68,13 +74,15 @@ const ManageIBKRData = ({
               Fetch {name}
             </button>
             <button
-              className={cx(styles.button, styles.destructive, { [styles.disabled]: !timestamp })}
+              className={cx(styles.button, styles.destructive, {
+                [styles.disabled]: !generalTS,
+              })}
               onClick={() => deleteAccountData(id)}
-              disabled={!timestamp}
+              disabled={!generalTS}
             >
               Clear
             </button>
-            {ledgersState.value && <small>{message}</small>}
+            <small>{message}</small>
           </div>
         );
       })}

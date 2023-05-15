@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
+import dayjs from 'dayjs';
 
-import { Position } from '../types';
+import { Position, PositionsTimestamped } from '../types';
 
 export const fetchPositions = async ({
   URL,
@@ -16,16 +17,17 @@ export const fetchPositions = async ({
   delay?: number;
   page?: number;
   allData?: Position[];
-}): Promise<Position[]> | null => {
+}): Promise<PositionsTimestamped> | null => {
   try {
     console.info(`Fetching ${URL}/${page}`);
+    const timestamp = dayjs().unix();
     const response = await fetch(`${URL}/${page}`, options);
     const contentType = response.headers?.get('content-type');
     if (response.ok && contentType.includes('application/json')) {
       const data = (await response.json()) as Position[];
       if (data.length === 0) {
         console.info('All positions successfully fetched.');
-        return allData;
+        return { allData, timestamp };
       }
       const isFullResponse = data
         .filter((position) => position.assetClass === 'OPT')

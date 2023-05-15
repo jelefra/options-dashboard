@@ -19,6 +19,7 @@ import {
   IEXCloudUsageResponse,
   Ledgers,
   OpenExchangeRatesUsage,
+  Positions,
   Summaries,
   TradeData,
   TransactionData,
@@ -39,7 +40,7 @@ const Home = () => {
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
   const [ledgers, setLedgers] = useState<Ledgers>(null);
   const [summaries, setSummaries] = useState<Summaries>(null);
-  const [positions, setPositions] = useState<Summaries>(null);
+  const [positions, setPositions] = useState<Positions>(null);
   const [forexAPIUsage, setForexAPIUsage] = useState<OpenExchangeRatesUsage>(null);
   const [stocksAPIUsage, setStocksAPIUsage] = useState<IEXCloudUsageResponse>(null);
 
@@ -110,7 +111,7 @@ const Home = () => {
   const withAllSummaries = summaries && Object.values(summaries).every(Boolean);
   const withOneLedger = ledgers && Object.values(ledgers).some(Boolean);
   const withOneSummary = summaries && Object.values(summaries).some(Boolean);
-  const withIBKRData = ledgers && summaries;
+  const withIBKRData = ledgers && summaries && positions;
 
   const cash =
     withAllSummaries &&
@@ -151,14 +152,16 @@ const Home = () => {
           transactions={transactions}
         />
       )}
-      <ManageIBKRData
-        IBKRStates={[
-          { endpoint: 'ledger', value: ledgers, setter: setLedgers },
-          { endpoint: 'summary', value: summaries, setter: setSummaries },
-          { endpoint: 'positions', value: positions, setter: setPositions },
-        ]}
-        now={NOW}
-      />
+      {withIBKRData && (
+        <ManageIBKRData
+          IBKRStates={[
+            { endpoint: 'ledger', value: ledgers, setter: setLedgers },
+            { endpoint: 'summary', value: summaries, setter: setSummaries },
+            { endpoint: 'positions', value: positions, setter: setPositions },
+          ]}
+          now={NOW}
+        />
+      )}
       {(showCurrencyWeights || showForex) && (
         <Currencies currencies={currencies}>
           {showCurrencyWeights && (
