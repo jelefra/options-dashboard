@@ -16,8 +16,6 @@ import tickers from '../data/tickers';
 
 import styles from '../styles/Table.module.css';
 
-const SHOW_PAST_DAYS = 30;
-
 type BatchCodesType = { [key: string]: { ticker: string; batchCode: string } };
 
 const Tickers = ({
@@ -68,9 +66,6 @@ const Tickers = ({
       <tbody>
         {Object.entries(earnings)
           .sort(([tickerA], [tickerB]) => tickerA.localeCompare(tickerB))
-          .filter(([, { date }]) =>
-            dayjs(date, INPUT_DATE_FORMAT).add(SHOW_PAST_DAYS, 'day').isSameOrAfter(now, 'day')
-          )
           .map(([ticker, { date, confirmed, timing }]) => {
             const daysToEarnings = hoursToDays(
               dayjs(date, INPUT_DATE_FORMAT).add(1, 'day').diff(now, 'hour')
