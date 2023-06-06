@@ -48,6 +48,7 @@ export type StockEnriched = Stock & {
     return: number;
     returnPct: number;
   };
+  missingUpside?: boolean;
 };
 
 type Operation = {

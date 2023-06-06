@@ -237,8 +237,6 @@ const Stocks = () => {
         putOnlyPremium) /
         (wheelingQuantity + partialBatchQuantity);
 
-    const returnPct = current && avgCost && current / avgCost - 1;
-
     const returnCurrency =
       totalQuantity * current -
       wheelingAcquisitionCost -
@@ -251,6 +249,8 @@ const Stocks = () => {
     const returnGBP = (current || totalQuantity === 0) && returnCurrency / forexRate;
     const valueGBP = calcValueGBP(stock, currentTickerPrices, rates);
 
+    const returnPct = current && avgCost && returnGBP / (valueGBP - returnGBP);
+
     totals.returnGBP.value += returnGBP;
     totals.valueGBP.value += valueGBP;
 
@@ -262,6 +262,7 @@ const Stocks = () => {
       returnPct,
       totalQuantity,
       valueGBP,
+      missingUpside: !!wheelingMissedUpside,
       ...(stock.partialBatch && {
         partialBatch: { ...stock.partialBatch },
       }),
@@ -346,6 +347,9 @@ const Stocks = () => {
                     [row.colour]: row.colour && name === 'ticker',
                     [styles.contrast]: rowIndex % 2 && index > 0,
                     [styles.freezeFirstTdColumn]: index === 0,
+                    [styles.warning]:
+                      row.missingUpside &&
+                      (name === 'valueGBP' || name === 'returnGBP' || name === 'returnPct'),
                   })}
                   key={index}
                 >
