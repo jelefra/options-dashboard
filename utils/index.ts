@@ -24,7 +24,9 @@ export const calcReturnPctForPeriod = (returnPct: number, days: number, newPerio
   ((1 + returnPct) ** (1 / (days + 1))) ** newPeriod - 1;
 
 export const isCurrentPut = ({ closePrice, expiry, type }: TradeData, now: Dayjs): boolean =>
-  type === 'Put' && dayjs(expiry, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day') && !closePrice;
+  type === 'Put' &&
+  dayjs(expiry, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day') &&
+  (!closePrice || false);
 
 export const removeNullValues = (obj) =>
   Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== null));
