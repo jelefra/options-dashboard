@@ -59,12 +59,22 @@ type Operation = {
   type: TransactionType | TradeType;
 };
 
-type TradeCommon = {
+type TradeCloseDataPresent = {
+  closeCommission: number;
+  closeDate: string;
+  closePrice: number;
+  closeTradePrice: number;
+};
+
+type TradeCloseDataAbsent = {
+  closeCommission?: never;
+  closeDate?: never;
+  closePrice?: never;
+  closeTradePrice?: never;
+};
+
+type TradeCommon = (TradeCloseDataAbsent | TradeCloseDataPresent) & {
   batchCode?: string;
-  closeCommission?: number;
-  closeDate?: string;
-  closePrice?: number;
-  closeTradePrice?: number;
   // Trades filled long after being placed don't feature delta or IV
   delta?: number;
   IV?: number;
