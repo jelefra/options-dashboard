@@ -291,16 +291,8 @@ const Stocks = () => {
       stockData.allocation = valueGBP / totals.valueGBP.value;
       return stockData;
     })
-    .sort((stockA, stockB) =>
-      !(
-        stockA.partialBatch?.quantity ||
-        stockA.wheeling?.quantity ||
-        stockB.partialBatch?.quantity ||
-        stockB.wheeling?.quantity
-      )
-        ? stockB.returnGBP - stockA.returnGBP
-        : stockB.valueGBP - stockA.valueGBP
-    );
+    .sort((stockA, stockB) => stockB.returnGBP - stockA.returnGBP)
+    .sort((stockA, stockB) => stockB.valueGBP - stockA.valueGBP);
 
   return (
     <>
