@@ -63,15 +63,18 @@ const Stocks = () => {
       setRates(data.rates);
     };
 
+    fetchForexRates()
+      .then(() => setIsLoading(false))
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
     const fetchAllTickerPrices = async () => {
       const response = await fetch(`/api/allTickerPrices?now=${String(NOW)}`);
       const data = await response.json();
       setCurrentTickerPrices(data.currentTickerPrices);
     };
-
-    Promise.all([fetchForexRates(), fetchAllTickerPrices()])
-      .then(() => setIsLoading(false))
-      .catch(console.error);
+    fetchAllTickerPrices().catch(console.error);
   }, []);
 
   if (isLoading) return <Loading />;

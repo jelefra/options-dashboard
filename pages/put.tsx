@@ -72,16 +72,18 @@ const Put = () => {
       const data = await response.json();
       setRates(data.rates);
     };
+    fetchForexRates()
+      .then(() => setIsLoading(false))
+      .catch(console.error);
+  }, []);
 
+  useEffect(() => {
     const fetchPutTickerPrices = async () => {
       const response = await fetch(`/api/putTickerPrices?now=${String(NOW)}`);
       const data = await response.json();
       setCurrentTickerPrices(data.currentTickerPrices);
     };
-
-    Promise.all([fetchForexRates(), fetchPutTickerPrices()])
-      .then(() => setIsLoading(false))
-      .catch(console.error);
+    fetchPutTickerPrices().catch(console.error);
   }, []);
 
   useEffect(() => {

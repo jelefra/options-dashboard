@@ -63,13 +63,7 @@ const Call = () => {
       setRates(data.rates);
     };
 
-    const fetchCallTickerPrices = async () => {
-      const response = await fetch('/api/callTickerPrices');
-      const data = await response.json();
-      setCurrentTickerPrices(data.currentTickerPrices);
-    };
-
-    Promise.all([fetchForexRates(), fetchCallTickerPrices()])
+    fetchForexRates()
       .then(() => setIsLoading(false))
       .catch(console.error);
   }, []);
@@ -94,6 +88,15 @@ const Call = () => {
     };
     fetchCallCloseTradePrices().catch(console.error);
   }, [callIds]);
+
+  useEffect(() => {
+    const fetchCallTickerPrices = async () => {
+      const response = await fetch('/api/callTickerPrices');
+      const data = await response.json();
+      setCurrentTickerPrices(data.currentTickerPrices);
+    };
+    fetchCallTickerPrices().catch(console.error);
+  }, []);
 
   useEffect(() => {
     const fetchPositions = async () => {
