@@ -32,17 +32,6 @@ import styles from '../styles/Table.module.css';
 
 const NOW = dayjs();
 
-const calcValueGBP = (
-  stock: Stock,
-  currentTickerPrices: CurrentTickerPrices,
-  rates: ForexRates
-) => {
-  const { currency, current } = stock;
-  const value = calcValue(stock, current);
-  const forexRate = rates[currency];
-  return value / forexRate;
-};
-
 const calcValue = (stock: Stock, current: number) => {
   const partialBatchQuantity = stock.partialBatch?.quantity || 0;
   const wheelingQuantity = stock.wheeling?.quantity || 0;
@@ -249,10 +238,10 @@ const Stocks = () => {
       wheelingPremium +
       wheeledReturn;
 
-    const returnGBP = (current || totalQuantity === 0) && returnCurrency / forexRate;
-    const valueGBP = calcValueGBP(stock, currentTickerPrices, rates);
+    const returnGBP = current || totalQuantity === 0 ? returnCurrency / forexRate : null;
+    const valueGBP = current && forexRate ? calcValue(stock, current) / forexRate : null;
 
-    const returnPct = current && avgCost && returnGBP / (valueGBP - returnGBP);
+    const returnPct = current && avgCost ? returnGBP / (valueGBP - returnGBP) : null;
 
     totals.returnGBP.value += returnGBP;
     totals.valueGBP.value += valueGBP;
@@ -289,11 +278,7 @@ const Stocks = () => {
   });
 
   const rows: StockEnriched[] = stockData
-    .map((stockData) => {
-      const valueGBP = stockData.valueGBP;
-      stockData.allocation = valueGBP / totals.valueGBP.value;
-      return stockData;
-    })
+    .map((stockData) => ({ ...stockData, allocation: stockData.valueGBP / totals.valueGBP.value }))
     .sort((stockA, stockB) => stockB.returnGBP - stockA.returnGBP)
     .sort((stockA, stockB) => stockB.valueGBP - stockA.valueGBP);
 
