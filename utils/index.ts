@@ -4,7 +4,6 @@ dayjs.extend(isSameOrAfter);
 
 import { INPUT_DATE_FORMAT } from '../constants';
 import { Accounts, Position, TradeData, TradeType } from '../types';
-import tickers from '../data/tickers';
 
 export const calcDteCurrent = (expiryDate: Dayjs, now: Dayjs) =>
   expiryDate?.add(1, 'day').diff(now, 'day');
@@ -56,10 +55,11 @@ export const getPosition = (
 ) =>
   positions.length &&
   positions.find(
-    (position) =>
-      position?.fullName ===
-      `${tickers[ticker]?.IBKRTicker || ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
+    (position) => position?.fullName === `${ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
   );
 
-export const sanitiseIEXLogs = (URL) => URL.replace(/(pk_|sk_)\w+/, 'pk_***');
-export const sanitiseOpenExchangeRatesLogs = (URL) => URL.replace(/app_id=\w+/, 'app_id=***');
+export const sanitiseFinnhubLogs = (URL: string) => URL.replace(/token=\w+/, 'token=***');
+export const sanitiseMarketstackLogs = (URL: string) =>
+  URL.replace(/access_key=\w+/, 'access_key=***');
+export const sanitiseOpenExchangeRatesLogs = (URL: string) =>
+  URL.replace(/app_id=\w+/, 'app_id=***');

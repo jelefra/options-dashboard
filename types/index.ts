@@ -5,10 +5,10 @@ export type Stock = {
   colour: string;
   currency: string;
   current?: number;
-  IEXTicker?: string;
-  IBKRTicker?: string;
+  exchange?: string;
   optionSize?: number;
   ticker: string;
+  displayTicker?: string;
   partialBatch?: {
     acquisitionCost: number;
     quantity: number;
@@ -277,7 +277,34 @@ export type StocksHeadings = StocksRowTotal & {
   wheelingQuantity: number;
 };
 
-export type IEXCloudStockResponse = { latestPrice: number };
+export type MarketstackTickerEOD = {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  adj_high: number | null;
+  adj_low: number | null;
+  adj_close: number | null;
+  adj_open: number | null;
+  adj_volume: number | null;
+  split_factor: number;
+  dividend: number;
+  symbol: string;
+  exchange: string;
+  date: string;
+};
+
+export type FinnhubQuote = {
+  c: number; // Current price
+  d: number; // Change
+  dp: number; // Percent change
+  h: number; // High price of the day
+  l: number; // Low price of the day
+  o: number; // Open price of the day
+  pc: number; // Previous close price
+  t: number; // Time
+};
 
 export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; monthlyUsage: number };
 

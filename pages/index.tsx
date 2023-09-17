@@ -10,13 +10,11 @@ import Currencies from '../components/Currencies';
 import Forex from '../components/Forex';
 import Weight from '../components/Weight';
 import ForexAPIUsage from '../components/ForexAPIUsage';
-import StocksAPIUsage from '../components/StocksAPIUsage';
 import AccountsComponent from '../components/Accounts';
 
 import {
   CurrentTickerPrices,
   ForexRates,
-  IEXCloudUsageResponse,
   Ledgers,
   OpenExchangeRatesUsage,
   Positions,
@@ -42,7 +40,6 @@ const Home = () => {
   const [summaries, setSummaries] = useState<Summaries>(null);
   const [positions, setPositions] = useState<Positions>(null);
   const [forexAPIUsage, setForexAPIUsage] = useState<OpenExchangeRatesUsage>(null);
-  const [stocksAPIUsage, setStocksAPIUsage] = useState<IEXCloudUsageResponse>(null);
 
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
@@ -98,13 +95,6 @@ const Home = () => {
       setForexAPIUsage(data.usage);
     };
     fetchForexAPIUsage().catch(console.error);
-
-    const fetchStocksAPIUsage = async () => {
-      const response = await fetch('/api/stocksAPIUsage');
-      const data = await response.json();
-      setStocksAPIUsage(data.usage);
-    };
-    fetchStocksAPIUsage().catch(console.error);
   }, []);
 
   const withAllLedgers = ledgers && Object.values(ledgers).every(Boolean);
@@ -185,10 +175,7 @@ const Home = () => {
           trades={trades}
         />
       )}
-      <div>
-        {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
-        {stocksAPIUsage && <StocksAPIUsage usage={stocksAPIUsage} />}
-      </div>
+      {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
     </Container>
   );
 };

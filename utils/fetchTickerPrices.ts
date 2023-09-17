@@ -1,16 +1,42 @@
 import { createClient } from 'redis';
 
 import get from './get';
-import { sanitiseIEXLogs } from './index';
+import { sanitiseFinnhubLogs, sanitiseMarketstackLogs } from './index';
 
-import { IEXCloudStockResponse } from '../types';
+import { FinnhubQuote, MarketstackTickerEOD } from '../types';
+
+import { ONE_HOUR_IN_SECONDS } from '../constants';
 
 import tickers from '../data/tickers';
 
-const constructURL = (ticker: string) =>
-  `https://cloud.iexapis.com/v1/stock/${tickers[ticker].IEXTicker || ticker}/quote?token=${
-    process.env.IEX_PUBLISHABLE_KEY
-  }`;
+/* eslint-disable no-unused-vars */
+type ExchangeInfo = {
+  constructURL: (ticker: string) => string;
+  extractPrice: (response: object) => number;
+  expiry?: number;
+  logSanitiser: (URL: string) => string;
+};
+/* eslint-enable no-unused-vars */
+
+const getExchangeInfo = (exchange): ExchangeInfo => {
+  switch (exchange) {
+    case 'XHKG':
+    case 'XLON':
+      return {
+        constructURL: (ticker) =>
+          `http://api.marketstack.com/v1/tickers/${ticker}/eod/latest?access_key=${process.env.MARKETSTACK_KEY}`,
+        extractPrice: (response: MarketstackTickerEOD) => response?.close ?? null,
+        logSanitiser: sanitiseMarketstackLogs,
+      };
+    default:
+      return {
+        constructURL: (ticker) =>
+          `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${process.env.FINNHUB_API_KEY}`,
+        extractPrice: (response: FinnhubQuote) => response?.c ?? null,
+        logSanitiser: sanitiseFinnhubLogs,
+      };
+  }
+};
 
 const fetchTickerPrices = async (
   tickersToQuery: string[]
@@ -19,19 +45,26 @@ const fetchTickerPrices = async (
 }> => {
   const tickerPrices = await Promise.all(
     tickersToQuery.map(async (ticker, index) => {
+      const exchange = tickers[ticker].exchange;
+      const {
+        constructURL,
+        expiry = ONE_HOUR_IN_SECONDS,
+        logSanitiser,
+        extractPrice,
+      } = getExchangeInfo(exchange);
       const URL = constructURL(ticker);
       const client = createClient();
       await client.connect();
-      const response: IEXCloudStockResponse = await get({
+      const response = await get({
         client,
         URL,
         keyName: ticker,
-        logSanitiser: sanitiseIEXLogs,
+        expiry,
+        logSanitiser,
         // Delay queries to avoid 'Too Many Requests' (429) statuses
         initialFetchDelay: index * 100,
       });
-      // Keys with `undefined` values will not be exposed
-      const latestPrice = response?.latestPrice || null;
+      const latestPrice = extractPrice(response);
       return { ticker, latestPrice };
     })
   );
