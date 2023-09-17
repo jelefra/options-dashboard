@@ -25,7 +25,7 @@ const ibkr = async (req: NextApiRequest, res: NextApiResponse) => {
   await client.connect();
   const { endpoint, id } = req.query;
   if (typeof endpoint === 'string' && typeof id === 'string') {
-    const URL = `https://localhost:5000/v1/api/portfolio/${id}/${endpoint}`;
+    const URL = `https://127.0.0.1:5000/v1/api/portfolio/${id}/${endpoint}`;
     const value = await get({
       client,
       fetchFunction: fetchFunctions[endpoint] || fetchFn,
