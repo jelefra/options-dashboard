@@ -82,15 +82,6 @@ const processData = ({
         partialBatch.acquisitionCost += stockPrice * quantity + commission;
         partialBatch.quantity += factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
       }
-    } else if (type === 'Sale') {
-      if (batchCodesStr) {
-        // TODO
-        // ...
-      } else {
-        const partialBatch = stocks[ticker].partialBatch;
-        partialBatch.acquisitionCost -= stockPrice * quantity - commission;
-        partialBatch.quantity -= factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
-      }
     }
   }
 
@@ -160,6 +151,33 @@ const processData = ({
           tradePrice,
           type: 'Call',
         };
+      }
+    }
+  }
+
+  for (let transaction of transactions) {
+    const {
+      batchCodes: batchCodesStr,
+      commission,
+      date,
+      quantity,
+      stockPrice,
+      ticker,
+      type,
+    } = transaction;
+
+    if (type === 'Sale') {
+      if (batchCodesStr) {
+        const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
+        for (let batchCode of batchCodes) {
+          const batch = batches[batchCode];
+          const { optionSize } = tickers[ticker];
+          batch.exitValue = stockPrice * optionSize - commission / batchCodes.length;
+        }
+      } else {
+        const partialBatch = stocks[ticker].partialBatch;
+        partialBatch.acquisitionCost -= stockPrice * quantity - commission;
+        partialBatch.quantity -= factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
       }
     }
   }
