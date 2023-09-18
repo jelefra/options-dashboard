@@ -50,7 +50,7 @@ const NOW = dayjs();
 const Call = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
-  const [rates, setRates] = useState<ForexRates>(null);
+  const [rates, setRates] = useState<ForexRates>({});
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>({});
   const [positions, setPositions] = useState<Position[]>([]);
 
