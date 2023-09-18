@@ -196,7 +196,7 @@ const Call = () => {
             const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
             const forexRate = rates[currency];
 
-            const earningsDate = dayjs(earnings[ticker].date, INPUT_DATE_FORMAT);
+            const earningsDate = dayjs(earnings[ticker]?.date, INPUT_DATE_FORMAT);
             const daysToEarnings = earningsDate.diff(expiry, 'day');
             const daysTotal = expiry?.diff(acquisitionDate, 'day');
             const high = current && strike + tradePrice - commission / optionSize;
@@ -304,7 +304,7 @@ const Call = () => {
                     name === 'daysToEarnings' ||
                     name === 'return30DPctResidualEstimate';
 
-                  const earningsStatus = earnings[ticker].confirmed;
+                  const earningsStatus = earnings[ticker]?.confirmed;
                   const dayToEarningsClass = name === 'daysToEarnings' && {
                     [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
                     [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
