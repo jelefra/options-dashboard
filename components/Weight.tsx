@@ -1,9 +1,8 @@
 import dayjs from 'dayjs';
 
-import processData from '../utils/processData';
-import { pctZero } from '../utils/format';
-
 import { CurrentTickerPrices, ForexRates, Ledgers, TradeData, TransactionData } from '../types';
+import { pctZero } from '../utils/format';
+import processData from '../utils/processData';
 
 const NOW = dayjs();
 

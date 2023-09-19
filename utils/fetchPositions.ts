@@ -1,5 +1,5 @@
-import fetch from 'node-fetch';
 import dayjs from 'dayjs';
+import fetch from 'node-fetch';
 
 import { Position, PositionsTimestamped } from '../types';
 

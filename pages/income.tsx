@@ -1,27 +1,24 @@
-import Head from 'next/head';
 import cx from 'classnames';
-import cloneDeep from 'lodash.clonedeep';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import cloneDeep from 'lodash.clonedeep';
+import Head from 'next/head';
 dayjs.extend(customParseFormat);
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
 
+import { useEffect, useState } from 'react';
+
 import Loading from '../components/Loading';
-
-import { dateMediumTerm, thousands } from '../utils/format';
-import { removeNullValues } from '../utils';
-
 import { INPUT_DATE_FORMAT } from '../constants';
-import { Account, ForexRates, HistoricalForexRates, TradeData } from '../types';
-
+import accounts from '../data/accounts';
 // @ts-ignore
 import tradesData from '../data/options.csv';
 import tickers from '../data/tickers';
-import accounts from '../data/accounts';
-
 import styles from '../styles/Table.module.css';
-import { useEffect, useState } from 'react';
+import { Account, ForexRates, HistoricalForexRates, TradeData } from '../types';
+import { removeNullValues } from '../utils';
+import { dateMediumTerm, thousands } from '../utils/format';
 
 const MONTHS_TO_DISPLAY = 10;
 

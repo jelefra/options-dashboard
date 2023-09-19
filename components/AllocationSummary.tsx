@@ -1,14 +1,11 @@
 import dayjs from 'dayjs';
 
-import processData from '../utils/processData';
+import tickers from '../data/tickers';
+import styles from '../styles/Table.module.css';
+import { CurrentTickerPrices, ForexRates, PutData, TradeData, TransactionData } from '../types';
 import { isCurrentPut } from '../utils';
 import { roundDown, thousandsGBP } from '../utils/format';
-
-import { CurrentTickerPrices, ForexRates, PutData, TradeData, TransactionData } from '../types';
-
-import tickers from '../data/tickers';
-
-import styles from '../styles/Table.module.css';
+import processData from '../utils/processData';
 
 const NOW = dayjs();
 

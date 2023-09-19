@@ -1,6 +1,5 @@
-import APIUsage from './APIUsage';
-
 import { OpenExchangeRatesUsage } from '../types';
+import APIUsage from './APIUsage';
 
 const ForexAPIUsage = ({ usage }: { usage: OpenExchangeRatesUsage }) => {
   const { requests, requests_quota, days_elapsed, days_remaining } = usage;

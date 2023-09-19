@@ -1,17 +1,22 @@
-import { useEffect, useState } from 'react';
-import Head from 'next/head';
 import dayjs from 'dayjs';
+import Head from 'next/head';
+import { useEffect, useState } from 'react';
 
-import Container from '../components/Container';
-import Tickers from '../components/Tickers';
+import AccountsComponent from '../components/Accounts';
 import AllocationSummary from '../components/AllocationSummary';
-import ManageIBKRData from '../components/ManageIBKRData';
+import Container from '../components/Container';
 import Currencies from '../components/Currencies';
 import Forex from '../components/Forex';
-import Weight from '../components/Weight';
 import ForexAPIUsage from '../components/ForexAPIUsage';
-import AccountsComponent from '../components/Accounts';
-
+import ManageIBKRData from '../components/ManageIBKRData';
+import Tickers from '../components/Tickers';
+import Weight from '../components/Weight';
+import accounts from '../data/accounts';
+import earnings from '../data/earnings';
+// @ts-ignore
+import tradesData from '../data/options.csv';
+// @ts-ignore
+import transactionsData from '../data/transactions.csv';
 import {
   CurrentTickerPrices,
   ForexRates,
@@ -23,13 +28,6 @@ import {
   TransactionData,
 } from '../types';
 import { removeNullValues } from '../utils';
-
-import earnings from '../data/earnings';
-import accounts from '../data/accounts';
-// @ts-ignore
-import tradesData from '../data/options.csv';
-// @ts-ignore
-import transactionsData from '../data/transactions.csv';
 
 const NOW = dayjs();
 

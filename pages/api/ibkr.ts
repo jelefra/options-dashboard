@@ -1,12 +1,11 @@
-import { createClient } from 'redis';
-import type { NextApiRequest, NextApiResponse } from 'next';
 import https from 'https';
-
-import get from '../../utils/get';
-import { fetchFn } from '../../utils/fetch';
-import { fetchPositions } from '../../utils/fetchPositions';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from 'redis';
 
 import { IBKR_DEFAULT_EXPIRY, IBKR_POSITIONS_EXPIRY } from '../../constants';
+import { fetchFn } from '../../utils/fetch';
+import { fetchPositions } from '../../utils/fetchPositions';
+import get from '../../utils/get';
 
 const agent = new https.Agent({
   rejectUnauthorized: false,

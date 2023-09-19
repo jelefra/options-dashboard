@@ -1,12 +1,29 @@
-import { useEffect, useState } from 'react';
-import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
+import Head from 'next/head';
+import { useEffect, useState } from 'react';
 
-import Loading from '../components/Loading';
 import CloseTradePriceInput from '../components/CloseTradePriceInput';
-
-import processData from '../utils/processData';
+import Loading from '../components/Loading';
+import { DISPLAY, INPUT_DATE_FORMAT, MINIMUM_RETURN_THRESHOLD } from '../constants';
+import accounts from '../data/accounts';
+import earnings from '../data/earnings';
+// @ts-ignore
+import tradesData from '../data/options.csv';
+// @ts-ignore
+import transactionsData from '../data/transactions.csv';
+import styles from '../styles/Table.module.css';
+import {
+  Batch,
+  CallRow,
+  CallRowTotal,
+  CurrentTickerPrices,
+  ForexRates,
+  Position,
+  Positions,
+  TradeData,
+  TransactionData,
+} from '../types';
 import {
   calcDteCurrent,
   calcDteTotal,
@@ -21,29 +38,7 @@ import {
   removeNullValues,
 } from '../utils';
 import { dateShortTerm, decimalTwo, pctOne, thousands } from '../utils/format';
-
-import {
-  Batch,
-  CallRow,
-  CallRowTotal,
-  CurrentTickerPrices,
-  ForexRates,
-  Position,
-  Positions,
-  TradeData,
-  TransactionData,
-} from '../types';
-
-import { DISPLAY, INPUT_DATE_FORMAT, MINIMUM_RETURN_THRESHOLD } from '../constants';
-
-// @ts-ignore
-import tradesData from '../data/options.csv';
-// @ts-ignore
-import transactionsData from '../data/transactions.csv';
-import accounts from '../data/accounts';
-import earnings from '../data/earnings';
-
-import styles from '../styles/Table.module.css';
+import processData from '../utils/processData';
 
 const NOW = dayjs();
 

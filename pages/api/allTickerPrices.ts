@@ -1,14 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-import { removeNullValues } from '../../utils';
-import fetchTickerPrices from '../../utils/fetchTickerPrices';
-
-import { TradeData, TransactionData } from '../../types';
-
 // @ts-ignore
 import tradesData from '../../data/options.csv';
 // @ts-ignore
 import transactionsData from '../../data/transactions.csv';
+import { TradeData, TransactionData } from '../../types';
+import { removeNullValues } from '../../utils';
+import fetchTickerPrices from '../../utils/fetchTickerPrices';
 
 const getAllTickersToQuery = () => {
   const trades: TradeData[] = tradesData.map(removeNullValues);

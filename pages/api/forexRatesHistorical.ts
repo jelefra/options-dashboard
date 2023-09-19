@@ -1,20 +1,17 @@
+import dayjs from 'dayjs';
+import cloneDeep from 'lodash.clonedeep';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from 'redis';
-import cloneDeep from 'lodash.clonedeep';
-import dayjs from 'dayjs';
-
-import { removeNullValues, sanitiseOpenExchangeRatesLogs } from '../../utils';
-import get from '../../utils/get';
-
-import { ExchangeRateResponse, TradeData, TransactionData } from '../../types';
-
-// @ts-ignore
-import tradesData from '../../data/options.csv';
-// @ts-ignore
-import transactionsData from '../../data/transactions.csv';
-import tickers from '../../data/tickers';
 
 import { INPUT_DATE_FORMAT, TEN_YEARS_IN_SECONDS } from '../../constants';
+// @ts-ignore
+import tradesData from '../../data/options.csv';
+import tickers from '../../data/tickers';
+// @ts-ignore
+import transactionsData from '../../data/transactions.csv';
+import { ExchangeRateResponse, TradeData, TransactionData } from '../../types';
+import { removeNullValues, sanitiseOpenExchangeRatesLogs } from '../../utils';
+import get from '../../utils/get';
 
 const formatDateForAPI = (dateInBritishFormat): string => {
   const [dd, mm, yyyy] = dateInBritishFormat.split('/');

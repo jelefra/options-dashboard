@@ -1,5 +1,5 @@
-import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from 'redis';
 
 const deleteRedisKey = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();

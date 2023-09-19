@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
-import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
+import Head from 'next/head';
+import { useEffect, useState } from 'react';
 
 import Loading from '../components/Loading';
-
-import processData from '../utils/processData';
-import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
-import { removeNullValues } from '../utils';
-import flatten from '../utils/flatten';
-
+import { DISPLAY } from '../constants';
+// @ts-ignore
+import tradesData from '../data/options.csv';
+// @ts-ignore
+import transactionsData from '../data/transactions.csv';
+import styles from '../styles/Table.module.css';
 import {
   CurrentTickerPrices,
   ForexRates,
@@ -20,15 +20,10 @@ import {
   TradeData,
   TransactionData,
 } from '../types';
-
-import { DISPLAY } from '../constants';
-
-// @ts-ignore
-import tradesData from '../data/options.csv';
-// @ts-ignore
-import transactionsData from '../data/transactions.csv';
-
-import styles from '../styles/Table.module.css';
+import { removeNullValues } from '../utils';
+import flatten from '../utils/flatten';
+import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
+import processData from '../utils/processData';
 
 const NOW = dayjs();
 

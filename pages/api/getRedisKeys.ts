@@ -1,5 +1,5 @@
-import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from 'redis';
 
 const getRedisKeys = async (req: NextApiRequest, res: NextApiResponse) => {
   const { keys: keysParam } = req.query;

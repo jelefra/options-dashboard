@@ -1,20 +1,29 @@
-import { useEffect, useState } from 'react';
-import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import Head from 'next/head';
+import { useEffect, useState } from 'react';
 dayjs.extend(customParseFormat);
 
-import Loading from '../components/Loading';
 import CloseTradePriceInput from '../components/CloseTradePriceInput';
-
+import Loading from '../components/Loading';
+import { DISPLAY, INPUT_DATE_FORMAT, MINIMUM_RETURN_THRESHOLD } from '../constants';
+import accounts from '../data/accounts';
+import earnings from '../data/earnings';
 // @ts-ignore
 import tradesData from '../data/options.csv';
 import tickers from '../data/tickers';
-import accounts from '../data/accounts';
-import earnings from '../data/earnings';
-
-import { dateShortTerm, decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
+import styles from '../styles/Table.module.css';
+import {
+  CurrentTickerPrices,
+  ForexRates,
+  Position,
+  Positions,
+  PutData,
+  PutRow,
+  PutRowTotal,
+  TradeData,
+} from '../types';
 import {
   calcDteCurrent,
   calcDteTotal,
@@ -30,20 +39,7 @@ import {
   isCurrentPut,
   removeNullValues,
 } from '../utils';
-
-import { INPUT_DATE_FORMAT, DISPLAY, MINIMUM_RETURN_THRESHOLD } from '../constants';
-import {
-  CurrentTickerPrices,
-  ForexRates,
-  Position,
-  Positions,
-  PutData,
-  PutRow,
-  PutRowTotal,
-  TradeData,
-} from '../types';
-
-import styles from '../styles/Table.module.css';
+import { dateShortTerm, decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 
 const NOW = dayjs();
 

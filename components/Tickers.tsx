@@ -6,15 +6,11 @@ dayjs.extend(customParseFormat);
 import cx from 'classnames';
 import cloneDeep from 'lodash.clonedeep';
 
-import { hoursToDays } from '../utils/format';
-
-import type { EarningsDates, TradeData, TransactionData } from '../types';
-
 import { INPUT_DATE_FORMAT } from '../constants';
-
 import tickers from '../data/tickers';
-
 import styles from '../styles/Table.module.css';
+import type { EarningsDates, TradeData, TransactionData } from '../types';
+import { hoursToDays } from '../utils/format';
 
 type BatchCodesType = { [key: string]: { ticker: string; batchCode: string } };
 

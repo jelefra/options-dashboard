@@ -1,31 +1,27 @@
-import { useEffect, useState } from 'react';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
 import cx from 'classnames';
-import cloneDeep from 'lodash.clonedeep';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import cloneDeep from 'lodash.clonedeep';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 dayjs.extend(customParseFormat);
 import minMax from 'dayjs/plugin/minMax';
 dayjs.extend(minMax);
 
 import Loading from '../../components/Loading';
-
-import { dateMediumTerm, thousands } from '../../utils/format';
-import { removeNullValues } from '../../utils';
-import { factorStockSplit } from '../../utils/factorStockSplit';
-
 import { DISPLAY, INPUT_DATE_FORMAT } from '../../constants';
-import { Account, ForexRates, HistoricalForexRates, TradeData, TransactionData } from '../../types';
-
+import accounts from '../../data/accounts';
 // @ts-ignore
 import tradesData from '../../data/options.csv';
+import tickers from '../../data/tickers';
 // @ts-ignore
 import transactionsData from '../../data/transactions.csv';
-import tickers from '../../data/tickers';
-import accounts from '../../data/accounts';
-
 import styles from '../../styles/Table.module.css';
+import { Account, ForexRates, HistoricalForexRates, TradeData, TransactionData } from '../../types';
+import { removeNullValues } from '../../utils';
+import { factorStockSplit } from '../../utils/factorStockSplit';
+import { dateMediumTerm, thousands } from '../../utils/format';
 
 const CapitalGains = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);

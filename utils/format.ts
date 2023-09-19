@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
 
-import { DATE_SHORT_HORIZON, DATE_MEDIUM_HORIZON, DATE_LONG_HORIZON } from '../constants';
+import { DATE_LONG_HORIZON, DATE_MEDIUM_HORIZON, DATE_SHORT_HORIZON } from '../constants';
 
 export const dateShortTerm = (day: Dayjs) => day.format(DATE_SHORT_HORIZON);
 

@@ -1,7 +1,6 @@
 import dayjs, { Dayjs } from 'dayjs';
 
 import { INPUT_DATE_FORMAT } from '../constants';
-
 import { stockSplits } from '../data/stockSplits';
 
 export const factorStockSplit = (ticker: string, quantity: number, tradeDate: Dayjs) => {

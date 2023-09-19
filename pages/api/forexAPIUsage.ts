@@ -1,8 +1,8 @@
-import { createClient } from 'redis';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from 'redis';
 
-import get from '../../utils/get';
 import { sanitiseOpenExchangeRatesLogs } from '../../utils';
+import get from '../../utils/get';
 
 const forexAPIUsage = async (req: NextApiRequest, res: NextApiResponse) => {
   const client = createClient();

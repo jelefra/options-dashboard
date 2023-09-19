@@ -1,5 +1,5 @@
-import { ReactElement } from 'react';
 import { Dayjs } from 'dayjs';
+import { ReactElement } from 'react';
 
 export type Stock = {
   colour: string;

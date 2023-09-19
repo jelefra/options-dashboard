@@ -1,6 +1,5 @@
-import { decimalTwo } from '../utils/format';
-
 import { ForexRates } from '../types';
+import { decimalTwo } from '../utils/format';
 
 const Forex = ({ currencies, rates }: { currencies: string[]; rates: ForexRates }) => (
   <tr>

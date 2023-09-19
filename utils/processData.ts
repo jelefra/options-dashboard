@@ -4,13 +4,10 @@ dayjs.extend(isSameOrAfter);
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
-import { factorStockSplit } from './factorStockSplit';
-
-import { Batch, CurrentTickerPrices, Stock, TradeData, TransactionData } from '../types';
-
 import { INPUT_DATE_FORMAT } from '../constants';
-
 import tickers from '../data/tickers';
+import { Batch, CurrentTickerPrices, Stock, TradeData, TransactionData } from '../types';
+import { factorStockSplit } from './factorStockSplit';
 
 const processData = ({
   transactions,

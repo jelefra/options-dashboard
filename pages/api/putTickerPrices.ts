@@ -1,13 +1,11 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
 import dayjs, { Dayjs } from 'dayjs';
-
-import fetchTickerPrices from '../../utils/fetchTickerPrices';
-import { isCurrentPut, removeNullValues } from '../../utils';
-
-import { TradeData } from '../../types';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 // @ts-ignore
 import tradesData from '../../data/options.csv';
+import { TradeData } from '../../types';
+import { isCurrentPut, removeNullValues } from '../../utils';
+import fetchTickerPrices from '../../utils/fetchTickerPrices';
 
 const getPutTickersToQuery = (trades: TradeData[], now: Dayjs): string[] => [
   ...new Set(trades.filter((trade) => isCurrentPut(trade, now)).map(({ ticker }) => ticker)),

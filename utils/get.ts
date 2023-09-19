@@ -1,6 +1,5 @@
-import { fetchFn } from './fetch';
-
 import { FIFTEEN_MINUTES_IN_SECONDS } from '../constants';
+import { fetchFn } from './fetch';
 
 const get = async ({
   client,

@@ -1,22 +1,18 @@
-import { useEffect, useState } from 'react';
-import Head from 'next/head';
 import cx from 'classnames';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import Head from 'next/head';
+import { useEffect, useState } from 'react';
 dayjs.extend(customParseFormat);
 
 import Loading from '../components/Loading';
-
+import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
+import accounts from '../data/accounts';
 // @ts-ignore
 import bankData from '../data/bank.csv';
-import accounts from '../data/accounts';
-
-import { decimalTwo, dateLongTerm, pctOne, thousands } from '../utils/format';
-
-import { DISPLAY, INPUT_DATE_FORMAT } from '../constants';
-import { BankData, ForexRates, ForexRow } from '../types';
-
 import styles from '../styles/Table.module.css';
+import { BankData, ForexRates, ForexRow } from '../types';
+import { dateLongTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
 const Forex = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
