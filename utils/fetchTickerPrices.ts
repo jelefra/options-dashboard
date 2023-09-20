@@ -18,11 +18,17 @@ type ExchangeInfo = {
 const getExchangeInfo = (exchange): ExchangeInfo => {
   switch (exchange) {
     case 'XHKG':
+      return {
+        constructURL: (ticker) =>
+          `http://api.marketstack.com/v1/tickers/${ticker}.${exchange}/eod/latest?access_key=${process.env.MARKETSTACK_KEY}`,
+        extractPrice: (response: MarketstackTickerEOD) => response?.close ?? null,
+        logSanitiser: sanitiseMarketstackLogs,
+      };
     case 'XLON':
       return {
         constructURL: (ticker) =>
-          `http://api.marketstack.com/v1/tickers/${ticker}/eod/latest?access_key=${process.env.MARKETSTACK_KEY}`,
-        extractPrice: (response: MarketstackTickerEOD) => response?.close ?? null,
+          `http://api.marketstack.com/v1/tickers/${ticker}.${exchange}/eod/latest?access_key=${process.env.MARKETSTACK_KEY}`,
+        extractPrice: (response: MarketstackTickerEOD) => response?.close / 100 ?? null,
         logSanitiser: sanitiseMarketstackLogs,
       };
     default:
@@ -49,7 +55,7 @@ const fetchTickerPrices = async (
         logSanitiser,
         extractPrice,
       } = getExchangeInfo(exchange);
-      const URL = constructURL(ticker);
+      const URL = constructURL(tickers[ticker].ticker);
       const client = createClient();
       await client.connect();
       const response = await get({
