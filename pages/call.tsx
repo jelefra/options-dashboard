@@ -289,13 +289,16 @@ const Call = () => {
             <tr key={rowIndex}>
               {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
                 const showContrast = name !== 'account' && name !== 'batchCode';
-                const showZeroValues =
-                  name === 'assignmentPct' ||
-                  name === 'dteCurrent' ||
-                  name === 'highPct' ||
-                  name === 'costBasisDrop' ||
-                  name === 'daysToEarnings' ||
-                  name === 'return30DPctResidualEstimate';
+                const showZeroValuesNames: (keyof CallRow)[] = [
+                  'assignmentPct',
+                  'costBasisDrop',
+                  'daysToEarnings',
+                  'dteCurrent',
+                  'highPct',
+                  'return30DPctResidualEstimate',
+                ];
+
+                const showZeroValues = showZeroValuesNames.includes(name);
 
                 const earningsStatus = earnings[ticker]?.confirmed;
                 const dayToEarningsClass = name === 'daysToEarnings' && {

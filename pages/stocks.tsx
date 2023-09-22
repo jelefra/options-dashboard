@@ -315,22 +315,27 @@ const Stocks = () => {
         <tbody>
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
-              {headings.map(({ name, format = (v) => v, align = 'right' }, index) => (
-                <td
-                  className={cx({
-                    [styles[align]]: align === 'right',
-                    [row.colour]: row.colour && name === 'ticker',
-                    [styles.contrast]: rowIndex % 2 && index > 0,
-                    [styles.freezeFirstTdColumn]: index === 0,
-                    [styles.warning]:
-                      row.missingUpside &&
-                      (name === 'valueGBP' || name === 'returnGBP' || name === 'returnPct'),
-                  })}
-                  key={index}
-                >
-                  {!!flatten(row)[name] && format(flatten(row)[name])}
-                </td>
-              ))}
+              {headings.map(({ name, format = (v) => v, align = 'right' }, index) => {
+                const showZeroValues =
+                  name === 'wheeledGrowth' || name === 'wheeledGrowthAsPctOfReturn';
+
+                return (
+                  <td
+                    className={cx({
+                      [styles[align]]: align === 'right',
+                      [row.colour]: row.colour && name === 'ticker',
+                      [styles.contrast]: rowIndex % 2 && index > 0,
+                      [styles.freezeFirstTdColumn]: index === 0,
+                      [styles.warning]:
+                        row.missingUpside &&
+                        (name === 'valueGBP' || name === 'returnGBP' || name === 'returnPct'),
+                    })}
+                    key={index}
+                  >
+                    {(!!flatten(row)[name] || showZeroValues) && format(flatten(row)[name])}
+                  </td>
+                );
+              })}
             </tr>
           ))}
 
