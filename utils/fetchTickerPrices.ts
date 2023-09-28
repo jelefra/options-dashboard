@@ -3,7 +3,7 @@ import { createClient } from 'redis';
 import { ONE_HOUR_IN_SECONDS } from '../constants';
 import tickers from '../data/tickers';
 import { FinnhubQuote, MarketstackTickerEOD } from '../types';
-import get from './get';
+import { fetchAndStore, getFromRedis } from './get';
 import { sanitiseFinnhubLogs, sanitiseMarketstackLogs } from './index';
 
 /* eslint-disable no-unused-vars */
@@ -46,8 +46,9 @@ const fetchTickerPrices = async (
 ): Promise<{
   [key: string]: number;
 }> => {
+  let countOfTickersToQueryFromAPI = 0;
   const tickerPrices = await Promise.all(
-    tickersToQuery.map(async (ticker, index) => {
+    tickersToQuery.map(async (ticker) => {
       const exchange = tickers[ticker].exchange;
       const {
         constructURL,
@@ -58,17 +59,24 @@ const fetchTickerPrices = async (
       const URL = constructURL(tickers[ticker].ticker);
       const client = createClient();
       await client.connect();
-      const response = await get({
-        client,
-        URL,
-        keyName: ticker,
-        expiry,
-        logSanitiser,
-        // Delay queries to avoid 'Too Many Requests' (429) statuses
-        initialFetchDelay: index * 100,
-      });
-      const latestPrice = extractPrice(response);
-      return { ticker, latestPrice };
+      const redisData = await getFromRedis(client, ticker);
+      if (redisData) {
+        const latestPrice = extractPrice(redisData);
+        return { ticker, latestPrice };
+      } else {
+        const response = fetchAndStore({
+          client,
+          URL,
+          keyName: ticker,
+          expiry,
+          logSanitiser,
+          // Delay queries to avoid 'Too Many Requests' (429) statuses
+          initialFetchDelay: countOfTickersToQueryFromAPI * 100,
+        });
+        countOfTickersToQueryFromAPI++;
+        const latestPrice = extractPrice(response);
+        return { ticker, latestPrice };
+      }
     })
   );
 
