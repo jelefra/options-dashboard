@@ -14,7 +14,7 @@ import { DISPLAY, INPUT_DATE_FORMAT } from '../../constants';
 import accounts from '../../data/accounts';
 // @ts-ignore
 import tradesData from '../../data/options.csv';
-import tickers from '../../data/tickers';
+import tickers, { tickersMap } from '../../data/tickers';
 // @ts-ignore
 import transactionsData from '../../data/transactions.csv';
 import styles from '../../styles/Table.module.css';
@@ -72,8 +72,9 @@ const CapitalGains = () => {
 
   const accountsWithCurrencies: {
     [key: string]: Account;
-  } = [...transactions, ...trades].reduce((accounts, { account, ticker }) => {
+  } = [...transactions, ...trades].reduce((accounts, { account, ticker: displayTicker }) => {
     const accountTickers = accounts[account].tickers;
+    const { ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
     if (!accountTickers.includes(ticker)) {
       accountTickers.push(ticker);
 
@@ -164,10 +165,18 @@ const CapitalGains = () => {
   } = Object.fromEntries(months.map((month) => [month, cloneDeep(accountsCapitalGainsSkeleton)]));
 
   for (let transaction of transactions) {
-    const { account, commission, date, quantity, stockPrice, ticker, type } = transaction;
+    const {
+      account,
+      commission,
+      date,
+      quantity,
+      stockPrice,
+      ticker: displayTicker,
+      type,
+    } = transaction;
 
     if (type === 'Purchase') {
-      const { currency } = tickers[ticker];
+      const { currency, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
       const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
       stocks[account][ticker].acquisitionCost += quantity * stockPrice + commission * forexRate;
       stocks[account][ticker].quantity += factorStockSplit(
@@ -187,13 +196,13 @@ const CapitalGains = () => {
       commission,
       date,
       strike,
-      ticker,
+      ticker: displayTicker,
       tradePrice,
       type,
     } = trade;
 
     if (type === 'Put') {
-      const { currency, optionSize } = tickers[ticker];
+      const { currency, optionSize, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
       const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
       const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
 
@@ -254,12 +263,12 @@ const CapitalGains = () => {
       commission,
       date,
       strike,
-      ticker,
+      ticker: displayTicker,
       tradePrice,
       type,
     } = trade;
 
-    const { currency, optionSize } = tickers[ticker];
+    const { currency, optionSize, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
     const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
     const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
 

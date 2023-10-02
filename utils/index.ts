@@ -3,6 +3,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
 
 import { INPUT_DATE_FORMAT } from '../constants';
+import { tickersMap } from '../data/tickers';
 import { Accounts, Position, TradeData, TradeType } from '../types';
 
 export const calcDteCurrent = (expiryDate: Dayjs, now: Dayjs) =>
@@ -63,3 +64,6 @@ export const sanitiseMarketstackLogs = (URL: string) =>
   URL.replace(/access_key=\w+/, 'access_key=***');
 export const sanitiseOpenExchangeRatesLogs = (URL: string) =>
   URL.replace(/app_id=\w+/, 'app_id=***');
+
+export const getTickerDisplayName = (ticker: string) =>
+  (Object.entries(tickersMap).find(([, officialName]) => officialName === ticker) || [ticker])[0];

@@ -14,7 +14,7 @@ import { INPUT_DATE_FORMAT } from '../constants';
 import accounts from '../data/accounts';
 // @ts-ignore
 import tradesData from '../data/options.csv';
-import tickers from '../data/tickers';
+import tickers, { tickersMap } from '../data/tickers';
 import styles from '../styles/Table.module.css';
 import { Account, ForexRates, HistoricalForexRates, TradeData } from '../types';
 import { removeNullValues } from '../utils';
@@ -94,7 +94,7 @@ const Income = () => {
       type,
     } = trade;
     const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
-    const { currency, optionSize } = tickers[ticker];
+    const { currency, optionSize } = tickers[tickersMap[ticker] ?? ticker];
     const { currencies } = accountsWithCurrencies[account];
     if (!currencies.includes(currency)) {
       currencies.push(currency);

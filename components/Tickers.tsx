@@ -7,7 +7,7 @@ import cx from 'classnames';
 import cloneDeep from 'lodash.clonedeep';
 
 import { INPUT_DATE_FORMAT } from '../constants';
-import tickers from '../data/tickers';
+import tickers, { tickersMap } from '../data/tickers';
 import styles from '../styles/Table.module.css';
 import type { EarningsDates, TradeData, TransactionData } from '../types';
 import { hoursToDays } from '../utils/format';
@@ -70,7 +70,7 @@ const Tickers = ({
 
             return (
               <tr key={ticker}>
-                <td className={tickers[ticker].colour}>{ticker}</td>
+                <td className={tickers[tickersMap[ticker] ?? ticker].colour}>{ticker}</td>
                 <td>{batchCodes[ticker]?.batchCode}</td>
                 <td className={cx({ mute })}>{date}</td>
                 <td className={cx(styles.right, { mute })}>{daysToEarnings}</td>

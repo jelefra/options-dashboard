@@ -20,7 +20,7 @@ import {
   TradeData,
   TransactionData,
 } from '../types';
-import { removeNullValues } from '../utils';
+import { getTickerDisplayName, removeNullValues } from '../utils';
 import flatten from '../utils/flatten';
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import processData from '../utils/processData';
@@ -70,7 +70,7 @@ const Stocks = () => {
     format?: Function;
     align?: 'default' | 'right';
   }[] = [
-    { name: 'ticker', section: 'ticker', align: 'default' },
+    { name: 'ticker', section: 'ticker', align: 'default', format: getTickerDisplayName },
     { name: 'totalQuantity', section: 'summary', format: thousands },
     { name: 'wheelingActiveCalls', section: 'summary' },
     { name: 'avgCost', section: 'summary', format: decimalTwo },

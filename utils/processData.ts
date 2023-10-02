@@ -5,7 +5,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 import { INPUT_DATE_FORMAT } from '../constants';
-import tickers from '../data/tickers';
+import tickers, { tickersMap } from '../data/tickers';
 import { Batch, CurrentTickerPrices, Stock, TradeData, TransactionData } from '../types';
 import { factorStockSplit } from './factorStockSplit';
 
@@ -39,14 +39,16 @@ const processData = ({
       date,
       quantity,
       stockPrice,
-      ticker,
+      ticker: displayTicker,
       type,
     } = transaction;
+
+    const { colour, currency, optionSize, ticker } =
+      tickers[tickersMap[displayTicker] ?? displayTicker];
 
     if (type === 'Purchase') {
       if (batchCodesStr) {
         const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
-        const { colour, currency, optionSize } = tickers[ticker];
 
         for (let batchCode of batchCodes) {
           batches[batchCode] = batches[batchCode] || {
@@ -93,12 +95,13 @@ const processData = ({
       date,
       stockPrice,
       strike,
-      ticker,
+      ticker: displayTicker,
       tradePrice,
       type,
     } = trade;
 
-    const { colour, currency, optionSize } = tickers[ticker];
+    const { colour, currency, optionSize, ticker } =
+      tickers[tickersMap[displayTicker] ?? displayTicker];
 
     const netCumulativePremium =
       (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
@@ -159,16 +162,17 @@ const processData = ({
       date,
       quantity,
       stockPrice,
-      ticker,
+      ticker: displayTicker,
       type,
     } = transaction;
+
+    const { optionSize, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
 
     if (type === 'Sale') {
       if (batchCodesStr) {
         const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
         for (let batchCode of batchCodes) {
           const batch = batches[batchCode];
-          const { optionSize } = tickers[ticker];
           batch.exitValue = stockPrice * optionSize - commission / batchCodes.length;
         }
       } else {

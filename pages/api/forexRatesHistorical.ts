@@ -6,7 +6,7 @@ import { createClient } from 'redis';
 import { INPUT_DATE_FORMAT, TEN_YEARS_IN_SECONDS } from '../../constants';
 // @ts-ignore
 import tradesData from '../../data/options.csv';
-import tickers from '../../data/tickers';
+import tickers, { tickersMap } from '../../data/tickers';
 // @ts-ignore
 import transactionsData from '../../data/transactions.csv';
 import { ExchangeRateResponse, TradeData, TransactionData } from '../../types';
@@ -39,13 +39,13 @@ const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) =
   };
 
   const datesFromTransactions = transactions.reduce((dates, { date, ticker }) => {
-    const { currency } = tickers[ticker];
+    const { currency } = tickers[tickersMap[ticker] ?? ticker];
     mutate(dates, date, currency);
     return dates;
   }, {});
 
   const dates: { [key: string]: string[] } = trades.reduce((dates, { date, closeDate, ticker }) => {
-    const { currency } = tickers[ticker];
+    const { currency } = tickers[tickersMap[ticker] ?? ticker];
     [date, closeDate].filter(Boolean).forEach((date) => {
       mutate(dates, date, currency);
     });

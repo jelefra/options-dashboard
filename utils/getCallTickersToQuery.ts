@@ -1,4 +1,4 @@
-import tickers from '../data/tickers';
+import tickers, { tickersMap } from '../data/tickers';
 import { TradeData, TransactionData } from '../types';
 
 const processTrades = (trades: TradeData[]) => {
@@ -7,15 +7,15 @@ const processTrades = (trades: TradeData[]) => {
   } = {};
 
   for (let trade of trades) {
-    const { type, closePrice, strike, ticker } = trade;
-    const size = tickers[ticker].optionSize;
+    const { type, closePrice, strike, ticker: displayTicker } = trade;
+    const { optionSize, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
 
     if (type === 'Put' && closePrice && closePrice < strike) {
-      tickersFromTrades[ticker] = (tickersFromTrades[ticker] || 0) + size;
+      tickersFromTrades[ticker] = (tickersFromTrades[ticker] || 0) + optionSize;
     }
 
     if (type === 'Call' && closePrice && closePrice > strike) {
-      tickersFromTrades[ticker] = (tickersFromTrades[ticker] || 0) - size;
+      tickersFromTrades[ticker] = (tickersFromTrades[ticker] || 0) - optionSize;
     }
   }
   return tickersFromTrades;
@@ -27,7 +27,8 @@ const processTransactions = (transactions: TransactionData[]) => {
   } = {};
 
   for (let transaction of transactions) {
-    const { quantity, ticker, type } = transaction;
+    const { quantity, ticker: displayTicker, type } = transaction;
+    const { ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
 
     if (type === 'Purchase') {
       tickersFromTransactions[ticker] = (tickersFromTransactions[ticker] || 0) + quantity;

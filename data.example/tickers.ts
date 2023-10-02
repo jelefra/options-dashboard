@@ -1,5 +1,9 @@
 import { Stock } from '../types';
 
+export const tickersMap = {
+  BABA: '9988',
+};
+
 const tickers: {
   [key: string]: Stock;
 } = {
@@ -9,8 +13,7 @@ const tickers: {
     currency: 'USD',
     colour: 'c1D1D1F',
   },
-  BABA: {
-    displayTicker: 'BABA',
+  '9988': {
     ticker: '9988',
     exchange: 'XHKG',
     optionSize: 500,

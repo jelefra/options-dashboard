@@ -8,7 +8,6 @@ export type Stock = {
   exchange?: string;
   optionSize?: number;
   ticker: string;
-  displayTicker?: string;
   partialBatch?: {
     acquisitionCost: number;
     quantity: number;
