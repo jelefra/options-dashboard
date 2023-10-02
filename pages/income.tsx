@@ -179,8 +179,6 @@ const Income = () => {
       return summary;
     }, cloneDeep(accountsIncomeSkeleton));
 
-  console.log(hasIncome, Object.entries(hasIncome));
-
   return (
     <>
       <Head>
