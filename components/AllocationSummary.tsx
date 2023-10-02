@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import tickers from '../data/tickers';
 import styles from '../styles/Table.module.css';
 import { CurrentTickerPrices, ForexRates, PutData, TradeData, TransactionData } from '../types';
-import { isCurrentPut } from '../utils';
+import { getTickerDisplayName, isCurrentPut } from '../utils';
 import { roundDown, thousandsGBP } from '../utils/format';
 import processData from '../utils/processData';
 
@@ -22,12 +22,19 @@ const AllocationSummary = ({
   trades: TradeData[];
   transactions: TransactionData[];
 }) => {
-  const hasMissingTickerPrice = Object.values(currentTickerPrices).some((price) => !price);
-  if (hasMissingTickerPrice) {
-    return <div style={{ padding: '20px' }}>Ticker prices incomplete.</div>;
-  }
-
   const { batches, stocks } = processData({ transactions, trades, currentTickerPrices, now: NOW });
+
+  const missingTickerPrices = [
+    ...new Set([...Object.values(stocks), ...Object.values(batches)].map(({ ticker }) => ticker)),
+  ].filter((ticker) => !currentTickerPrices[ticker]);
+
+  if (missingTickerPrices.length > 0) {
+    return (
+      <div style={{ padding: '20px' }}>
+        Missing ticker prices: {missingTickerPrices.map(getTickerDisplayName).join(', ')}
+      </div>
+    );
+  }
 
   const { wheelingGBP, notWheelingGBP } = Object.values(batches).reduce(
     (total, { current, currentCall = {}, currency, exitValue, optionSize }) => {
