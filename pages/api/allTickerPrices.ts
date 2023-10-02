@@ -1,29 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// @ts-ignore
-import tradesData from '../../data/options.csv';
-// @ts-ignore
-import transactionsData from '../../data/transactions.csv';
-import { TradeData, TransactionData } from '../../types';
-import { removeNullValues } from '../../utils';
 import fetchTickerPrices from '../../utils/fetchTickerPrices';
-
-const getAllTickersToQuery = () => {
-  const trades: TradeData[] = tradesData.map(removeNullValues);
-  const transactions: TransactionData[] = transactionsData.map(removeNullValues);
-  return [
-    ...new Set([
-      ...trades.map(({ ticker }) => ticker),
-      ...transactions.map(({ ticker }) => ticker),
-    ]),
-  ];
-};
+import getAllTickersToQuery from '../../utils/getAllTickersToQuery';
 
 const allTickerPrices = async (req: NextApiRequest, res: NextApiResponse) => {
-  const { now } = req.query;
+  const { now, ignoreCurrentCache } = req.query;
   if (typeof now === 'string') {
     const allTickersToQuery = getAllTickersToQuery();
-    const currentTickerPrices = await fetchTickerPrices(allTickersToQuery);
+    const currentTickerPrices = await fetchTickerPrices(
+      allTickersToQuery,
+      ignoreCurrentCache === 'true'
+    );
     res.status(200).json({ currentTickerPrices });
   }
 };

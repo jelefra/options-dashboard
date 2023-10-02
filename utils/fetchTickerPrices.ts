@@ -42,7 +42,8 @@ const getExchangeInfo = (exchange): ExchangeInfo => {
 };
 
 const fetchTickerPrices = async (
-  tickersToQuery: string[]
+  tickersToQuery: string[],
+  ignoreCurrentCache: boolean = false
 ): Promise<{
   [key: string]: number;
 }> => {
@@ -60,11 +61,11 @@ const fetchTickerPrices = async (
       const client = createClient();
       await client.connect();
       const redisData = await getFromRedis(client, ticker);
-      if (redisData) {
+      if (!ignoreCurrentCache && redisData) {
         const latestPrice = extractPrice(redisData);
         return { ticker, latestPrice };
       } else {
-        const response = fetchAndStore({
+        const response = await fetchAndStore({
           client,
           URL,
           keyName: ticker,

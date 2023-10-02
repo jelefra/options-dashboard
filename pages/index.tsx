@@ -9,6 +9,7 @@ import Currencies from '../components/Currencies';
 import Forex from '../components/Forex';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import ManageIBKRData from '../components/ManageIBKRData';
+import RefetchTickerPrices from '../components/RefetchTickerPrices';
 import Tickers from '../components/Tickers';
 import Weight from '../components/Weight';
 import accounts from '../data/accounts';
@@ -150,6 +151,7 @@ const Home = () => {
           now={NOW}
         />
       )}
+      <RefetchTickerPrices setCurrentTickerPrices={setCurrentTickerPrices} />
       {(showCurrencyWeights || showForex) && (
         <Currencies currencies={currencies}>
           {showCurrencyWeights && (
