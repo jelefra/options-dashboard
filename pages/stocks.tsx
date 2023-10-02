@@ -54,7 +54,7 @@ const Stocks = () => {
 
   useEffect(() => {
     const fetchAllTickerPrices = async () => {
-      const response = await fetch(`/api/allTickerPrices?now=${String(NOW)}`);
+      const response = await fetch('/api/allTickerPrices');
       const data = await response.json();
       setCurrentTickerPrices(data.currentTickerPrices);
     };

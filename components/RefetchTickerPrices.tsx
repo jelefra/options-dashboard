@@ -1,11 +1,8 @@
 import cx from 'classnames';
-import dayjs from 'dayjs';
 import { Dispatch, SetStateAction } from 'react';
 
 import styles from '../styles/Button.module.css';
 import { CurrentTickerPrices } from '../types';
-
-const NOW = dayjs();
 
 const RefetchTickerPrices = ({
   setCurrentTickerPrices,
@@ -13,7 +10,7 @@ const RefetchTickerPrices = ({
   setCurrentTickerPrices: Dispatch<SetStateAction<CurrentTickerPrices>>;
 }) => {
   const fetchAllTickerPrices = async () => {
-    const response = await fetch(`/api/allTickerPrices?now=${String(NOW)}&ignoreCurrentCache=true`);
+    const response = await fetch('/api/allTickerPrices?ignoreCurrentCache=true');
     const data = await response.json();
     setCurrentTickerPrices(data.currentTickerPrices);
   };
