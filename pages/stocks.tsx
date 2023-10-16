@@ -20,7 +20,7 @@ import {
   TradeData,
   TransactionData,
 } from '../types';
-import { getTickerDisplayName, removeNullValues } from '../utils';
+import { getTickerDisplayName, isCurrentPut, removeNullValues } from '../utils';
 import flatten from '../utils/flatten';
 import { decimalTwo, pctOne, pctZero, thousands } from '../utils/format';
 import processData from '../utils/processData';
@@ -79,6 +79,20 @@ const Stocks = () => {
     { name: 'returnGBP', section: 'summary', format: thousands },
     { name: 'valueGBP', section: 'summary', format: thousands },
     { name: 'allocation', section: 'summary', format: pctOne },
+    { name: 'wheelingPutsActiveCount', section: 'summaryWithActivePuts', format: thousands },
+    { name: 'wheelingPutsActiveValueGBP', section: 'summaryWithActivePuts', format: thousands },
+    { name: 'allocationWithActivePuts', section: 'summaryWithActivePuts', format: pctOne },
+    {
+      name: 'wheelingPutsAssignableCount',
+      section: 'summaryWithAssignablePuts',
+      format: thousands,
+    },
+    {
+      name: 'wheelingPutsAssignableValueGBP',
+      section: 'summaryWithAssignablePuts',
+      format: thousands,
+    },
+    { name: 'allocationWithAssignablePuts', section: 'summaryWithAssignablePuts', format: pctOne },
     { name: 'wheelingAcquisitionCost', section: 'wheeling', format: thousands },
     { name: 'wheelingQuantity', section: 'wheeling', format: thousands },
     { name: 'wheelingPremium', section: 'wheeling', format: thousands },
@@ -96,7 +110,16 @@ const Stocks = () => {
     { name: 'partialBatchQuantity', section: 'partialBatch', format: thousands },
   ];
 
-  type SectionName = 'ticker' | 'partialBatch' | 'putOnly' | 'wheeling' | 'wheeled' | 'summary';
+  type SectionName =
+    | 'ticker'
+    | 'partialBatch'
+    | 'putOnly'
+    | 'wheeling'
+    | 'wheeled'
+    | 'summary'
+    | 'summaryWithActivePuts'
+    | 'summaryWithAssignablePuts';
+
   type Section = {
     name: SectionName;
     backgroundColor: string;
@@ -110,7 +133,16 @@ const Stocks = () => {
       sections[heading.section] += 1;
       return sections;
     },
-    { ticker: 0, partialBatch: 0, putOnly: 0, wheeling: 0, wheeled: 0, summary: 0 }
+    {
+      ticker: 0,
+      partialBatch: 0,
+      putOnly: 0,
+      wheeling: 0,
+      wheeled: 0,
+      summary: 0,
+      summaryWithActivePuts: 0,
+      summaryWithAssignablePuts: 0,
+    }
   );
 
   const uniqueSectionsOrdered: SectionName[] = headings
@@ -130,6 +162,8 @@ const Stocks = () => {
     wheeling: { name: 'wheeling', backgroundColor: 'Honeydew' },
     wheeled: { name: 'wheeled', backgroundColor: 'LemonChiffon' },
     summary: { name: 'summary', backgroundColor: 'AntiqueWhite' },
+    summaryWithActivePuts: { name: 'summaryWithActivePuts', backgroundColor: 'WhiteSmoke' },
+    summaryWithAssignablePuts: { name: 'summaryWithAssignablePuts', backgroundColor: 'PapayaWhip' },
   };
 
   const sectionsWithCounts = uniqueSectionsOrdered.map((section) => ({
@@ -143,6 +177,7 @@ const Stocks = () => {
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
 
   const { batches, stocks } = processData({ transactions, trades, currentTickerPrices, now: NOW });
+  const currentPuts = trades.filter((trade) => isCurrentPut(trade, NOW));
 
   for (let batch of Object.values(batches)) {
     const {
@@ -188,31 +223,55 @@ const Stocks = () => {
     }
   }
 
+  for (let currentPut of currentPuts) {
+    const { ticker, strike } = currentPut;
+    const { optionSize } = stocks[ticker];
+    const currentStockPrice = currentTickerPrices[ticker];
+    stocks[ticker].wheeling = stocks[ticker].wheeling || {
+      activeCalls: 0,
+      acquisitionCost: 0,
+      missedUpside: 0,
+      premium: 0,
+      quantity: 0,
+    };
+    stocks[ticker].wheeling.puts = stocks[ticker].wheeling.puts || {
+      active: { count: 0, value: 0 },
+      assignable: { count: 0, value: 0 },
+    };
+    stocks[ticker].wheeling.puts.active.count += 1;
+    stocks[ticker].wheeling.puts.active.value += optionSize * Math.min(strike, currentStockPrice);
+    stocks[ticker].wheeling.puts.assignable.count += strike > currentStockPrice ? 1 : 0;
+    stocks[ticker].wheeling.puts.assignable.value +=
+      strike > currentStockPrice ? optionSize * Math.min(strike, currentStockPrice) : 0;
+  }
+
   // eslint-disable-next-line no-unused-vars
   const totals: { [key in keyof StocksRowTotal]: { value: number; format?: Function } } = {
     returnGBP: { value: 0 },
     valueGBP: { value: 0 },
+    wheelingPutsActiveValueGBP: { value: 0 },
+    wheelingPutsAssignableValueGBP: { value: 0 },
   };
 
   const stockData: StockEnriched[] = Object.values(stocks).map((stock) => {
-    const { currency, current } = stock;
+    const { currency, current, wheeling, wheeled, partialBatch, putOnly } = stock;
     const forexRate = rates[currency];
 
-    const partialBatchQuantity = stock.partialBatch?.quantity || 0;
-    const partialBatchAcquisitionCost = stock.partialBatch?.acquisitionCost || 0;
+    const partialBatchQuantity = partialBatch?.quantity || 0;
+    const partialBatchAcquisitionCost = partialBatch?.acquisitionCost || 0;
 
-    const wheeledAcquisitionCost = stock.wheeled?.acquisitionCost;
-    const wheeledPremium = stock.wheeled?.premium || 0;
-    const wheeledExitValue = stock.wheeled?.exitValue;
+    const wheeledAcquisitionCost = wheeled?.acquisitionCost;
+    const wheeledPremium = wheeled?.premium || 0;
+    const wheeledExitValue = wheeled?.exitValue;
     const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
     const wheeledReturn = wheeledPremium + wheeledGrowth || 0;
 
-    const putOnlyPremium = stock.putOnly?.premium || 0;
+    const putOnlyPremium = putOnly?.premium || 0;
 
-    const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
-    const wheelingAcquisitionCost = stock.wheeling?.acquisitionCost || 0;
-    const wheelingPremium = stock.wheeling?.premium || 0;
-    const wheelingQuantity = stock.wheeling?.quantity || 0;
+    const wheelingMissedUpside = wheeling?.missedUpside || 0;
+    const wheelingAcquisitionCost = wheeling?.acquisitionCost || 0;
+    const wheelingPremium = wheeling?.premium || 0;
+    const wheelingQuantity = wheeling?.quantity || 0;
 
     const totalQuantity = wheelingQuantity + partialBatchQuantity;
     const avgCost =
@@ -235,11 +294,19 @@ const Stocks = () => {
 
     const returnGBP = current || totalQuantity === 0 ? returnCurrency / forexRate : null;
     const valueGBP = current && forexRate ? calcValue(stock, current) / forexRate : null;
+    const wheelingPutsActiveValueGBP = current
+      ? (wheeling?.puts?.active?.value || 0) / forexRate
+      : null;
+    const wheelingPutsAssignableValueGBP = current
+      ? (wheeling?.puts?.assignable?.value || 0) / forexRate
+      : null;
 
     const returnPct = current && avgCost ? returnGBP / (valueGBP - returnGBP) : null;
 
     totals.returnGBP.value += returnGBP;
     totals.valueGBP.value += valueGBP;
+    totals.wheelingPutsActiveValueGBP.value += wheelingPutsActiveValueGBP;
+    totals.wheelingPutsAssignableValueGBP.value += wheelingPutsAssignableValueGBP;
 
     return {
       ...stock,
@@ -250,15 +317,15 @@ const Stocks = () => {
       totalQuantity,
       valueGBP,
       missingUpside: !!wheelingMissedUpside,
-      ...(stock.partialBatch && {
-        partialBatch: { ...stock.partialBatch },
+      ...(partialBatch && {
+        partialBatch: { ...partialBatch },
       }),
-      ...(stock.putOnly && {
-        putOnly: { ...stock.putOnly, premiumGBP: putOnlyPremium / forexRate },
+      ...(putOnly && {
+        putOnly: { ...putOnly, premiumGBP: putOnlyPremium / forexRate },
       }),
-      ...(stock.wheeled && {
+      ...(wheeled && {
         wheeled: {
-          ...stock.wheeled,
+          ...wheeled,
           growth: wheeledGrowth,
           growthAsPctOfReturn: wheeledGrowth / wheeledReturn,
           premiumAsPctOfReturn: wheeledPremium / wheeledReturn,
@@ -266,14 +333,37 @@ const Stocks = () => {
           returnPct: wheeledReturn / wheeledAcquisitionCost,
         },
       }),
-      ...(stock.wheeling && {
-        wheeling: { ...stock.wheeling },
+      ...(wheeling && {
+        wheeling: {
+          ...wheeling,
+          puts: {
+            active: {
+              count: wheeling.puts?.active?.count,
+              value: wheeling.puts?.active?.value,
+              valueGBP: wheelingPutsActiveValueGBP,
+            },
+            assignable: {
+              count: wheeling.puts?.assignable?.count,
+              value: wheeling.puts?.assignable?.value,
+              valueGBP: wheelingPutsAssignableValueGBP,
+            },
+          },
+        },
       }),
     };
   });
 
   const rows: StockEnriched[] = stockData
-    .map((stockData) => ({ ...stockData, allocation: stockData.valueGBP / totals.valueGBP.value }))
+    .map((stockData) => ({
+      ...stockData,
+      allocation: stockData.valueGBP / totals.valueGBP.value,
+      allocationWithActivePuts:
+        (stockData.valueGBP + (stockData.wheeling?.puts?.active?.valueGBP || 0)) /
+        (totals.valueGBP.value + totals.wheelingPutsActiveValueGBP.value),
+      allocationWithAssignablePuts:
+        (stockData.valueGBP + (stockData.wheeling?.puts?.assignable?.valueGBP || 0)) /
+        (totals.valueGBP.value + totals.wheelingPutsAssignableValueGBP.value),
+    }))
     .sort((stockA, stockB) => stockB.returnGBP - stockA.returnGBP)
     .sort((stockA, stockB) => stockB.valueGBP - stockA.valueGBP);
 

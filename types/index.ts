@@ -27,11 +27,23 @@ export type Stock = {
     missedUpside: number;
     premium: number;
     quantity: number;
+    puts?: {
+      active: {
+        count: number;
+        value: number;
+      };
+      assignable: {
+        count: number;
+        value: number;
+      };
+    };
   };
 };
 
 export type StockEnriched = Stock & {
   allocation?: number;
+  allocationWithActivePuts?: number;
+  allocationWithAssignablePuts?: number;
   avgCost: number;
   returnGBP: number;
   returnPct: number;
@@ -46,6 +58,16 @@ export type StockEnriched = Stock & {
     premiumAsPctOfReturn: number;
     return: number;
     returnPct: number;
+  };
+  wheeling?: {
+    puts?: {
+      active: {
+        valueGBP: number;
+      };
+      assignable: {
+        valueGBP: number;
+      };
+    };
   };
   missingUpside?: boolean;
 };
@@ -245,11 +267,15 @@ export type ForexRow = {
 export type StocksRowTotal = {
   returnGBP: number;
   valueGBP: number;
+  wheelingPutsActiveValueGBP: number;
+  wheelingPutsAssignableValueGBP: number;
 };
 
 // Ideally would be defined programmatically from the keys of flatten(row)
 export type StocksHeadings = StocksRowTotal & {
   allocation: number;
+  allocationWithActivePuts: number;
+  allocationWithAssignablePuts: number;
   avgCost: number;
   colour: string;
   current: number;
@@ -273,6 +299,8 @@ export type StocksHeadings = StocksRowTotal & {
   wheelingActiveCalls: number;
   wheelingMissedUpside: number;
   wheelingPremium: number;
+  wheelingPutsActiveCount: number;
+  wheelingPutsAssignableCount: number;
   wheelingQuantity: number;
 };
 
