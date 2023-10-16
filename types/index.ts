@@ -333,8 +333,6 @@ export type FinnhubQuote = {
   t: number; // Time
 };
 
-export type IEXCloudUsageResponse = { dailyUsage: { [key: string]: string }; monthlyUsage: number };
-
 export type ExchangeRateResponse = { rates: ForexRates };
 
 export type CurrentTickerPrices = { [key: string]: number };
