@@ -30,7 +30,7 @@ const NOW = dayjs();
 const calcValue = (stock: Stock, current: number) => {
   const partialBatchQuantity = stock.partialBatch?.quantity || 0;
   const wheelingQuantity = stock.wheeling?.quantity || 0;
-  const wheelingMissedUpside = stock.wheeling?.missedUpside || 0;
+  const wheelingMissedUpside = stock.wheeling?.calls?.missedUpside || 0;
   const totalQuantity = wheelingQuantity + partialBatchQuantity;
   return totalQuantity * current - wheelingMissedUpside;
 };
@@ -72,27 +72,21 @@ const Stocks = () => {
   }[] = [
     { name: 'ticker', section: 'ticker', align: 'default', format: getTickerDisplayName },
     { name: 'totalQuantity', section: 'summary', format: thousands },
-    { name: 'wheelingActiveCalls', section: 'summary' },
+    { name: 'wheelingCallsActiveCount', section: 'summary' },
     { name: 'avgCost', section: 'summary', format: decimalTwo },
     { name: 'current', section: 'summary', format: decimalTwo },
     { name: 'returnPct', section: 'summary', format: pctOne },
     { name: 'returnGBP', section: 'summary', format: thousands },
     { name: 'valueGBP', section: 'summary', format: thousands },
     { name: 'allocation', section: 'summary', format: pctOne },
-    { name: 'wheelingPutsActiveCount', section: 'summaryWithActivePuts', format: thousands },
+    { name: 'wheelingPutsActiveCount', section: 'summaryWithActivePuts' },
     { name: 'wheelingPutsActiveValueGBP', section: 'summaryWithActivePuts', format: thousands },
     { name: 'allocationWithActivePuts', section: 'summaryWithActivePuts', format: pctOne },
-    {
-      name: 'wheelingPutsAssignableCount',
-      section: 'summaryWithAssignablePuts',
-      format: thousands,
-    },
-    {
-      name: 'wheelingPutsAssignableValueGBP',
-      section: 'summaryWithAssignablePuts',
-      format: thousands,
-    },
-    { name: 'allocationWithAssignablePuts', section: 'summaryWithAssignablePuts', format: pctOne },
+    { name: 'wheelingPutsAssignableCount', section: 'summaryNet', format: thousands },
+    { name: 'wheelingPutsAssignableValueGBP', section: 'summaryNet', format: thousands },
+    { name: 'wheelingCallsAssignableCount', section: 'summaryNet' },
+    { name: 'wheelingCallsAssignableValueGBP', section: 'summaryNet', format: thousands },
+    { name: 'allocationNet', section: 'summaryNet', format: pctOne },
     { name: 'wheelingAcquisitionCost', section: 'wheeling', format: thousands },
     { name: 'wheelingQuantity', section: 'wheeling', format: thousands },
     { name: 'wheelingPremium', section: 'wheeling', format: thousands },
@@ -118,7 +112,7 @@ const Stocks = () => {
     | 'wheeled'
     | 'summary'
     | 'summaryWithActivePuts'
-    | 'summaryWithAssignablePuts';
+    | 'summaryNet';
 
   type Section = {
     name: SectionName;
@@ -141,7 +135,7 @@ const Stocks = () => {
       wheeled: 0,
       summary: 0,
       summaryWithActivePuts: 0,
-      summaryWithAssignablePuts: 0,
+      summaryNet: 0,
     }
   );
 
@@ -163,7 +157,7 @@ const Stocks = () => {
     wheeled: { name: 'wheeled', backgroundColor: 'LemonChiffon' },
     summary: { name: 'summary', backgroundColor: 'AntiqueWhite' },
     summaryWithActivePuts: { name: 'summaryWithActivePuts', backgroundColor: 'WhiteSmoke' },
-    summaryWithAssignablePuts: { name: 'summaryWithAssignablePuts', backgroundColor: 'PapayaWhip' },
+    summaryNet: { name: 'summaryNet', backgroundColor: 'PapayaWhip' },
   };
 
   const sectionsWithCounts = uniqueSectionsOrdered.map((section) => ({
@@ -204,8 +198,11 @@ const Stocks = () => {
       wheeled.quantity += optionSize;
     } else {
       stocks[ticker].wheeling = stocks[ticker].wheeling || {
-        activeCalls: 0,
-        missedUpside: 0,
+        calls: {
+          active: { count: 0, value: 0 },
+          assignable: { count: 0, value: 0 },
+          missedUpside: 0,
+        },
         acquisitionCost: 0,
         premium: 0,
         quantity: 0,
@@ -215,8 +212,11 @@ const Stocks = () => {
       const missedUpside = strike ? Math.max(current - strike, 0) * optionSize : 0;
 
       const wheeling = stocks[ticker].wheeling;
-      wheeling.activeCalls += currentCall ? 1 : 0;
-      wheeling.missedUpside += missedUpside;
+      wheeling.calls.active.count += currentCall ? 1 : 0;
+      wheeling.calls.active.value += currentCall ? optionSize * Math.min(strike, current) : 0;
+      wheeling.calls.assignable.count += currentCall && current > strike ? 1 : 0;
+      wheeling.calls.assignable.value += currentCall && current > strike ? optionSize * strike : 0;
+      wheeling.calls.missedUpside += missedUpside;
       wheeling.acquisitionCost += acquisitionCost;
       wheeling.premium += netCumulativePremium;
       wheeling.quantity += optionSize;
@@ -228,9 +228,12 @@ const Stocks = () => {
     const { optionSize } = stocks[ticker];
     const currentStockPrice = currentTickerPrices[ticker];
     stocks[ticker].wheeling = stocks[ticker].wheeling || {
-      activeCalls: 0,
+      calls: {
+        active: { count: 0, value: 0 },
+        assignable: { count: 0, value: 0 },
+        missedUpside: 0,
+      },
       acquisitionCost: 0,
-      missedUpside: 0,
       premium: 0,
       quantity: 0,
     };
@@ -251,6 +254,7 @@ const Stocks = () => {
     valueGBP: { value: 0 },
     wheelingPutsActiveValueGBP: { value: 0 },
     wheelingPutsAssignableValueGBP: { value: 0 },
+    wheelingCallsAssignableValueGBP: { value: 0 },
   };
 
   const stockData: StockEnriched[] = Object.values(stocks).map((stock) => {
@@ -268,7 +272,7 @@ const Stocks = () => {
 
     const putOnlyPremium = putOnly?.premium || 0;
 
-    const wheelingMissedUpside = wheeling?.missedUpside || 0;
+    const wheelingMissedUpside = wheeling?.calls.missedUpside || 0;
     const wheelingAcquisitionCost = wheeling?.acquisitionCost || 0;
     const wheelingPremium = wheeling?.premium || 0;
     const wheelingQuantity = wheeling?.quantity || 0;
@@ -300,6 +304,12 @@ const Stocks = () => {
     const wheelingPutsAssignableValueGBP = current
       ? (wheeling?.puts?.assignable?.value || 0) / forexRate
       : null;
+    const wheelingCallsActiveValueGBP = current
+      ? (wheeling?.calls?.active?.value || 0) / forexRate
+      : null;
+    const wheelingCallsAssignableValueGBP = current
+      ? (wheeling?.calls?.assignable?.value || 0) / forexRate
+      : null;
 
     const returnPct = current && avgCost ? returnGBP / (valueGBP - returnGBP) : null;
 
@@ -307,6 +317,7 @@ const Stocks = () => {
     totals.valueGBP.value += valueGBP;
     totals.wheelingPutsActiveValueGBP.value += wheelingPutsActiveValueGBP;
     totals.wheelingPutsAssignableValueGBP.value += wheelingPutsAssignableValueGBP;
+    totals.wheelingCallsAssignableValueGBP.value += wheelingCallsAssignableValueGBP;
 
     return {
       ...stock,
@@ -348,6 +359,19 @@ const Stocks = () => {
               valueGBP: wheelingPutsAssignableValueGBP,
             },
           },
+          calls: {
+            missedUpside: wheelingMissedUpside,
+            active: {
+              count: wheeling.calls?.active?.count,
+              value: wheeling.calls?.active?.value,
+              valueGBP: wheelingCallsActiveValueGBP,
+            },
+            assignable: {
+              count: wheeling.calls?.assignable?.count,
+              value: wheeling.calls?.assignable?.value,
+              valueGBP: wheelingCallsAssignableValueGBP,
+            },
+          },
         },
       }),
     };
@@ -360,9 +384,13 @@ const Stocks = () => {
       allocationWithActivePuts:
         (stockData.valueGBP + (stockData.wheeling?.puts?.active?.valueGBP || 0)) /
         (totals.valueGBP.value + totals.wheelingPutsActiveValueGBP.value),
-      allocationWithAssignablePuts:
-        (stockData.valueGBP + (stockData.wheeling?.puts?.assignable?.valueGBP || 0)) /
-        (totals.valueGBP.value + totals.wheelingPutsAssignableValueGBP.value),
+      allocationNet:
+        (stockData.valueGBP +
+          (stockData.wheeling?.puts?.assignable?.valueGBP || 0) -
+          (stockData.wheeling?.calls?.assignable?.valueGBP || 0)) /
+        (totals.valueGBP.value +
+          totals.wheelingPutsAssignableValueGBP.value -
+          totals.wheelingCallsAssignableValueGBP.value),
     }))
     .sort((stockA, stockB) => stockB.returnGBP - stockA.returnGBP)
     .sort((stockA, stockB) => stockB.valueGBP - stockA.valueGBP);
