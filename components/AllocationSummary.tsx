@@ -66,7 +66,7 @@ const AllocationSummary = ({
       const current = currentTickerPrices[ticker];
       const { currency, optionSize } = tickers[ticker];
       summary[strike <= current ? 'OTMPutsGBP' : 'ITMPutsGBP'] +=
-        (strike * optionSize) / rates[currency];
+        (Math.min(strike, current) * optionSize) / rates[currency];
       return summary;
     },
     { ITMPutsGBP: 0, OTMPutsGBP: 0 }
