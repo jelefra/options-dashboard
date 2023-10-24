@@ -21,6 +21,12 @@ export type Stock = {
     premium: number;
     quantity: number;
   };
+  sold?: {
+    acquisitionCost: number;
+    exitValue?: number;
+    premium: number;
+    quantity: number;
+  };
   wheeling?: {
     acquisitionCost: number;
     premium: number;
@@ -62,6 +68,13 @@ export type StockEnriched = Stock & {
     premiumGBP: number;
   };
   wheeled?: {
+    growth: number;
+    growthAsPctOfReturn: number;
+    premiumAsPctOfReturn: number;
+    return: number;
+    returnPct: number;
+  };
+  sold?: {
     growth: number;
     growthAsPctOfReturn: number;
     premiumAsPctOfReturn: number;
@@ -247,7 +260,10 @@ export type Batch = {
   currency: string;
   current?: number;
   currentCall?: Call;
-  exitValue?: number;
+  exit?: {
+    value: number;
+    method: 'Call' | 'Sale';
+  };
   netCumulativePremium: number;
   optionSize: number;
   origin: 'Purchase' | 'Put';
@@ -292,8 +308,8 @@ export type StocksRowTotal = {
 // Ideally would be defined programmatically from the keys of flatten(row)
 export type StocksHeadings = StocksRowTotal & {
   allocation: number;
-  allocationWithActivePuts: number;
   allocationNet: number;
+  allocationWithActivePuts: number;
   avgCost: number;
   colour: string;
   current: number;
@@ -302,15 +318,24 @@ export type StocksHeadings = StocksRowTotal & {
   putOnlyPremium: number;
   putOnlyPremiumGBP: number;
   returnPct: number;
+  soldAcquisitionCost: number;
+  soldExitValue: number;
+  soldGrowth: number;
+  soldGrowthAsPctOfReturn: number;
+  soldPremium: number;
+  soldPremiumAsPctOfReturn: number;
+  soldQuantity: number;
+  soldReturn: number;
+  soldReturnPct: number;
   ticker: string;
   totalQuantity: number;
   wheeledAcquisitionCost: number;
-  wheeledQuantity: number;
   wheeledExitValue: number;
-  wheeledPremium: number;
-  wheeledPremiumAsPctOfReturn: number;
   wheeledGrowth: number;
   wheeledGrowthAsPctOfReturn: number;
+  wheeledPremium: number;
+  wheeledPremiumAsPctOfReturn: number;
+  wheeledQuantity: number;
   wheeledReturn: number;
   wheeledReturnPct: number;
   wheelingAcquisitionCost: number;

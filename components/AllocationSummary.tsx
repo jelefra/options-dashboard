@@ -37,12 +37,12 @@ const AllocationSummary = ({
   }
 
   const { wheelingGBP, notWheelingGBP } = Object.values(batches).reduce(
-    (total, { current, currentCall = {}, currency, exitValue, optionSize }) => {
+    (total, { current, currentCall = {}, currency, exit, optionSize }) => {
       const { strike } = currentCall;
       if (strike) {
         const missedUpside = strike ? Math.max(current - strike, 0) : 0;
         total.wheelingGBP += (optionSize * (current - missedUpside)) / rates[currency];
-      } else if (!exitValue) {
+      } else if (!exit?.value) {
         total.notWheelingGBP += (optionSize * current) / rates[currency];
       }
       return total;

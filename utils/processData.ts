@@ -134,7 +134,7 @@ const processData = ({
       batch.netCumulativePremium += netCumulativePremium;
 
       if (closePrice && closePrice > strike) {
-        batch.exitValue = strike * optionSize;
+        batch.exit = { value: strike * optionSize, method: 'Call' };
       }
 
       const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
@@ -173,7 +173,10 @@ const processData = ({
         const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
         for (let batchCode of batchCodes) {
           const batch = batches[batchCode];
-          batch.exitValue = stockPrice * optionSize - commission / batchCodes.length;
+          batch.exit = {
+            value: stockPrice * optionSize - commission / batchCodes.length,
+            method: 'Sale',
+          };
         }
       } else {
         const partialBatch = stocks[ticker].partialBatch;

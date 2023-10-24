@@ -108,7 +108,7 @@ const Call = () => {
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
   const batchesWithoutCalls = Object.entries(batches)
-    .filter(([, batch]) => !batch.currentCall && !batch.exitValue)
+    .filter(([, batch]) => !batch.currentCall && !batch.exit)
     .sort(([a], [b]) => a.localeCompare(b))
     .sort(([, a], [, b]) => a.account.localeCompare(b.account));
 

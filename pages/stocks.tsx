@@ -102,6 +102,15 @@ const Stocks = () => {
     { name: 'wheeledReturnPct', section: 'wheeled', format: pctZero },
     { name: 'partialBatchAcquisitionCost', section: 'partialBatch', format: thousands },
     { name: 'partialBatchQuantity', section: 'partialBatch', format: thousands },
+    { name: 'soldAcquisitionCost', section: 'sold', format: thousands },
+    { name: 'soldQuantity', section: 'sold', format: thousands },
+    { name: 'soldPremium', section: 'sold', format: thousands },
+    { name: 'soldPremiumAsPctOfReturn', section: 'sold', format: pctOne },
+    { name: 'soldGrowth', section: 'sold', format: thousands },
+    { name: 'soldGrowthAsPctOfReturn', section: 'sold', format: pctOne },
+    { name: 'soldExitValue', section: 'sold', format: thousands },
+    { name: 'soldReturn', section: 'sold', format: thousands },
+    { name: 'soldReturnPct', section: 'sold', format: pctOne },
   ];
 
   type SectionName =
@@ -112,7 +121,8 @@ const Stocks = () => {
     | 'wheeled'
     | 'summary'
     | 'summaryWithActivePuts'
-    | 'summaryNet';
+    | 'summaryNet'
+    | 'sold';
 
   type Section = {
     name: SectionName;
@@ -136,6 +146,7 @@ const Stocks = () => {
       summary: 0,
       summaryWithActivePuts: 0,
       summaryNet: 0,
+      sold: 0,
     }
   );
 
@@ -158,6 +169,7 @@ const Stocks = () => {
     summary: { name: 'summary', backgroundColor: 'AntiqueWhite' },
     summaryWithActivePuts: { name: 'summaryWithActivePuts', backgroundColor: 'WhiteSmoke' },
     summaryNet: { name: 'summaryNet', backgroundColor: 'PapayaWhip' },
+    sold: { name: 'sold', backgroundColor: 'Beige' },
   };
 
   const sectionsWithCounts = uniqueSectionsOrdered.map((section) => ({
@@ -178,13 +190,13 @@ const Stocks = () => {
       acquisitionCost,
       current,
       currentCall,
-      exitValue,
+      exit,
       netCumulativePremium,
       optionSize,
       ticker,
     } = batch;
 
-    if (exitValue) {
+    if (exit?.value && exit.method === 'Call') {
       stocks[ticker].wheeled = stocks[ticker].wheeled || {
         acquisitionCost: 0,
         exitValue: 0,
@@ -193,9 +205,21 @@ const Stocks = () => {
       };
       const wheeled = stocks[ticker].wheeled;
       wheeled.acquisitionCost += acquisitionCost;
-      wheeled.exitValue += exitValue;
+      wheeled.exitValue += exit.value;
       wheeled.premium += netCumulativePremium;
       wheeled.quantity += optionSize;
+    } else if (exit?.value && exit.method === 'Sale') {
+      stocks[ticker].sold = stocks[ticker].sold || {
+        acquisitionCost: 0,
+        exitValue: 0,
+        quantity: 0,
+        premium: 0,
+      };
+      const sold = stocks[ticker].sold;
+      sold.acquisitionCost += acquisitionCost;
+      sold.exitValue += exit.value;
+      sold.premium += netCumulativePremium;
+      sold.quantity += optionSize;
     } else {
       stocks[ticker].wheeling = stocks[ticker].wheeling || {
         calls: {
@@ -258,7 +282,7 @@ const Stocks = () => {
   };
 
   const stockData: StockEnriched[] = Object.values(stocks).map((stock) => {
-    const { currency, current, wheeling, wheeled, partialBatch, putOnly } = stock;
+    const { currency, current, wheeling, wheeled, partialBatch, putOnly, sold } = stock;
     const forexRate = rates[currency];
 
     const partialBatchQuantity = partialBatch?.quantity || 0;
@@ -269,6 +293,10 @@ const Stocks = () => {
     const wheeledExitValue = wheeled?.exitValue;
     const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
     const wheeledReturn = wheeledPremium + wheeledGrowth || 0;
+
+    const soldPremium = sold?.premium || 0;
+    const soldGrowth = sold?.exitValue - sold?.acquisitionCost;
+    const soldReturn = (sold?.premium || 0) + (sold?.exitValue || 0) - (sold?.acquisitionCost || 0);
 
     const putOnlyPremium = putOnly?.premium || 0;
 
@@ -294,7 +322,8 @@ const Stocks = () => {
       wheelingMissedUpside +
       putOnlyPremium +
       wheelingPremium +
-      wheeledReturn;
+      wheeledReturn +
+      soldReturn;
 
     const returnGBP = current || totalQuantity === 0 ? returnCurrency / forexRate : null;
     const valueGBP = current && forexRate ? calcValue(stock, current) / forexRate : null;
@@ -372,6 +401,16 @@ const Stocks = () => {
               valueGBP: wheelingCallsAssignableValueGBP,
             },
           },
+        },
+      }),
+      ...(sold && {
+        sold: {
+          ...sold,
+          growth: soldGrowth,
+          growthAsPctOfReturn: soldGrowth / soldReturn,
+          premiumAsPctOfReturn: soldPremium / soldReturn,
+          return: soldReturn,
+          returnPct: soldReturn / sold.acquisitionCost,
         },
       }),
     };
