@@ -48,3 +48,6 @@ styles/accounts.css
 data/earnings.ts
 data/stockSplits.ts
 data/cash.ts
+
+# TypeScript
+tsconfig.tsbuildinfo
