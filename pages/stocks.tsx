@@ -472,41 +472,46 @@ const Stocks = () => {
         <tbody>
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
-              {headings.map(({ name, format = (v) => v, align = 'right' }, index) => {
-                const showZeroValues =
-                  name === 'wheeledGrowth' || name === 'wheeledGrowthAsPctOfReturn';
+              {headings.map(
+                ({ name, format = (v: string | number) => v, align = 'right' }, index) => {
+                  const showZeroValues =
+                    name === 'wheeledGrowth' || name === 'wheeledGrowthAsPctOfReturn';
 
-                return (
-                  <td
-                    className={cx({
-                      [styles[align]]: align === 'right',
-                      [row.colour]: row.colour && name === 'ticker',
-                      [styles.contrast]: rowIndex % 2 && index > 0,
-                      [styles.freezeFirstTdColumn]: index === 0,
-                      [styles.warning]:
-                        row.missingUpside &&
-                        (name === 'valueGBP' || name === 'returnGBP' || name === 'returnPct'),
-                    })}
-                    key={index}
-                  >
-                    {(!!flatten(row)[name] || showZeroValues) && format(flatten(row)[name])}
-                  </td>
-                );
-              })}
+                  return (
+                    <td
+                      className={cx({
+                        [styles[align]]: align === 'right',
+                        [row.colour]: row.colour && name === 'ticker',
+                        [styles.contrast]: rowIndex % 2 && index > 0,
+                        [styles.freezeFirstTdColumn]: index === 0,
+                        [styles.warning]:
+                          row.missingUpside &&
+                          (name === 'valueGBP' || name === 'returnGBP' || name === 'returnPct'),
+                      })}
+                      key={index}
+                    >
+                      {(!!flatten(row)[name] || showZeroValues) && format(flatten(row)[name])}
+                    </td>
+                  );
+                }
+              )}
             </tr>
           ))}
 
           <tr>
-            {headings.map(({ name, format, align = 'right' }, index) => (
-              <td
-                className={cx(styles.total, {
-                  [styles[align]]: align === 'right',
-                })}
-                key={index}
-              >
-                {!!totals[name]?.value && format(totals[name].value)}
-              </td>
-            ))}
+            {headings.map(({ name, format, align = 'right' }, index) => {
+              const total = name in totals && totals[name as keyof typeof totals];
+              return (
+                <td
+                  className={cx(styles.total, {
+                    [styles[align]]: align === 'right',
+                  })}
+                  key={index}
+                >
+                  {name in totals && total.value ? format(total.value) : false}
+                </td>
+              );
+            })}
           </tr>
         </tbody>
       </table>

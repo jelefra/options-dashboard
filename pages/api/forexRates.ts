@@ -17,10 +17,13 @@ const forexRates = async (req: NextApiRequest, res: NextApiResponse) => {
     logSanitiser: sanitiseOpenExchangeRatesLogs,
   });
   const ratesBaseUSD = response.rates;
-  const ratesBaseGBP = Object.keys(ratesBaseUSD).reduce((ratesBaseGBP, currency) => {
-    ratesBaseGBP[currency] = ratesBaseUSD[currency] / ratesBaseUSD.GBP;
-    return ratesBaseGBP;
-  }, {});
+  const ratesBaseGBP = Object.keys(ratesBaseUSD).reduce(
+    (ratesBaseGBP: { [key: string]: number }, currency) => {
+      ratesBaseGBP[currency] = ratesBaseUSD[currency] / ratesBaseUSD.GBP;
+      return ratesBaseGBP;
+    },
+    {}
+  );
   res.status(200).json({ rates: ratesBaseGBP });
 };
 

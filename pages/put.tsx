@@ -278,58 +278,63 @@ const Put = () => {
 
             return (
               <tr key={tradeIndex}>
-                {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
-                  const showZeroValues =
-                    name === 'assignmentPct' ||
-                    name === 'dteCurrent' ||
-                    name === 'highPct' ||
-                    name === 'lowPct' ||
-                    name === 'daysToEarnings' ||
-                    name === 'return30DPctResidualEstimate';
+                {orderedRowValues.map(
+                  ({ name, format = (v: string | number) => v, align = 'right' }, index) => {
+                    const showZeroValues =
+                      name === 'assignmentPct' ||
+                      name === 'dteCurrent' ||
+                      name === 'highPct' ||
+                      name === 'lowPct' ||
+                      name === 'daysToEarnings' ||
+                      name === 'return30DPctResidualEstimate';
 
-                  const earningsStatus = earnings[ticker]?.confirmed;
-                  const dayToEarningsClass = name === 'daysToEarnings' && {
-                    [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
-                    [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
-                    [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
-                  };
+                    const earningsStatus = earnings[ticker]?.confirmed;
+                    const dayToEarningsClass = name === 'daysToEarnings' && {
+                      [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
+                      [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
+                      [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
+                    };
 
-                  return (
-                    <td
-                      className={cx(
-                        {
-                          [styles[align]]: align === 'right',
-                          [colour]: name === 'ticker',
-                          [accountColour]: name === 'account',
-                          [styles.contrast]: tradeIndex % 2 && index > 1,
-                          [styles.freezeFirstTdColumn]: index === 0,
-                          [styles.freezeSecondTdColumn]: index === 1,
-                          mute:
-                            name === 'return30DPctResidualEstimate' &&
-                            row?.[name] > MINIMUM_RETURN_THRESHOLD,
-                        },
-                        dayToEarningsClass
-                      )}
-                      key={index}
-                    >
-                      {(!!row[name] || showZeroValues) && format(row[name])}
-                    </td>
-                  );
-                })}
+                    return (
+                      <td
+                        className={cx(
+                          {
+                            [styles[align]]: align === 'right',
+                            [colour]: name === 'ticker',
+                            [accountColour]: name === 'account',
+                            [styles.contrast]: tradeIndex % 2 && index > 1,
+                            [styles.freezeFirstTdColumn]: index === 0,
+                            [styles.freezeSecondTdColumn]: index === 1,
+                            mute:
+                              name === 'return30DPctResidualEstimate' &&
+                              row?.[name] > MINIMUM_RETURN_THRESHOLD,
+                          },
+                          dayToEarningsClass
+                        )}
+                        key={index}
+                      >
+                        {(!!row[name] || showZeroValues) && format(row[name])}
+                      </td>
+                    );
+                  }
+                )}
               </tr>
             );
           })}
           <tr>
-            {headings.map(({ name, format, align = 'right' }, index) => (
-              <td
-                className={cx(styles.total, {
-                  [styles[align]]: align === 'right',
-                })}
-                key={index}
-              >
-                {!!totals[name]?.value && (totals[name].format || format)(totals[name].value)}
-              </td>
-            ))}
+            {headings.map(({ name, format, align = 'right' }, index) => {
+              const total = name in totals && totals[name as keyof typeof totals];
+              return (
+                <td
+                  className={cx(styles.total, {
+                    [styles[align]]: align === 'right',
+                  })}
+                  key={index}
+                >
+                  {name in totals && total.value ? (total.format || format)(total.value) : false}
+                </td>
+              );
+            })}
           </tr>
         </tbody>
       </table>

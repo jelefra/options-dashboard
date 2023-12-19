@@ -60,7 +60,7 @@ const Weight = ({
       return totalGBP;
     }, 0);
 
-  const currenciesPct = Object.entries(currencyAmounts).reduce(
+  const currenciesPct = Object.entries(currencyAmounts).reduce<{ [currency: string]: number }>(
     (currenciesPct, [currency, amount]) => {
       currenciesPct[currency] = amount / (rates[currency] * totalGBP);
       return currenciesPct;

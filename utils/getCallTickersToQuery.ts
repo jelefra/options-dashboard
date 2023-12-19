@@ -41,7 +41,7 @@ const processTransactions = (transactions: TransactionData[]) => {
   return tickersFromTransactions;
 };
 
-const getCallTickersToQuery = (trades, transactions) => {
+const getCallTickersToQuery = (trades: TradeData[], transactions: TransactionData[]) => {
   const tickersFromTrades = processTrades(trades);
   const tickersFromTransactions = processTransactions(transactions);
 

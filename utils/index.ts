@@ -28,7 +28,7 @@ export const isCurrentPut = ({ closePrice, expiry, type }: TradeData, now: Dayjs
   dayjs(expiry, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day') &&
   (!closePrice || false);
 
-export const removeNullValues = (obj) =>
+export const removeNullValues = (obj: object) =>
   Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== null));
 
 export const formatDaysToEarnings = (n: number) => (Math.abs(n) < 15 ? n : '');
@@ -49,7 +49,7 @@ export const getPositionsKeys = (accounts: Accounts) =>
 
 export const getPosition = (
   positions: Position[],
-  ticker,
+  ticker: string,
   expiry: Dayjs,
   strike: number,
   type: TradeType

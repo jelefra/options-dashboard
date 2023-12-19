@@ -1,20 +1,23 @@
+import { createClient } from 'redis';
+
 import { FIFTEEN_MINUTES_IN_SECONDS } from '../constants';
 import { fetchFn } from './fetch';
 
-export const getFromRedis = async (client, keyName) => {
+export const getFromRedis = async (client: ReturnType<typeof createClient>, keyName: string) => {
   const data = await client.get(keyName);
   return data ? JSON.parse(data) : null;
 };
 
 type FetchAndStore = {
-  client;
+  client: ReturnType<typeof createClient>;
   fetchFunction?: Function;
   initialFetchDelay?: number;
   URL: string;
   keyName: string;
   expiry?: number;
   fetchFnOptions?: object;
-  logSanitiser?: Function;
+  // eslint-disable-next-line no-unused-vars
+  logSanitiser?: (input: string) => string;
 };
 
 export const fetchAndStore = async ({

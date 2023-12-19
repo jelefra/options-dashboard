@@ -44,10 +44,10 @@ const CapitalGains = () => {
 
   const transactions: TransactionData[] = transactionsData
     .map(removeNullValues)
-    .filter(({ account }) => applicableAccounts[account]);
+    .filter(({ account }: TransactionData) => applicableAccounts[account]);
   const trades: TradeData[] = tradesData
     .map(removeNullValues)
-    .filter(({ account }) => applicableAccounts[account]);
+    .filter(({ account }: TradeData) => applicableAccounts[account]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -310,10 +310,8 @@ const CapitalGains = () => {
       [key: string]: {
         put: boolean;
         call: boolean;
-        ITMCallGain: boolean;
-        ITMCallLoss: boolean;
-        saleGain: boolean;
-        saleLoss: boolean;
+        ITMCall: boolean;
+        sale: boolean;
         total: boolean;
       };
     };
@@ -322,7 +320,7 @@ const CapitalGains = () => {
       account,
       Object.fromEntries(
         currencies.reduce((currenciesCapitalGains, currency) => {
-          const hasValue = (key) =>
+          const hasValue = (key: keyof CapitalGains) =>
             Object.values(capitalGains).some(
               (gains) =>
                 gains[account][currency].gains[key] !== 0 ||
@@ -353,39 +351,52 @@ const CapitalGains = () => {
     .flatMap(([, gains]) => Object.entries(gains))
     .reduce((summary, [account, currencies]) => {
       Object.entries(currencies).forEach(([currencyCode, types]) => {
-        Object.entries(types).forEach(([type, categories]) => {
-          for (const category in categories) {
-            summary[account][currencyCode][type][category] += categories[category];
+        Object.entries(types).forEach(
+          ([type, categories]: [keyof AccountsCapitalGains[string][string], CapitalGains]) => {
+            Object.entries(categories).forEach(([category, val]: [keyof CapitalGains, number]) => {
+              summary[account][currencyCode][type][category] += val;
+            });
           }
-        });
+        );
       });
       return summary;
     }, cloneDeep(accountsCapitalGainsSkeleton));
 
+  console.log('total', total);
+
   const displayTotal = (
-    { key1, key2 }: { key1: string; key2?: string },
+    {
+      key1,
+      key2,
+    }: {
+      key1: keyof AccountsCapitalGains[string][string];
+      key2?: keyof AccountsCapitalGains[string][string];
+    },
     className: string = undefined
   ) => {
     return Object.entries(hasGains).map(([account, currenciesCapitalGains]) =>
       Object.entries(currenciesCapitalGains).map(([currency, currencyCapitalGains]) =>
         Object.entries(currencyCapitalGains)
           .filter(([, value]) => value)
-          .map(([id], index, source) => (
-            <td
-              className={cx(className, styles.total, styles.right, {
-                [styles.leftEdge]: index === 0,
-                [styles.rightEdge]: index === source.length - 1,
-                [styles.thick]: currency === 'BASE',
-                [styles.italic]: !historicalForexRates,
-              })}
-              key={`${account}-${currency}-${id}`}
-            >
-              {thousands(
-                (total[account][currency][key1][id] || 0) +
-                  (total[account][currency][key2]?.[id] || 0)
-              )}
-            </td>
-          ))
+          .map(([id]: [keyof typeof hasGains[string][string], true], index, source) => {
+            // console.log('id', id);
+            return (
+              <td
+                className={cx(className, styles.total, styles.right, {
+                  [styles.leftEdge]: index === 0,
+                  [styles.rightEdge]: index === source.length - 1,
+                  [styles.thick]: currency === 'BASE',
+                  [styles.italic]: !historicalForexRates,
+                })}
+                key={`${account}-${currency}-${id}`}
+              >
+                {thousands(
+                  (total[account][currency][key1][id] || 0) +
+                    (total[account][currency][key2]?.[id] || 0)
+                )}
+              </td>
+            );
+          })
       )
     );
   };
@@ -456,7 +467,7 @@ const CapitalGains = () => {
                 Object.entries(currenciesCapitalGains).map(([currency, currencyCapitalGains]) =>
                   Object.entries(currencyCapitalGains)
                     .filter(([, value]) => value)
-                    .map(([id], index, source) => (
+                    .map(([id]: [keyof CapitalGains, true], index, source) => (
                       <td
                         className={cx(styles.right, styles.columnWidthSm, {
                           [styles.leftEdge]: index === 0,

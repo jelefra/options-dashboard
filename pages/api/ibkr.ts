@@ -11,11 +11,11 @@ const agent = new https.Agent({
   rejectUnauthorized: false,
 });
 
-const fetchFunctions = {
+const fetchFunctions: { [key: string]: Function } = {
   positions: fetchPositions,
 };
 
-const expiries = {
+const expiries: { [key: string]: number } = {
   positions: IBKR_POSITIONS_EXPIRY,
 };
 

@@ -27,12 +27,15 @@ const AccountsComponent = ({
 
   const currentPuts = trades.filter((trade) => isCurrentPut(trade, NOW)) as PutData[];
 
-  const currentPutsByAccount = currentPuts.reduce((summary, { account, strike, ticker }) => {
-    const { currency, optionSize } = tickers[ticker];
-    summary[account] = summary[account] || {};
-    summary[account][currency] = (summary[account][currency] || 0) + strike * optionSize;
-    return summary;
-  }, {});
+  const currentPutsByAccount = currentPuts.reduce(
+    (summary: { [key: string]: { [key: string]: number } }, { account, strike, ticker }) => {
+      const { currency, optionSize } = tickers[ticker];
+      summary[account] = summary[account] || {};
+      summary[account][currency] = (summary[account][currency] || 0) + strike * optionSize;
+      return summary;
+    },
+    {}
+  );
 
   const putCurrencies = Array.from(
     new Set(currentPuts.map(({ ticker }) => tickers[ticker].currency))

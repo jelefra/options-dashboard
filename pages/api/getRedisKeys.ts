@@ -15,7 +15,7 @@ const getRedisKeys = async (req: NextApiRequest, res: NextApiResponse) => {
       })
     );
 
-    const values = redisKeyValuePairs.reduce((accumulator, current) => {
+    const values = redisKeyValuePairs.reduce((accumulator: { [key: string]: any }, current) => {
       const { key, value } = current;
       accumulator[key] = value;
       return accumulator;

@@ -1,5 +1,5 @@
 import cx from 'classnames';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 
@@ -112,12 +112,14 @@ const Call = () => {
     .sort(([a], [b]) => a.localeCompare(b))
     .sort(([, a], [, b]) => a.account.localeCompare(b.account));
 
-  const headings: {
+  type Heading = {
     name: keyof CallRow;
     format?: Function;
     align?: 'default' | 'right';
     scope?: 'all';
-  }[] = [
+  };
+
+  const headings: Heading[] = [
     { name: 'account', align: 'default', scope: 'all' },
     { name: 'batchCode', align: 'default', scope: 'all' },
     { name: 'unitAcquisitionCost', format: decimalTwo, scope: 'all' },
@@ -156,7 +158,8 @@ const Call = () => {
 
   const renderTableBody = (
     batches: [string, Batch][],
-    headingFilterFunction = (value) => value
+    // eslint-disable-next-line no-unused-vars
+    headingFilterFunction: (heading: Heading) => boolean = () => true
   ) => {
     // eslint-disable-next-line no-unused-vars
     const totals: { [key in keyof CallRowTotal]: number } = {
@@ -287,51 +290,53 @@ const Call = () => {
 
           return (
             <tr key={rowIndex}>
-              {orderedRowValues.map(({ name, format = (v) => v, align = 'right' }, index) => {
-                const showContrast = name !== 'account' && name !== 'batchCode';
-                const showZeroValuesNames: (keyof CallRow)[] = [
-                  'assignmentPct',
-                  'costBasisDrop',
-                  'daysToEarnings',
-                  'dteCurrent',
-                  'highPct',
-                  'return30DPctResidualEstimate',
-                ];
+              {orderedRowValues.map(
+                ({ name, format = (v: number | Dayjs) => v, align = 'right' }, index) => {
+                  const showContrast = name !== 'account' && name !== 'batchCode';
+                  const showZeroValuesNames: (keyof CallRow)[] = [
+                    'assignmentPct',
+                    'costBasisDrop',
+                    'daysToEarnings',
+                    'dteCurrent',
+                    'highPct',
+                    'return30DPctResidualEstimate',
+                  ];
 
-                const showZeroValues = showZeroValuesNames.includes(name);
+                  const showZeroValues = showZeroValuesNames.includes(name);
 
-                const earningsStatus = earnings[ticker]?.confirmed;
-                const dayToEarningsClass = name === 'daysToEarnings' && {
-                  [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
-                  [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
-                  [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
-                };
+                  const earningsStatus = earnings[ticker]?.confirmed;
+                  const dayToEarningsClass = name === 'daysToEarnings' && {
+                    [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
+                    [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
+                    [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
+                  };
 
-                return (
-                  <td
-                    className={cx(
-                      {
-                        [styles[align]]: align === 'right',
-                        [colour]: name === 'batchCode',
-                        [accountColour]: name === 'account',
-                        [styles.contrast]: rowIndex % 2 && showContrast,
-                        [styles.freezeFirstTdColumn]: index === 0,
-                        [styles.freezeSecondTdColumn]: index === 1,
-                        [styles.warning]:
-                          current > high &&
-                          (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
-                        mute:
-                          name === 'return30DPctResidualEstimate' &&
-                          row?.[name] > MINIMUM_RETURN_THRESHOLD,
-                      },
-                      dayToEarningsClass
-                    )}
-                    key={index}
-                  >
-                    {(!!row[name] || showZeroValues) && format(row[name])}
-                  </td>
-                );
-              })}
+                  return (
+                    <td
+                      className={cx(
+                        {
+                          [styles[align]]: align === 'right',
+                          [colour]: name === 'batchCode',
+                          [accountColour]: name === 'account',
+                          [styles.contrast]: rowIndex % 2 && showContrast,
+                          [styles.freezeFirstTdColumn]: index === 0,
+                          [styles.freezeSecondTdColumn]: index === 1,
+                          [styles.warning]:
+                            current > high &&
+                            (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
+                          mute:
+                            name === 'return30DPctResidualEstimate' &&
+                            row?.[name] > MINIMUM_RETURN_THRESHOLD,
+                        },
+                        dayToEarningsClass
+                      )}
+                      key={index}
+                    >
+                      {(!!row[name] || showZeroValues) && format(row[name])}
+                    </td>
+                  );
+                }
+              )}
             </tr>
           );
         })}
@@ -345,7 +350,7 @@ const Call = () => {
                 })}
                 key={index}
               >
-                {!!totals[name] && format(totals[name])}
+                {name in totals && format(totals[name as keyof typeof totals])}
               </td>
             ))}
         </tr>

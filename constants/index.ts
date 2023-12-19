@@ -17,7 +17,7 @@ export const IBKR_DEFAULT_EXPIRY = THIRTY_DAYS_IN_SECONDS;
 
 export const MINIMUM_RETURN_THRESHOLD = 0.015;
 
-export const DISPLAY = {
+export const DISPLAY: { [key: string]: string } = {
   ITMCall: 'ITM call',
   account: 'Account',
   acquisitionCost: 'Acquisition cost',

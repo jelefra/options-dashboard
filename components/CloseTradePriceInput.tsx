@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { ChangeEvent, Dispatch, KeyboardEvent, SetStateAction } from 'react';
 
 import { decimalTwo } from '../utils/format';
 
-const CloseTradePriceInput = ({ batchId, closeTradePrices, setCloseTradePrices }) => {
-  const storeCloseTradePrice = async (value) =>
+const CloseTradePriceInput = ({
+  batchId,
+  closeTradePrices,
+  setCloseTradePrices,
+}: {
+  batchId: string;
+  closeTradePrices: { [key: string]: number };
+  setCloseTradePrices: Dispatch<SetStateAction<{ [key: string]: number }>>;
+}) => {
+  const storeCloseTradePrice = async (value: string) =>
     fetch('/api/setRedisKey', {
       method: 'POST',
       headers: {
@@ -12,15 +20,17 @@ const CloseTradePriceInput = ({ batchId, closeTradePrices, setCloseTradePrices }
       body: JSON.stringify({ name: batchId, value }),
     });
 
-  const formatValue = (value) => value && decimalTwo(parseFloat(value) || 0);
+  const formatValue = (value: string) => value && decimalTwo(parseFloat(value) || 0);
 
-  const act = async (e) => {
+  type Event<T> = { target: T };
+
+  const act = async (e: Event<HTMLInputElement>) => {
     const value = formatValue(e.target.value);
     if (value === '0.00' || value === '') {
       setCloseTradePrices({ ...closeTradePrices, [batchId]: null });
       await deleteKey();
     } else {
-      setCloseTradePrices({ ...closeTradePrices, [batchId]: value });
+      setCloseTradePrices({ ...closeTradePrices, [batchId]: Number(value) });
       await storeCloseTradePrice(value);
     }
   };
@@ -30,16 +40,16 @@ const CloseTradePriceInput = ({ batchId, closeTradePrices, setCloseTradePrices }
       method: 'PUT',
     });
 
-  const handleKeyPress = async (e) => {
+  const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       await act(e);
     }
   };
 
-  const handleBlur = async (e) => await act(e);
+  const handleBlur = async (e: ChangeEvent<HTMLInputElement>) => await act(e);
 
-  const handleChange = (e) =>
-    setCloseTradePrices({ ...closeTradePrices, [batchId]: e.target.value });
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setCloseTradePrices({ ...closeTradePrices, [batchId]: Number(e.target.value) });
 
   return (
     <input
@@ -50,7 +60,7 @@ const CloseTradePriceInput = ({ batchId, closeTradePrices, setCloseTradePrices }
       min="0"
       step="0.01"
       placeholder="0.00"
-      value={formatValue(closeTradePrices[batchId]) || ''}
+      value={formatValue(String(closeTradePrices[batchId])) || ''}
       onChange={handleChange}
       onBlur={handleBlur}
       onKeyPress={handleKeyPress}

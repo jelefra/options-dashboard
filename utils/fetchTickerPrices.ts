@@ -15,7 +15,7 @@ type ExchangeInfo = {
 };
 /* eslint-enable no-unused-vars */
 
-const getExchangeInfo = (exchange): ExchangeInfo => {
+const getExchangeInfo = (exchange: string): ExchangeInfo => {
   switch (exchange) {
     case 'XHKG':
       return {
@@ -81,7 +81,7 @@ const fetchTickerPrices = async (
     })
   );
 
-  return tickerPrices.reduce((tickerPriceMap, tickerWithPrice) => {
+  return tickerPrices.reduce((tickerPriceMap: { [key: string]: number }, tickerWithPrice) => {
     const { ticker, latestPrice } = tickerWithPrice;
     tickerPriceMap[ticker] = latestPrice;
     return tickerPriceMap;

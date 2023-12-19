@@ -80,7 +80,7 @@ const Forex = () => {
 
               return (
                 <tr key={rowIndex}>
-                  {headings.map(({ name, format = (v) => v, align }, index) => (
+                  {headings.map(({ name, format = (v: number) => v, align }, index) => (
                     <td
                       className={cx({
                         [styles[align]]: align === 'right',

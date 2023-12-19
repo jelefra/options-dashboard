@@ -13,7 +13,7 @@ import { ExchangeRateResponse, TradeData, TransactionData } from '../../types';
 import { removeNullValues, sanitiseOpenExchangeRatesLogs } from '../../utils';
 import get from '../../utils/get';
 
-const formatDateForAPI = (dateInBritishFormat): string => {
+const formatDateForAPI = (dateInBritishFormat: string): string => {
   const [dd, mm, yyyy] = dateInBritishFormat.split('/');
   return `${yyyy}-${mm}-${dd}`;
 };
@@ -28,13 +28,14 @@ const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) =
 
   const filterFn =
     typeof from === 'string'
-      ? ({ date }) => dayjs(date, INPUT_DATE_FORMAT).isSameOrAfter(dayjs(from, INPUT_DATE_FORMAT))
+      ? ({ date }: { date: string }) =>
+          dayjs(date, INPUT_DATE_FORMAT).isSameOrAfter(dayjs(from, INPUT_DATE_FORMAT))
       : () => true;
 
   const transactions: TransactionData[] = transactionsData.map(removeNullValues).filter(filterFn);
   const trades: TradeData[] = tradesData.map(removeNullValues).filter(filterFn);
 
-  const mutate = (dates, date, currency) => {
+  const mutate = (dates: { [key: string]: string[] }, date: string, currency: string) => {
     dates[date] = Array.from(new Set([...(dates[date] || []), currency]));
   };
 
@@ -74,14 +75,13 @@ const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) =
     })
   );
 
-  const historicalRatesBaseGBP = historicalForexRates.reduce(
-    (forexRatesAllDays, forexRatesOneDay) => {
-      const { date, rates } = forexRatesOneDay;
-      forexRatesAllDays[date] = rates;
-      return forexRatesAllDays;
-    },
-    {}
-  );
+  const historicalRatesBaseGBP = historicalForexRates.reduce<{
+    [key: string]: { [key: string]: number };
+  }>((forexRatesAllDays, forexRatesOneDay) => {
+    const { date, rates } = forexRatesOneDay;
+    forexRatesAllDays[date] = rates;
+    return forexRatesAllDays;
+  }, {});
 
   return res.status(200).json({ historicalRates: historicalRatesBaseGBP });
 };

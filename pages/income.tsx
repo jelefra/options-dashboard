@@ -57,7 +57,7 @@ const Income = () => {
 
   const trades: TradeData[] = tradesData
     .map(removeNullValues)
-    .filter(({ date }) => dayjs(date, INPUT_DATE_FORMAT).isSameOrAfter(start));
+    .filter(({ date }: { date: string }) => dayjs(date, INPUT_DATE_FORMAT).isSameOrAfter(start));
 
   const accountsWithCurrencies: {
     [key: string]: Account;
@@ -141,7 +141,7 @@ const Income = () => {
       account,
       Object.fromEntries(
         currencies.reduce((summary, currency) => {
-          const hasValue = (key) =>
+          const hasValue = (key: keyof Income) =>
             Object.values(income).some((entry) => (entry[account]?.[currency]?.[key] || 0) !== 0);
           return [
             ...summary,
@@ -172,7 +172,7 @@ const Income = () => {
     .flatMap(([, accountsIncome]) => Object.entries(accountsIncome))
     .reduce((summary, [account, currencies]) => {
       Object.entries(currencies).forEach(([currencyCode, types]) => {
-        Object.entries(types).forEach(([type, amount]) => {
+        Object.entries(types).forEach(([type, amount]: [keyof Income, number]) => {
           summary[account][currencyCode][type] += amount;
         });
       });
@@ -244,7 +244,7 @@ const Income = () => {
                 Object.entries(currencies).map(([currency, incomes]) =>
                   Object.entries(incomes)
                     .filter(([, value]) => value)
-                    .map(([type], index, source) => (
+                    .map(([type]: [keyof Income, true], index, source) => (
                       <td
                         className={cx(styles.right, {
                           [styles.contrast]: rowIndex % 2,
@@ -270,7 +270,7 @@ const Income = () => {
               Object.entries(currencies).map(([currency, incomes]) =>
                 Object.entries(incomes)
                   .filter(([, value]) => value)
-                  .map(([id], index, source) => (
+                  .map(([id]: [keyof Income, true], index, source) => (
                     <td
                       className={cx(styles.total, styles.right, {
                         [styles.leftEdge]: index === 0,

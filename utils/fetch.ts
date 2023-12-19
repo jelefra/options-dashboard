@@ -3,9 +3,15 @@ import fetch from 'node-fetch';
 export const fetchFn = async ({
   URL,
   options,
-  logSanitiser = (URL) => URL,
+  logSanitiser = (URL: string) => URL,
   retries = 5,
   delay = 200,
+}: {
+  URL: string;
+  options: object;
+  logSanitiser: Function;
+  retries: number;
+  delay: number;
 }): Promise<any> => {
   try {
     console.info(`Fetching ${logSanitiser(URL)}`);
