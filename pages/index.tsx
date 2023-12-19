@@ -131,7 +131,6 @@ const Home = () => {
         <title>Options</title>
         <link rel="icon" href="/home.ico" />
       </Head>
-      <Tickers earnings={earnings} now={NOW} trades={trades} transactions={transactions} />
       {showAllocationSummary && (
         <AllocationSummary
           cash={cash}
@@ -175,6 +174,7 @@ const Home = () => {
           trades={trades}
         />
       )}
+      <Tickers earnings={earnings} now={NOW} trades={trades} transactions={transactions} />
       {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
     </Container>
   );
