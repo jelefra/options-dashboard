@@ -37,8 +37,8 @@ const calcValue = (stock: Stock, current: number) => {
 
 const Stocks = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [rates, setRates] = useState<ForexRates>(null);
-  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
+  const [rates, setRates] = useState<ForexRates | null>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices | null>(null);
 
   useEffect(() => {
     const fetchForexRates = async () => {
@@ -152,7 +152,7 @@ const Stocks = () => {
 
   const uniqueSectionsOrdered: SectionName[] = headings
     .map(({ section }) => section)
-    .reduce((uniqueSectionsOrdered, sectionName) => {
+    .reduce((uniqueSectionsOrdered: SectionName[], sectionName) => {
       if (!uniqueSectionsOrdered.includes(sectionName)) {
         uniqueSectionsOrdered.push(sectionName);
       }
@@ -197,78 +197,107 @@ const Stocks = () => {
     } = batch;
 
     if (exit?.value && exit.method === 'Call') {
-      stocks[ticker].wheeled = stocks[ticker].wheeled || {
+      const wheeled = stocks[ticker].wheeled || {
         acquisitionCost: 0,
         exitValue: 0,
         quantity: 0,
         premium: 0,
       };
-      const wheeled = stocks[ticker].wheeled;
+      stocks[ticker].wheeled = wheeled;
       wheeled.acquisitionCost += acquisitionCost;
       wheeled.exitValue += exit.value;
       wheeled.premium += netCumulativePremium;
       wheeled.quantity += optionSize;
     } else if (exit?.value && exit.method === 'Sale') {
-      stocks[ticker].sold = stocks[ticker].sold || {
+      const sold = stocks[ticker].sold || {
         acquisitionCost: 0,
         exitValue: 0,
         quantity: 0,
         premium: 0,
       };
-      const sold = stocks[ticker].sold;
+      stocks[ticker].sold = sold;
       sold.acquisitionCost += acquisitionCost;
       sold.exitValue += exit.value;
       sold.premium += netCumulativePremium;
       sold.quantity += optionSize;
     } else {
-      stocks[ticker].wheeling = stocks[ticker].wheeling || {
+      const wheeling = stocks[ticker].wheeling || {
         calls: {
           active: { count: 0, value: 0 },
           assignable: { count: 0, value: 0 },
           missedUpside: 0,
         },
+        puts: {
+          active: {
+            count: 0,
+            value: 0,
+          },
+          assignable: {
+            count: 0,
+            value: 0,
+          },
+        },
         acquisitionCost: 0,
         premium: 0,
         quantity: 0,
       };
+      stocks[ticker].wheeling = wheeling;
 
-      const { strike } = currentCall || {};
-      const missedUpside = strike ? Math.max(current - strike, 0) * optionSize : 0;
-
-      const wheeling = stocks[ticker].wheeling;
-      wheeling.calls.active.count += currentCall ? 1 : 0;
-      wheeling.calls.active.value += currentCall ? optionSize * Math.min(strike, current) : 0;
-      wheeling.calls.assignable.count += currentCall && current > strike ? 1 : 0;
-      wheeling.calls.assignable.value += currentCall && current > strike ? optionSize * strike : 0;
-      wheeling.calls.missedUpside += missedUpside;
       wheeling.acquisitionCost += acquisitionCost;
       wheeling.premium += netCumulativePremium;
       wheeling.quantity += optionSize;
+
+      if (currentCall) {
+        const { strike } = currentCall;
+        const missedUpside = strike && current ? Math.max(current - strike, 0) * optionSize : 0;
+
+        wheeling.calls.active.count += currentCall ? 1 : 0;
+        wheeling.calls.active.value +=
+          currentCall && current ? optionSize * Math.min(strike, current) : 0;
+        wheeling.calls.assignable.count += currentCall && current && current > strike ? 1 : 0;
+        wheeling.calls.assignable.value +=
+          currentCall && current && current > strike ? optionSize * strike : 0;
+        wheeling.calls.missedUpside += missedUpside;
+      }
     }
   }
 
   for (let currentPut of currentPuts) {
     const { ticker, strike } = currentPut;
     const { optionSize } = stocks[ticker];
+    if (!optionSize) {
+      throw new Error(`Option size missing for ${ticker}`);
+    }
     const currentStockPrice = currentTickerPrices[ticker];
-    stocks[ticker].wheeling = stocks[ticker].wheeling || {
+    const wheeling = stocks[ticker].wheeling || {
       calls: {
         active: { count: 0, value: 0 },
         assignable: { count: 0, value: 0 },
         missedUpside: 0,
       },
+      puts: {
+        active: {
+          count: 0,
+          value: 0,
+        },
+        assignable: {
+          count: 0,
+          value: 0,
+        },
+      },
       acquisitionCost: 0,
       premium: 0,
       quantity: 0,
     };
-    stocks[ticker].wheeling.puts = stocks[ticker].wheeling.puts || {
+    stocks[ticker].wheeling = wheeling;
+    const wheelingPuts = wheeling.puts || {
       active: { count: 0, value: 0 },
       assignable: { count: 0, value: 0 },
     };
-    stocks[ticker].wheeling.puts.active.count += 1;
-    stocks[ticker].wheeling.puts.active.value += optionSize * Math.min(strike, currentStockPrice);
-    stocks[ticker].wheeling.puts.assignable.count += strike > currentStockPrice ? 1 : 0;
-    stocks[ticker].wheeling.puts.assignable.value +=
+    wheelingPuts.active.count += 1;
+    wheelingPuts.active.value += optionSize * Math.min(strike, currentStockPrice);
+    wheelingPuts.assignable.count += strike > currentStockPrice ? 1 : 0;
+    wheelingPuts.assignable.value +=
       strike > currentStockPrice ? optionSize * Math.min(strike, currentStockPrice) : 0;
   }
 
@@ -291,11 +320,12 @@ const Stocks = () => {
     const wheeledAcquisitionCost = wheeled?.acquisitionCost;
     const wheeledPremium = wheeled?.premium || 0;
     const wheeledExitValue = wheeled?.exitValue;
-    const wheeledGrowth = wheeledExitValue - wheeledAcquisitionCost;
+    const wheeledGrowth =
+      wheeledExitValue && wheeledAcquisitionCost ? wheeledExitValue - wheeledAcquisitionCost : 0;
     const wheeledReturn = wheeledPremium + wheeledGrowth || 0;
 
     const soldPremium = sold?.premium || 0;
-    const soldGrowth = sold?.exitValue - sold?.acquisitionCost;
+    const soldGrowth = sold && sold.exitValue - sold.acquisitionCost;
     const soldReturn = (sold?.premium || 0) + (sold?.exitValue || 0) - (sold?.acquisitionCost || 0);
 
     const putOnlyPremium = putOnly?.premium || 0;
@@ -316,40 +346,45 @@ const Stocks = () => {
         (wheelingQuantity + partialBatchQuantity);
 
     const returnCurrency =
+      current &&
       totalQuantity * current -
-      wheelingAcquisitionCost -
-      partialBatchAcquisitionCost -
-      wheelingMissedUpside +
-      putOnlyPremium +
-      wheelingPremium +
-      wheeledReturn +
-      soldReturn;
+        wheelingAcquisitionCost -
+        partialBatchAcquisitionCost -
+        wheelingMissedUpside +
+        putOnlyPremium +
+        wheelingPremium +
+        wheeledReturn +
+        soldReturn;
 
-    const returnGBP = current || totalQuantity === 0 ? returnCurrency / forexRate : null;
-    const valueGBP = current && forexRate ? calcValue(stock, current) / forexRate : null;
+    const returnGBP = returnCurrency ? returnCurrency / forexRate : undefined;
+    const valueGBP = current && forexRate ? calcValue(stock, current) / forexRate : undefined;
     const wheelingPutsActiveValueGBP = current
       ? (wheeling?.puts?.active?.value || 0) / forexRate
-      : null;
+      : undefined;
     const wheelingPutsAssignableValueGBP = current
       ? (wheeling?.puts?.assignable?.value || 0) / forexRate
-      : null;
+      : undefined;
     const wheelingCallsActiveValueGBP = current
       ? (wheeling?.calls?.active?.value || 0) / forexRate
-      : null;
+      : undefined;
     const wheelingCallsAssignableValueGBP = current
       ? (wheeling?.calls?.assignable?.value || 0) / forexRate
-      : null;
+      : undefined;
 
-    const returnPct = current && avgCost ? returnGBP / (valueGBP - returnGBP) : null;
+    const returnPct =
+      returnGBP && valueGBP && avgCost ? returnGBP / (valueGBP - returnGBP) : undefined;
 
-    totals.returnGBP.value += returnGBP;
-    totals.valueGBP.value += valueGBP;
-    totals.wheelingPutsActiveValueGBP.value += wheelingPutsActiveValueGBP;
-    totals.wheelingPutsAssignableValueGBP.value += wheelingPutsAssignableValueGBP;
-    totals.wheelingCallsAssignableValueGBP.value += wheelingCallsAssignableValueGBP;
+    // TODO check total can be displayed instead of || 0
+    totals.returnGBP.value += returnGBP || 0;
+    totals.valueGBP.value += valueGBP || 0;
+    totals.wheelingPutsActiveValueGBP.value += wheelingPutsActiveValueGBP || 0;
+    totals.wheelingPutsAssignableValueGBP.value += wheelingPutsAssignableValueGBP || 0;
+    totals.wheelingCallsAssignableValueGBP.value += wheelingCallsAssignableValueGBP || 0;
 
     return {
-      ...stock,
+      colour: stock.colour,
+      currency: stock.currency,
+      ticker: stock.ticker,
       avgCost,
       current,
       returnGBP,
@@ -363,16 +398,17 @@ const Stocks = () => {
       ...(putOnly && {
         putOnly: { ...putOnly, premiumGBP: putOnlyPremium / forexRate },
       }),
-      ...(wheeled && {
-        wheeled: {
-          ...wheeled,
-          growth: wheeledGrowth,
-          growthAsPctOfReturn: wheeledGrowth / wheeledReturn,
-          premiumAsPctOfReturn: wheeledPremium / wheeledReturn,
-          return: wheeledReturn,
-          returnPct: wheeledReturn / wheeledAcquisitionCost,
-        },
-      }),
+      ...(wheeled &&
+        wheeledAcquisitionCost && {
+          wheeled: {
+            ...wheeled,
+            growth: wheeledGrowth,
+            growthAsPctOfReturn: wheeledGrowth / wheeledReturn,
+            premiumAsPctOfReturn: wheeledPremium / wheeledReturn,
+            return: wheeledReturn,
+            returnPct: wheeledReturn / wheeledAcquisitionCost,
+          },
+        }),
       ...(wheeling && {
         wheeling: {
           ...wheeling,
@@ -403,36 +439,39 @@ const Stocks = () => {
           },
         },
       }),
-      ...(sold && {
-        sold: {
-          ...sold,
-          growth: soldGrowth,
-          growthAsPctOfReturn: soldGrowth / soldReturn,
-          premiumAsPctOfReturn: soldPremium / soldReturn,
-          return: soldReturn,
-          returnPct: soldReturn / sold.acquisitionCost,
-        },
-      }),
+      ...(sold &&
+        soldGrowth && {
+          sold: {
+            ...sold,
+            growth: soldGrowth,
+            growthAsPctOfReturn: soldGrowth && soldGrowth / soldReturn,
+            premiumAsPctOfReturn: soldPremium / soldReturn,
+            return: soldReturn,
+            returnPct: soldReturn / sold.acquisitionCost,
+          },
+        }),
     };
   });
 
   const rows: StockEnriched[] = stockData
     .map((stockData) => ({
       ...stockData,
-      allocation: stockData.valueGBP / totals.valueGBP.value,
+      allocation: stockData.valueGBP && stockData.valueGBP / totals.valueGBP.value,
       allocationWithActivePuts:
+        stockData.valueGBP &&
         (stockData.valueGBP + (stockData.wheeling?.puts?.active?.valueGBP || 0)) /
-        (totals.valueGBP.value + totals.wheelingPutsActiveValueGBP.value),
+          (totals.valueGBP.value + totals.wheelingPutsActiveValueGBP.value),
       allocationNet:
+        stockData.valueGBP &&
         (stockData.valueGBP +
           (stockData.wheeling?.puts?.assignable?.valueGBP || 0) -
           (stockData.wheeling?.calls?.assignable?.valueGBP || 0)) /
-        (totals.valueGBP.value +
-          totals.wheelingPutsAssignableValueGBP.value -
-          totals.wheelingCallsAssignableValueGBP.value),
+          (totals.valueGBP.value +
+            totals.wheelingPutsAssignableValueGBP.value -
+            totals.wheelingCallsAssignableValueGBP.value),
     }))
-    .sort((stockA, stockB) => stockB.returnGBP - stockA.returnGBP)
-    .sort((stockA, stockB) => stockB.valueGBP - stockA.valueGBP);
+    .sort((stockA, stockB) => (stockB.returnGBP || 0) - (stockA.returnGBP || 0))
+    .sort((stockA, stockB) => (stockB.valueGBP || 0) - (stockA.valueGBP || 0));
 
   return (
     <>
@@ -499,19 +538,21 @@ const Stocks = () => {
           ))}
 
           <tr>
-            {headings.map(({ name, format, align = 'right' }, index) => {
-              const total = name in totals && totals[name as keyof typeof totals];
-              return (
-                <td
-                  className={cx(styles.total, {
-                    [styles[align]]: align === 'right',
-                  })}
-                  key={index}
-                >
-                  {name in totals && total.value ? format(total.value) : false}
-                </td>
-              );
-            })}
+            {headings.map(
+              ({ name, format = (v: string | number) => v, align = 'right' }, index) => {
+                const total = name in totals && totals[name as keyof typeof totals];
+                return (
+                  <td
+                    className={cx(styles.total, {
+                      [styles[align]]: align === 'right',
+                    })}
+                    key={index}
+                  >
+                    {total ? format(total.value) : false}
+                  </td>
+                );
+              }
+            )}
           </tr>
         </tbody>
       </table>

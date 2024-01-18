@@ -33,12 +33,12 @@ import { removeNullValues } from '../utils';
 const NOW = dayjs();
 
 const Home = () => {
-  const [rates, setRates] = useState<ForexRates>(null);
-  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
-  const [ledgers, setLedgers] = useState<Ledgers>(null);
-  const [summaries, setSummaries] = useState<Summaries>(null);
-  const [positions, setPositions] = useState<Positions>(null);
-  const [forexAPIUsage, setForexAPIUsage] = useState<OpenExchangeRatesUsage>(null);
+  const [rates, setRates] = useState<ForexRates | null>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices | null>(null);
+  const [ledgers, setLedgers] = useState<Ledgers | null>(null);
+  const [summaries, setSummaries] = useState<Summaries | null>(null);
+  const [positions, setPositions] = useState<Positions | null>(null);
+  const [forexAPIUsage, setForexAPIUsage] = useState<OpenExchangeRatesUsage | null>(null);
 
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
@@ -83,7 +83,9 @@ const Home = () => {
         .map(({ id }) => `positions-${id}`)
         .join(',');
       const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
+      // console.log('response', response);
       const data = await response.json();
+      // console.log('data.values', data.values);
       setPositions(data.values);
     };
     fetchPositions().catch(console.error);
@@ -100,30 +102,30 @@ const Home = () => {
   const withAllSummaries = summaries && Object.values(summaries).every(Boolean);
   const withOneLedger = ledgers && Object.values(ledgers).some(Boolean);
   const withOneSummary = summaries && Object.values(summaries).some(Boolean);
-  const withIBKRData = ledgers && summaries && positions;
+  const withIBKRData = !!ledgers && !!summaries && !!positions;
 
-  const cash =
-    withAllSummaries &&
-    Object.values(summaries).reduce(
-      (cash, { excessliquidity }) => (cash += excessliquidity.amount),
-      0
-    );
+  const cash = withAllSummaries
+    ? Object.values(summaries).reduce(
+        (cash, { excessliquidity }) => (cash += excessliquidity.amount),
+        0
+      )
+    : null;
 
-  const currencies =
-    ledgers &&
-    [
-      ...new Set(
-        Object.values(ledgers)
-          .filter(Boolean)
-          .flatMap((ledger) => Object.keys(ledger))
-          .filter((currency) => currency !== 'BASE')
-      ),
-    ].sort();
+  const currencies = withOneLedger
+    ? [
+        ...new Set(
+          Object.values(ledgers)
+            .filter(Boolean)
+            .flatMap((ledger) => Object.keys(ledger))
+            .filter((currency) => currency !== 'BASE')
+        ),
+      ].sort()
+    : null;
 
-  const showAllocationSummary = currentTickerPrices && rates && cash;
-  const showCurrencyWeights = currentTickerPrices && withAllLedgers && rates;
-  const showForex = withOneLedger && rates;
-  const showExcessLiquidity = withIBKRData && (withOneLedger || withOneSummary);
+  const showAllocationSummary = !!currentTickerPrices && !!rates && !!cash;
+  const showCurrencyWeights = !!currentTickerPrices && !!withAllLedgers && !!rates && !!currencies;
+  const showForex = !!withOneLedger && !!rates && !!currencies;
+  const showExcessLiquidity = withIBKRData && !!(withOneLedger || withOneSummary) && !!currencies;
 
   return (
     <Container>

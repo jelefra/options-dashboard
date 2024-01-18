@@ -9,7 +9,7 @@ import { sanitiseFinnhubLogs, sanitiseMarketstackLogs } from './index';
 /* eslint-disable no-unused-vars */
 type ExchangeInfo = {
   constructURL: (ticker: string) => string;
-  extractPrice: (response: object) => number;
+  extractPrice: (response: any) => number;
   expiry?: number;
   logSanitiser: (URL: string) => string;
 };
@@ -50,7 +50,7 @@ const fetchTickerPrices = async (
   let countOfTickersToQueryFromAPI = 0;
   const tickerPrices = await Promise.all(
     tickersToQuery.map(async (ticker) => {
-      const exchange = tickers[ticker].exchange;
+      const exchange = tickers[ticker].exchange || '';
       const {
         constructURL,
         expiry = ONE_HOUR_IN_SECONDS,

@@ -28,6 +28,9 @@ const Weight = ({
   for (let batch of Object.values(batches)) {
     const { currency, current, optionSize } = batch;
     currencyAmounts[currency] = currencyAmounts[currency] || 0;
+    if (!current) {
+      throw new Error(`Current stock price missing for ${batch.ticker}`);
+    }
     currencyAmounts[currency] += optionSize * current;
   }
 
@@ -39,6 +42,9 @@ const Weight = ({
         partialBatch: { quantity },
       } = stock;
       currencyAmounts[currency] = currencyAmounts[currency] || 0;
+      if (!current) {
+        throw new Error(`Current stock price missing for ${stock.ticker}`);
+      }
       currencyAmounts[currency] += quantity * current;
     }
   }

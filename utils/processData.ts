@@ -77,7 +77,9 @@ const processData = ({
           acquisitionCost: 0,
           quantity: 0,
         };
-        const partialBatch = stocks[ticker].partialBatch;
+        // Using the non-null assertion operator because
+        // TypeScript infers that `partialBatch` may be `undefined` otherwise
+        const partialBatch = stocks[ticker].partialBatch!;
         partialBatch.acquisitionCost += stockPrice * quantity + commission;
         partialBatch.quantity += factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
       }
@@ -103,11 +105,17 @@ const processData = ({
     const { colour, currency, optionSize, ticker } =
       tickers[tickersMap[displayTicker] ?? displayTicker];
 
+    if (!optionSize) {
+      throw new Error(`Option size missing for ${ticker}`);
+    }
     const netCumulativePremium =
       (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
 
     if (type === 'Put') {
       if (closePrice && closePrice < strike) {
+        if (!batchCode) {
+          throw new Error(`Batch code missing for ${ticker}`);
+        }
         batches[batchCode] = {
           account,
           acquisitionCost: strike * optionSize,
@@ -124,13 +132,15 @@ const processData = ({
       } else {
         // Put only (including current assignable puts)
         stocks[ticker].putOnly = stocks[ticker].putOnly || { premium: 0 };
-        stocks[ticker].putOnly.premium +=
+        // Using the non-null assertion operator because
+        // TypeScript infers that `stocks[ticker].putOnly` may be `undefined` otherwise
+        stocks[ticker].putOnly!.premium +=
           (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
       }
     }
 
     if (type === 'Call') {
-      const batch = batches[batchCode];
+      const batch = batches[batchCode as string];
       batch.netCumulativePremium += netCumulativePremium;
 
       if (closePrice && closePrice > strike) {
@@ -141,7 +151,7 @@ const processData = ({
       if (now && expiry.isSameOrAfter(now, 'day') && !trade.closeTradePrice) {
         batch.currentCall = {
           account,
-          batchCode,
+          batchCode: batchCode as string,
           commission,
           date: dayjs(date, INPUT_DATE_FORMAT),
           expiry,
@@ -170,6 +180,9 @@ const processData = ({
 
     if (type === 'Sale') {
       if (batchCodesStr) {
+        if (!optionSize) {
+          throw new Error(`Option size missing for ${ticker}`);
+        }
         const batchCodes = batchCodesStr.includes(',') ? batchCodesStr.split(',') : [batchCodesStr];
         for (let batchCode of batchCodes) {
           const batch = batches[batchCode];
@@ -180,6 +193,9 @@ const processData = ({
         }
       } else {
         const partialBatch = stocks[ticker].partialBatch;
+        if (!partialBatch) {
+          throw new Error(`Partial batch missing for ${ticker}`);
+        }
         partialBatch.acquisitionCost -= stockPrice * quantity - commission;
         partialBatch.quantity -= factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
       }

@@ -10,6 +10,10 @@ const processTrades = (trades: TradeData[]) => {
     const { type, closePrice, strike, ticker: displayTicker } = trade;
     const { optionSize, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
 
+    if (!optionSize) {
+      throw new Error(`Option size missing for ${displayTicker}`);
+    }
+
     if (type === 'Put' && closePrice && closePrice < strike) {
       tickersFromTrades[ticker] = (tickersFromTrades[ticker] || 0) + optionSize;
     }

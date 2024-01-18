@@ -16,7 +16,7 @@ import { dateLongTerm, decimalTwo, pctOne, thousands } from '../utils/format';
 
 const Forex = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [rates, setRates] = useState<ForexRates>(null);
+  const [rates, setRates] = useState<ForexRates | null>(null);
 
   useEffect(() => {
     const fetchForexRates = async () => {
@@ -80,7 +80,7 @@ const Forex = () => {
 
               return (
                 <tr key={rowIndex}>
-                  {headings.map(({ name, format = (v: number) => v, align }, index) => (
+                  {headings.map(({ name, format = (v: number) => v, align = '' }, index) => (
                     <td
                       className={cx({
                         [styles[align]]: align === 'right',

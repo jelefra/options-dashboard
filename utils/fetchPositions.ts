@@ -17,12 +17,12 @@ export const fetchPositions = async ({
   delay?: number;
   page?: number;
   allData?: Position[];
-}): Promise<PositionsTimestamped> | null => {
+}): Promise<PositionsTimestamped | null> => {
   try {
     console.info(`Fetching ${URL}/${page}`);
     const timestamp = dayjs().unix();
     const response = await fetch(`${URL}/${page}`, options);
-    const contentType = response.headers?.get('content-type');
+    const contentType = response.headers?.get('content-type') || '';
     if (response.ok && contentType.includes('application/json')) {
       const data = (await response.json()) as Position[];
       if (data.length === 0) {

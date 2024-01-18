@@ -17,13 +17,13 @@ export type Stock = {
   };
   wheeled?: {
     acquisitionCost: number;
-    exitValue?: number;
+    exitValue: number;
     premium: number;
     quantity: number;
   };
   sold?: {
     acquisitionCost: number;
-    exitValue?: number;
+    exitValue: number;
     premium: number;
     quantity: number;
   };
@@ -31,7 +31,7 @@ export type Stock = {
     acquisitionCost: number;
     premium: number;
     quantity: number;
-    calls?: {
+    calls: {
       missedUpside: number;
       active: {
         count: number;
@@ -42,7 +42,7 @@ export type Stock = {
         value: number;
       };
     };
-    puts?: {
+    puts: {
       active: {
         count: number;
         value: number;
@@ -60,10 +60,10 @@ export type StockEnriched = Stock & {
   allocationWithActivePuts?: number;
   allocationWithAssignablePuts?: number;
   avgCost: number;
-  returnGBP: number;
-  returnPct: number;
+  returnGBP?: number;
+  returnPct?: number;
   totalQuantity: number;
-  valueGBP: number;
+  valueGBP?: number;
   putOnly?: {
     premiumGBP: number;
   };
@@ -82,20 +82,20 @@ export type StockEnriched = Stock & {
     returnPct: number;
   };
   wheeling?: {
-    puts?: {
+    puts: {
       active: {
-        valueGBP: number;
+        valueGBP?: number;
       };
       assignable: {
-        valueGBP: number;
+        valueGBP?: number;
       };
     };
-    calls?: {
+    calls: {
       active: {
-        valueGBP: number;
+        valueGBP?: number;
       };
       assignable: {
-        valueGBP: number;
+        valueGBP?: number;
       };
     };
   };
@@ -176,24 +176,27 @@ export type Account = {
   capitalGains: boolean;
   colour: string;
   currencies: string[];
-  tickers?: string[];
+  tickers: string[];
 };
 
 export type Accounts = {
   [key: string]: Account;
 };
 
-type Row = {
+type GenericRow = {
   account: string;
-  assignmentPct: number;
-  current: number;
+  current?: number;
+};
+
+type Row = GenericRow & {
+  assignmentPct?: number;
   date: Dayjs;
   daysToEarnings: number;
   dteCurrent: number;
   dteTotal: number;
   expiry: Dayjs;
   high: number;
-  highPct: number;
+  highPct?: number;
   marketPrice?: number;
   priceIncreaseGBP: number;
   return30DPctResidual: number;
@@ -221,21 +224,24 @@ export type PutRow = Row &
     closeTradePrice: ReactElement;
     low: number;
     lowPct: number;
-    optionReturnPct: number;
+    optionReturnPct?: number;
     return30DPctExpected: number;
     return30DPctEffective: number;
     ticker: string;
   };
 
-export type CallRowTotal = {
-  priceIncreaseGBP: number;
-  returnGBP: number;
-  returnGBPLastCall: number;
-  valueGBP: number;
+export type GenericCallRowTotal = {
+  returnGBP?: number;
+  valueGBP?: number;
 };
 
-export type CallRow = Row &
-  CallRowTotal & {
+export type CallRowWithCurrentCallTotal = GenericCallRowTotal & {
+  priceIncreaseGBP?: number;
+  returnGBPLastCall?: number;
+};
+
+export type CallRowWithCurrentCall = Row &
+  CallRowWithCurrentCallTotal & {
     batchCode: string;
     closeTradePrice: ReactElement;
     costBasisDrop: number;
@@ -246,7 +252,7 @@ export type CallRow = Row &
     return30DPctIfAssigned: number;
     return30DPctLastCall: number;
     returnGBPIfAssigned: number;
-    returnPct: number;
+    returnPct?: number;
     returnPctIfAssigned: number;
     unitAcquisitionCost: number;
   };
@@ -348,21 +354,21 @@ export type StocksHeadings = StocksRowTotal & {
 };
 
 export type MarketstackTickerEOD = {
-  open: number;
-  high: number;
-  low: number;
+  // open: number;
+  // high: number;
+  // low: number;
   close: number;
-  volume: number;
-  adj_high: number | null;
-  adj_low: number | null;
-  adj_close: number | null;
-  adj_open: number | null;
-  adj_volume: number | null;
-  split_factor: number;
-  dividend: number;
-  symbol: string;
-  exchange: string;
-  date: string;
+  // volume: number;
+  // adj_high: number | null;
+  // adj_low: number | null;
+  // adj_close: number | null;
+  // adj_open: number | null;
+  // adj_volume: number | null;
+  // split_factor: number;
+  // dividend: number;
+  // symbol: string;
+  // exchange: string;
+  // date: string;
 };
 
 export type FinnhubQuote = {

@@ -8,8 +8,8 @@ const CloseTradePriceInput = ({
   setCloseTradePrices,
 }: {
   batchId: string;
-  closeTradePrices: { [key: string]: number };
-  setCloseTradePrices: Dispatch<SetStateAction<{ [key: string]: number }>>;
+  closeTradePrices: { [key: string]: number | null };
+  setCloseTradePrices: Dispatch<SetStateAction<{ [key: string]: number | null }>>;
 }) => {
   const storeCloseTradePrice = async (value: string) =>
     fetch('/api/setRedisKey', {

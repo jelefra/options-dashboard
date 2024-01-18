@@ -7,6 +7,7 @@ const accounts: Accounts = {
     capitalGains: true,
     colour: 'cFFFFFF',
     currencies: [],
+    tickers: [],
   },
   Account2: {
     name: 'Account2',
@@ -14,6 +15,7 @@ const accounts: Accounts = {
     capitalGains: false,
     colour: 'cE6E6FA',
     currencies: [],
+    tickers: [],
   },
 };
 

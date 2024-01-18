@@ -15,8 +15,8 @@ import transactionsData from '../data/transactions.csv';
 import styles from '../styles/Table.module.css';
 import {
   Batch,
-  CallRow,
-  CallRowTotal,
+  Call as CallType,
+  CallRowWithCurrentCall,
   CurrentTickerPrices,
   ForexRates,
   Position,
@@ -44,7 +44,7 @@ const NOW = dayjs();
 
 const Call = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
+  const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number | null }>({});
   const [rates, setRates] = useState<ForexRates>({});
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>({});
   const [positions, setPositions] = useState<Position[]>([]);
@@ -113,7 +113,7 @@ const Call = () => {
     .sort(([, a], [, b]) => a.account.localeCompare(b.account));
 
   type Heading = {
-    name: keyof CallRow;
+    name: keyof CallRowWithCurrentCall;
     format?: Function;
     align?: 'default' | 'right';
     scope?: 'all';
@@ -162,7 +162,8 @@ const Call = () => {
     headingFilterFunction: (heading: Heading) => boolean = () => true
   ) => {
     // eslint-disable-next-line no-unused-vars
-    const totals: { [key in keyof CallRowTotal]: number } = {
+    // TODO use CallRowTotal GenericCallRowTotal / CallRowWithCurrentCallTotal types
+    const totals: { [key: string]: number } = {
       returnGBP: 0,
       returnGBPLastCall: 0,
       valueGBP: 0,
@@ -189,102 +190,122 @@ const Call = () => {
             optionSize,
             ticker,
           } = batchData;
-          const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall || {};
-          const forexRate = rates[currency];
 
+          const forexRate = rates[currency];
           const earningsDate = dayjs(earnings[ticker]?.date, INPUT_DATE_FORMAT);
-          const daysToEarnings = earningsDate.diff(expiry, 'day');
-          const daysTotal = expiry?.diff(acquisitionDate, 'day');
-          const high = current && strike + tradePrice - commission / optionSize;
-          const returnPctLastCall =
-            (tradePrice * optionSize - commission) / (stockPrice * optionSize);
-          const dteLastCall = expiry?.diff(date, 'day');
           const unitAcquisitionCost = acquisitionCost / optionSize;
           const netCost = (acquisitionCost - netCumulativePremium) / optionSize;
-          const returnPctIfAssigned = strike / netCost - 1;
+          const valueCurrent = current && optionSize * current;
 
-          const priceIncrease = calcPriceIncrease(current, high, optionSize);
-          const returnCurrent = (current - netCost) * optionSize;
-          const returnIfAssigned = (strike - netCost) * optionSize;
-          const returnLastCall = optionSize * tradePrice - commission;
-          const valueCurrent = optionSize * current;
-          const valueIfAssigned = strike * optionSize;
+          const getCurrentCallValues = (currentCall: CallType) => {
+            const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall;
+            const high = current && strike + tradePrice - commission / optionSize;
+            const priceIncrease = current && high && calcPriceIncrease(current, high, optionSize);
+            const priceIncreaseGBP = priceIncrease && priceIncrease / forexRate;
+            const dteCurrent = calcDteCurrent(expiry, NOW);
+            const daysToEarnings = earningsDate.diff(expiry, 'day');
+            const position = getPosition(positions, ticker, expiry, strike, 'Call');
+            const marketPrice = position?.mktPrice;
+            const optionReturnPct = marketPrice && 1 - marketPrice / tradePrice;
+            const dteLastCall = expiry.diff(date, 'day');
+            const daysTotal = expiry.diff(acquisitionDate, 'day');
+            const closeTradePrice = closeTradePrices[batchCode];
+            const effectiveCloseNetReturn =
+              closeTradePrice && closeTradePrice > 0
+                ? optionSize * closeTradePrice - commission
+                : 0;
+            const effectiveCloseNetReturnPct =
+              valueCurrent && effectiveCloseNetReturn / valueCurrent;
+            const return30DPctResidual =
+              effectiveCloseNetReturnPct &&
+              calcReturnPctForPeriod(effectiveCloseNetReturnPct, dteCurrent, 30);
+            const returnPctResidualEstimate =
+              marketPrice &&
+              Math.max(optionSize * marketPrice - commission, 0) / (optionSize * stockPrice);
+            const return30DPctResidualEstimate =
+              returnPctResidualEstimate &&
+              calcReturnPctForPeriod(returnPctResidualEstimate, dteCurrent, 30);
+            const returnLastCall = optionSize * tradePrice - commission;
+            const returnGBPLastCall = returnLastCall / forexRate;
+            const returnIfAssigned = (strike - netCost) * optionSize;
+            const returnPctIfAssigned = strike / netCost - 1;
+            const returnPctLastCall =
+              (tradePrice * optionSize - commission) / (stockPrice * optionSize);
 
-          const returnGBP = Math.min(returnCurrent, returnIfAssigned || Infinity) / forexRate;
-          const valueGBP = Math.min(valueCurrent, valueIfAssigned || Infinity) / forexRate;
-          const returnGBPLastCall = returnLastCall / forexRate;
-
-          const closeTradePrice = closeTradePrices[batchCode];
-
-          const effectiveCloseNetReturn =
-            closeTradePrice > 0 ? optionSize * closeTradePrice - commission : 0;
-          const effectiveCloseNetReturnPct = effectiveCloseNetReturn / valueCurrent;
-          const dteCurrent = calcDteCurrent(expiry, NOW);
-          const return30DPctResidual = calcReturnPctForPeriod(
-            effectiveCloseNetReturnPct,
-            dteCurrent,
-            30
-          );
-
-          const position = getPosition(positions, ticker, expiry, strike, 'Call');
-          const marketPrice = position?.mktPrice;
-          const optionReturnPct = 1 - marketPrice / tradePrice;
-          const returnPctResidualEstimate =
-            Math.max(optionSize * marketPrice - commission, 0) / (optionSize * stockPrice);
-          const return30DPctResidualEstimate = calcReturnPctForPeriod(
-            returnPctResidualEstimate,
-            dteCurrent,
-            30
-          );
-          const priceIncreaseGBP = priceIncrease / forexRate;
-
-          const row: CallRow = {
-            account,
-            assignmentPct: current ? strike / current - 1 : undefined,
-            batchCode,
-            closeTradePrice: (
-              <CloseTradePriceInput
-                batchId={batchCode}
-                closeTradePrices={closeTradePrices}
-                setCloseTradePrices={setCloseTradePrices}
-              />
-            ),
-            costBasisDrop: netCost / unitAcquisitionCost - 1,
-            current,
-            date,
-            daysToEarnings,
-            daysTotal,
-            dteCurrent,
-            dteTotal: calcDteTotal(expiry, date),
-            expiry,
-            high,
-            highPct: high / current - 1,
-            marketPrice,
-            netCost,
-            optionReturnPct,
-            priceIncreaseGBP,
-            return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
-            return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
-            return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
-            return30DPctResidual,
-            return30DPctResidualEstimate,
-            returnGBP,
-            returnGBPIfAssigned: returnIfAssigned / forexRate,
-            returnGBPLastCall,
-            returnPct: current && Math.min(current, strike || Infinity) / netCost - 1,
-            returnPctIfAssigned,
-            status: strike < current ? 'Assignable' : null,
-            stockPrice,
-            strike,
-            tradePrice,
-            unitAcquisitionCost,
-            valueGBP,
+            return {
+              assignmentPct: current ? strike / current - 1 : undefined,
+              closeTradePrice: (
+                <CloseTradePriceInput
+                  batchId={batchCode}
+                  closeTradePrices={closeTradePrices}
+                  setCloseTradePrices={setCloseTradePrices}
+                />
+              ),
+              date,
+              daysToEarnings,
+              daysTotal,
+              dteCurrent,
+              dteTotal: calcDteTotal(expiry, date),
+              expiry,
+              high,
+              highPct: high && current && high / current - 1,
+              marketPrice,
+              optionReturnPct,
+              priceIncreaseGBP,
+              return1YPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 365),
+              return30DPctIfAssigned: calcReturnPctForPeriod(returnPctIfAssigned, daysTotal, 30),
+              return30DPctLastCall: calcReturnPctForPeriod(returnPctLastCall, dteLastCall, 30),
+              return30DPctResidual,
+              return30DPctResidualEstimate,
+              returnGBPIfAssigned: returnIfAssigned / forexRate,
+              returnGBPLastCall,
+              returnPctIfAssigned,
+              status: current && strike < current ? 'Assignable' : null,
+              stockPrice,
+              strike,
+              tradePrice,
+            };
           };
 
-          totals.returnGBP += returnGBP;
-          totals.returnGBPLastCall += returnGBPLastCall;
-          totals.valueGBP += valueGBP;
-          totals.priceIncreaseGBP += priceIncreaseGBP;
+          const currentCallValues = currentCall ? getCurrentCallValues(currentCall) : undefined;
+
+          const returnCurrent = current && (current - netCost) * optionSize;
+          const returnIfAssigned =
+            currentCallValues && (currentCallValues.strike - netCost) * optionSize;
+          const valueIfAssigned = currentCallValues && currentCallValues.strike * optionSize;
+          const returnGBP =
+            returnCurrent && Math.min(returnCurrent, returnIfAssigned || Infinity) / forexRate;
+          const valueGBP =
+            valueCurrent && Math.min(valueCurrent, valueIfAssigned || Infinity) / forexRate;
+
+          // TODO set type based on which table is rendered: CallRowWithCurrentCall | GenericCallRow
+          const row = {
+            account,
+            batchCode,
+            costBasisDrop: netCost / unitAcquisitionCost - 1,
+            current,
+            netCost,
+            returnGBP,
+            returnPct:
+              current &&
+              Math.min(
+                current,
+                currentCallValues ? currentCallValues.strike || Infinity : Infinity
+              ) /
+                netCost -
+                1,
+            unitAcquisitionCost,
+            valueGBP,
+            ...currentCallValues,
+          };
+
+          // TODO check total can be displayed instead of || 0
+          totals.returnGBP += returnGBP || 0;
+          totals.returnGBPLastCall += currentCallValues ? currentCallValues.returnGBPLastCall : 0;
+          totals.valueGBP += valueGBP || 0;
+          totals.priceIncreaseGBP += currentCallValues
+            ? currentCallValues.priceIncreaseGBP || 0
+            : 0;
 
           const accountColour = accounts[account].colour;
 
@@ -293,7 +314,7 @@ const Call = () => {
               {orderedRowValues.map(
                 ({ name, format = (v: number | Dayjs) => v, align = 'right' }, index) => {
                   const showContrast = name !== 'account' && name !== 'batchCode';
-                  const showZeroValuesNames: (keyof CallRow)[] = [
+                  const showZeroValuesNames: (keyof CallRowWithCurrentCall)[] = [
                     'assignmentPct',
                     'costBasisDrop',
                     'daysToEarnings',
@@ -305,11 +326,21 @@ const Call = () => {
                   const showZeroValues = showZeroValuesNames.includes(name);
 
                   const earningsStatus = earnings[ticker]?.confirmed;
-                  const dayToEarningsClass = name === 'daysToEarnings' && {
-                    [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
-                    [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
-                    [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
-                  };
+                  const dayToEarningsClass = name === 'daysToEarnings' &&
+                    currentCallValues && {
+                      [styles.info]: daysToEarningsInfo(
+                        currentCallValues.daysToEarnings,
+                        earningsStatus
+                      ),
+                      [styles.warning]: daysToEarningsWarning(
+                        currentCallValues.daysToEarnings,
+                        earningsStatus
+                      ),
+                      [styles.danger]: daysToEarningsDanger(
+                        currentCallValues.daysToEarnings,
+                        earningsStatus
+                      ),
+                    };
 
                   return (
                     <td
@@ -322,11 +353,17 @@ const Call = () => {
                           [styles.freezeFirstTdColumn]: index === 0,
                           [styles.freezeSecondTdColumn]: index === 1,
                           [styles.warning]:
-                            current > high &&
+                            currentCallValues &&
+                            currentCallValues.high &&
+                            current &&
+                            current > currentCallValues.high &&
                             (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
                           mute:
                             name === 'return30DPctResidualEstimate' &&
-                            row?.[name] > MINIMUM_RETURN_THRESHOLD,
+                            typeof row?.[name] !== undefined &&
+                            // Using the non-null assertion operator because
+                            // TypeScript infers that `row.return30DPctResidualEstimate` may be `undefined` otherwise
+                            row.return30DPctResidualEstimate! > MINIMUM_RETURN_THRESHOLD,
                         },
                         dayToEarningsClass
                       )}
@@ -343,7 +380,7 @@ const Call = () => {
         <tr>
           {headings
             .filter(headingFilterFunction)
-            .map(({ name, format, align = 'right' }, index) => (
+            .map(({ name, format = (v: string | number) => v, align = 'right' }, index) => (
               <td
                 className={cx(styles.total, {
                   [styles[align]]: align === 'right',

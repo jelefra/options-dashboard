@@ -12,7 +12,7 @@ import styles from '../styles/Table.module.css';
 import type { EarningsDates, TradeData, TransactionData } from '../types';
 import { hoursToDays } from '../utils/format';
 
-type BatchCodesType = { [key: string]: { ticker: string; batchCode: string } };
+type BatchCodes = { [key: string]: { ticker: string; batchCode: string } };
 
 const Tickers = ({
   earnings,
@@ -25,7 +25,7 @@ const Tickers = ({
   trades: TradeData[];
   transactions: TransactionData[];
 }) => {
-  const transactionsBatchNames: BatchCodesType = transactions.reduce(
+  const transactionsBatchNames: BatchCodes = transactions.reduce(
     (names, { ticker, batchCodes }) =>
       batchCodes
         ? { ...names, [ticker]: { ticker, batchCode: batchCodes.split(',').pop() } }
@@ -33,20 +33,28 @@ const Tickers = ({
     {}
   );
 
-  const batchCodes = trades.reduce((names, { ticker, batchCode }) => {
+  const batchCodes = trades.reduce((latestBatchCodes, { ticker, batchCode }) => {
     if (batchCode) {
-      if (!names[ticker]) {
-        names[ticker] = { ticker, batchCode };
+      if (!latestBatchCodes[ticker]) {
+        latestBatchCodes[ticker] = { ticker, batchCode };
       } else {
-        const [, index] = batchCode.match(/(\d+)/);
-        const [, overallIndex] = names[ticker].batchCode.match(/(\d+)/);
+        const batchCodeMatch = batchCode.match(/(\d+)/);
+        if (!batchCodeMatch) {
+          throw new Error(`Batch code missing an id ${batchCode}`);
+        }
+        const [, index] = batchCodeMatch;
+        const latestBatchCodeMatch = latestBatchCodes[ticker].batchCode.match(/(\d+)/);
+        if (!latestBatchCodeMatch) {
+          throw new Error(`Latest batch code missing an id ${latestBatchCodes[ticker].batchCode}`);
+        }
+        const [, overallIndex] = latestBatchCodeMatch;
         if (index > overallIndex) {
-          names[ticker].batchCode = `${ticker}${index}`;
+          latestBatchCodes[ticker].batchCode = `${ticker}${index}`;
         }
       }
     }
-    return names;
-  }, cloneDeep(transactionsBatchNames) as BatchCodesType);
+    return latestBatchCodes;
+  }, cloneDeep(transactionsBatchNames) as BatchCodes);
 
   return (
     <table className={styles.table}>

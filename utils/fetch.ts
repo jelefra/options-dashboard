@@ -16,7 +16,7 @@ export const fetchFn = async ({
   try {
     console.info(`Fetching ${logSanitiser(URL)}`);
     const response = await fetch(URL, options);
-    const contentType = response.headers?.get('content-type');
+    const contentType = response.headers?.get('content-type') || '';
     if (response.ok && contentType.includes('application/json')) {
       return response.json();
     }

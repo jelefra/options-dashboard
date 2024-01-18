@@ -31,6 +31,9 @@ const AccountsComponent = ({
     (summary: { [key: string]: { [key: string]: number } }, { account, strike, ticker }) => {
       const { currency, optionSize } = tickers[ticker];
       summary[account] = summary[account] || {};
+      if (!optionSize) {
+        throw new Error(`Option size missing for ${ticker}`);
+      }
       summary[account][currency] = (summary[account][currency] || 0) + strike * optionSize;
       return summary;
     },

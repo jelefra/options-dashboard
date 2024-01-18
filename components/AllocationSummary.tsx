@@ -37,8 +37,11 @@ const AllocationSummary = ({
   }
 
   const { wheelingGBP, notWheelingGBP } = Object.values(batches).reduce(
-    (total, { current, currentCall = {}, currency, exit, optionSize }) => {
+    (total, { current, currentCall = {}, currency, exit, optionSize, ticker }) => {
       const { strike } = currentCall;
+      if (!current) {
+        throw new Error(`Current stock price missing for ${ticker}`);
+      }
       if (strike) {
         const missedUpside = strike ? Math.max(current - strike, 0) : 0;
         total.wheelingGBP += (optionSize * (current - missedUpside)) / rates[currency];
@@ -51,8 +54,11 @@ const AllocationSummary = ({
   );
 
   const partialBatchesGBP = Object.values(stocks).reduce(
-    (total, { currency, current, partialBatch = {} }) => {
+    (total, { currency, current, partialBatch = {}, ticker }) => {
       const quantity = partialBatch.quantity || 0;
+      if (!current) {
+        throw new Error(`Current stock price missing for ${ticker}`);
+      }
       return (total += (quantity * current) / rates[currency]);
     },
     0
@@ -65,6 +71,9 @@ const AllocationSummary = ({
       const { ticker, strike } = put;
       const current = currentTickerPrices[ticker];
       const { currency, optionSize } = tickers[ticker];
+      if (!optionSize) {
+        throw new Error(`Option size missing for ${ticker}`);
+      }
       summary[strike <= current ? 'OTMPutsGBP' : 'ITMPutsGBP'] +=
         (Math.min(strike, current) * optionSize) / rates[currency];
       return summary;

@@ -57,9 +57,9 @@ const Put = () => {
   const positionsKeys = getPositionsKeys(accounts);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number }>({});
-  const [rates, setRates] = useState<ForexRates>(null);
-  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices>(null);
+  const [closeTradePrices, setCloseTradePrices] = useState<{ [key: string]: number | null }>({});
+  const [rates, setRates] = useState<ForexRates | null>(null);
+  const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices | null>(null);
   const [positions, setPositions] = useState<Position[]>([]);
 
   useEffect(() => {
@@ -180,6 +180,9 @@ const Put = () => {
             const { account, ticker, tradePrice, strike, commission, stockPrice, type } = trade;
             const accountColour = accounts[account].colour;
             const { optionSize, currency, colour } = tickers[ticker];
+            if (!optionSize) {
+              throw new Error(`Option size missing for ${ticker}`);
+            }
             const current = currentTickerPrices[ticker];
             const forexRate = rates[currency];
 
@@ -204,8 +207,11 @@ const Put = () => {
             const batchId = `${tradeIndex}-${ticker}`;
             const closeTradePrice = closeTradePrices[batchId];
 
-            const effectiveCloseNetReturn =
-              closeTradePrice > 0 ? optionSize * closeTradePrice - commission : 0;
+            const effectiveCloseNetReturn = closeTradePrice
+              ? closeTradePrice > 0
+                ? optionSize * closeTradePrice - commission
+                : 0
+              : 0;
             const effectiveCloseNetReturnPct = effectiveCloseNetReturn / cashEquivalent;
             const dteCurrent = calcDteCurrent(expiry, NOW);
             const return30DPctResidual = calcReturnPctForPeriod(
@@ -214,7 +220,7 @@ const Put = () => {
               30
             );
 
-            const status = current ? (strike > current ? 'Assignable' : null) : undefined;
+            const status = current ? (strike > current ? 'Assignable' : undefined) : undefined;
 
             const cashEquivalentGBP = cashEquivalent / forexRate;
             const priceIncreaseGBP = priceIncrease / forexRate;
@@ -223,14 +229,13 @@ const Put = () => {
 
             const position = getPosition(positions, ticker, expiry, strike, type);
             const marketPrice = position?.mktPrice;
-            const optionReturnPct = 1 - marketPrice / tradePrice;
-            const returnPctResidualEstimate =
-              Math.max(optionSize * marketPrice - commission, 0) / cashEquivalent;
-            const return30DPctResidualEstimate = calcReturnPctForPeriod(
-              returnPctResidualEstimate,
-              dteCurrent,
-              30
-            );
+            const optionReturnPct = marketPrice ? 1 - marketPrice / tradePrice : undefined;
+            const returnPctResidualEstimate = marketPrice
+              ? Math.max(optionSize * marketPrice - commission, 0) / cashEquivalent
+              : undefined;
+            const return30DPctResidualEstimate = returnPctResidualEstimate
+              ? calcReturnPctForPeriod(returnPctResidualEstimate, dteCurrent, 30)
+              : undefined;
 
             const row: PutRow = {
               account,
@@ -307,7 +312,10 @@ const Put = () => {
                             [styles.freezeSecondTdColumn]: index === 1,
                             mute:
                               name === 'return30DPctResidualEstimate' &&
-                              row?.[name] > MINIMUM_RETURN_THRESHOLD,
+                              typeof row?.[name] !== undefined &&
+                              // Using the non-null assertion operator because
+                              // TypeScript infers that `row.return30DPctResidualEstimate` may be `undefined` otherwise
+                              row.return30DPctResidualEstimate! > MINIMUM_RETURN_THRESHOLD,
                           },
                           dayToEarningsClass
                         )}
@@ -322,19 +330,21 @@ const Put = () => {
             );
           })}
           <tr>
-            {headings.map(({ name, format, align = 'right' }, index) => {
-              const total = name in totals && totals[name as keyof typeof totals];
-              return (
-                <td
-                  className={cx(styles.total, {
-                    [styles[align]]: align === 'right',
-                  })}
-                  key={index}
-                >
-                  {name in totals && total.value ? (total.format || format)(total.value) : false}
-                </td>
-              );
-            })}
+            {headings.map(
+              ({ name, format = (v: string | number) => v, align = 'right' }, index) => {
+                const total = name in totals && totals[name as keyof typeof totals];
+                return (
+                  <td
+                    className={cx(styles.total, {
+                      [styles[align]]: align === 'right',
+                    })}
+                    key={index}
+                  >
+                    {total && total.value ? (total.format || format)(total.value) : false}
+                  </td>
+                );
+              }
+            )}
           </tr>
         </tbody>
       </table>

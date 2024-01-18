@@ -24,8 +24,10 @@ const MONTHS_TO_DISPLAY = 10;
 
 const Income = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [rates, setRates] = useState<ForexRates>(null);
-  const [historicalForexRates, setHistoricalForexRates] = useState<HistoricalForexRates>(null);
+  const [rates, setRates] = useState<ForexRates | null>(null);
+  const [historicalForexRates, setHistoricalForexRates] = useState<HistoricalForexRates | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchForexRates = async () => {
@@ -99,6 +101,9 @@ const Income = () => {
     if (!currencies.includes(currency)) {
       currencies.push(currency);
     }
+    if (!optionSize) {
+      throw new Error(`Option size missing for ${ticker}`);
+    }
     const gain = (tradePrice - closeTradePrice) * optionSize - (commission + closeCommission);
     income[tradeMonth] = income[tradeMonth] || {};
     income[tradeMonth][account] = income[tradeMonth][account] || {};
@@ -126,21 +131,23 @@ const Income = () => {
     accountsWithCurrencies[account].currencies.push('BASE');
   }
 
+  type IncomeBoolean = {
+    Put: boolean;
+    Call: boolean;
+    Total: boolean;
+  };
+
   const hasIncome: {
     // account
     [key: string]: {
       // currency
-      [key: string]: {
-        Put: boolean;
-        Call: boolean;
-        Total: boolean;
-      };
+      [key: string]: IncomeBoolean;
     };
   } = Object.fromEntries(
     Object.entries(accountsWithCurrencies).map(([account, { currencies }]) => [
       account,
       Object.fromEntries(
-        currencies.reduce((summary, currency) => {
+        currencies.reduce((summary: [string, IncomeBoolean][], currency) => {
           const hasValue = (key: keyof Income) =>
             Object.values(income).some((entry) => (entry[account]?.[currency]?.[key] || 0) !== 0);
           return [
@@ -172,8 +179,8 @@ const Income = () => {
     .flatMap(([, accountsIncome]) => Object.entries(accountsIncome))
     .reduce((summary, [account, currencies]) => {
       Object.entries(currencies).forEach(([currencyCode, types]) => {
-        Object.entries(types).forEach(([type, amount]: [keyof Income, number]) => {
-          summary[account][currencyCode][type] += amount;
+        Object.entries(types).forEach(([type, amount]: [string, number]) => {
+          summary[account][currencyCode][type as keyof Income] += amount;
         });
       });
       return summary;
@@ -244,7 +251,7 @@ const Income = () => {
                 Object.entries(currencies).map(([currency, incomes]) =>
                   Object.entries(incomes)
                     .filter(([, value]) => value)
-                    .map(([type]: [keyof Income, true], index, source) => (
+                    .map(([type]: [string, boolean], index, source) => (
                       <td
                         className={cx(styles.right, {
                           [styles.contrast]: rowIndex % 2,
@@ -255,7 +262,9 @@ const Income = () => {
                         })}
                         key={`${month}-${account}-${currency}-${type}`}
                       >
-                        {thousands(income[month]?.[account]?.[currency]?.[type] || 0)}
+                        {thousands(
+                          income[month]?.[account]?.[currency]?.[type as keyof Income] || 0
+                        )}
                       </td>
                     ))
                 )
@@ -270,7 +279,7 @@ const Income = () => {
               Object.entries(currencies).map(([currency, incomes]) =>
                 Object.entries(incomes)
                   .filter(([, value]) => value)
-                  .map(([id]: [keyof Income, true], index, source) => (
+                  .map(([id]: [string, boolean], index, source) => (
                     <td
                       className={cx(styles.total, styles.right, {
                         [styles.leftEdge]: index === 0,
@@ -280,7 +289,7 @@ const Income = () => {
                       })}
                       key={`${account}-${currency}-${id}`}
                     >
-                      {thousands(total[account][currency][id] || 0)}
+                      {thousands(total[account][currency][id as keyof Income] || 0)}
                     </td>
                   ))
               )

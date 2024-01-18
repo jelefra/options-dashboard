@@ -11,7 +11,7 @@ const getRedisKeys = async (req: NextApiRequest, res: NextApiResponse) => {
     const redisKeyValuePairs = await Promise.all(
       keys.map(async (key) => {
         const value = await client.get(key);
-        return { key, value: JSON.parse(value) };
+        return { key, value: value !== null ? JSON.parse(value) : null };
       })
     );
 

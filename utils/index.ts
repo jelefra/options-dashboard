@@ -54,10 +54,12 @@ export const getPosition = (
   strike: number,
   type: TradeType
 ) =>
-  positions.length &&
-  positions.find(
-    (position) => position?.fullName === `${ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
-  );
+  positions.length
+    ? positions.find(
+        (position) =>
+          position?.fullName === `${ticker} ${expiry?.format("MMMDD'YY")} ${strike} ${type}`
+      )
+    : undefined;
 
 export const sanitiseFinnhubLogs = (URL: string) => URL.replace(/token=\w+/, 'token=***');
 export const sanitiseMarketstackLogs = (URL: string) =>

@@ -7,7 +7,7 @@ import { CurrentTickerPrices } from '../types';
 const RefetchTickerPrices = ({
   setCurrentTickerPrices,
 }: {
-  setCurrentTickerPrices: Dispatch<SetStateAction<CurrentTickerPrices>>;
+  setCurrentTickerPrices: Dispatch<SetStateAction<CurrentTickerPrices | null>>;
 }) => {
   const fetchAllTickerPrices = async () => {
     const response = await fetch('/api/allTickerPrices?ignoreCurrentCache=true');

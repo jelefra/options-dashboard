@@ -24,16 +24,16 @@ import { factorStockSplit } from '../../utils/factorStockSplit';
 import { dateMediumTerm, thousands } from '../../utils/format';
 
 const CapitalGains = () => {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [rates, setRates] = useState<ForexRates>(null);
-  const [historicalForexRates, setHistoricalForexRates] = useState<HistoricalForexRates>(null);
+  const [rates, setRates] = useState<ForexRates | null>(null);
+  const [historicalForexRates, setHistoricalForexRates] = useState<HistoricalForexRates | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchForexRates = async () => {
       const response = await fetch('/api/forexRates');
       const data = await response.json();
       setRates(data.rates);
-      setIsLoading(false);
     };
     fetchForexRates().catch(console.error);
   }, []);
@@ -50,19 +50,18 @@ const CapitalGains = () => {
     .filter(({ account }: TradeData) => applicableAccounts[account]);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchForexRatesHistorical = async () => {
       const response = await fetch('/api/forexRatesHistorical');
       const data = await response.json();
       setHistoricalForexRates(data.historicalRates);
-      setIsLoading(false);
     };
     fetchForexRatesHistorical().catch(console.error);
   }, []);
 
   const { year } = useRouter().query;
 
-  if (!year || isLoading) return <Loading />;
+  // (!rates && !historicalForexRates) would be slightly better, but extra complexity not worth it
+  if (!year || !rates) return <Loading />;
 
   if (typeof year === 'string' && isNaN(Number(year))) {
     return <p>Invalid URL</p>;
@@ -75,7 +74,7 @@ const CapitalGains = () => {
   } = [...transactions, ...trades].reduce((accounts, { account, ticker: displayTicker }) => {
     const accountTickers = accounts[account].tickers;
     const { ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
-    if (!accountTickers.includes(ticker)) {
+    if (!accountTickers?.includes(ticker)) {
       accountTickers.push(ticker);
 
       const accountCurrencies = accounts[account].currencies;
@@ -203,6 +202,9 @@ const CapitalGains = () => {
 
     if (type === 'Put') {
       const { currency, optionSize, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
+      if (!optionSize) {
+        throw new Error(`Option size missing for ${ticker}`);
+      }
       const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
       const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
 
@@ -269,6 +271,9 @@ const CapitalGains = () => {
     } = trade;
 
     const { currency, optionSize, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
+    if (!optionSize) {
+      throw new Error(`Option size missing for ${ticker}`);
+    }
     const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
     const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
 
@@ -285,7 +290,7 @@ const CapitalGains = () => {
       key.BASE.losses.total -= costToClose / forexRate;
     }
 
-    if (type === 'Call' && closePrice > strike) {
+    if (type === 'Call' && closePrice && closePrice > strike) {
       const acquisitionCost =
         (stocks[account][ticker].acquisitionCost / stocks[account][ticker].quantity) * optionSize;
       if (acquisitionCost < strike * optionSize + commission * forexRate) {
@@ -303,23 +308,25 @@ const CapitalGains = () => {
     }
   }
 
+  type CapitalGainsBoolean = {
+    put: boolean;
+    call: boolean;
+    ITMCall: boolean;
+    sale: boolean;
+    total: boolean;
+  };
+
   const hasGains: {
     // account
     [key: string]: {
       // currency
-      [key: string]: {
-        put: boolean;
-        call: boolean;
-        ITMCall: boolean;
-        sale: boolean;
-        total: boolean;
-      };
+      [key: string]: CapitalGainsBoolean;
     };
   } = Object.fromEntries(
     Object.entries(accountsWithCurrencies).map(([account, { currencies }]) => [
       account,
       Object.fromEntries(
-        currencies.reduce((currenciesCapitalGains, currency) => {
+        currencies.reduce((currenciesCapitalGains: [string, CapitalGainsBoolean][], currency) => {
           const hasValue = (key: keyof CapitalGains) =>
             Object.values(capitalGains).some(
               (gains) =>
@@ -351,13 +358,13 @@ const CapitalGains = () => {
     .flatMap(([, gains]) => Object.entries(gains))
     .reduce((summary, [account, currencies]) => {
       Object.entries(currencies).forEach(([currencyCode, types]) => {
-        Object.entries(types).forEach(
-          ([type, categories]: [keyof AccountsCapitalGains[string][string], CapitalGains]) => {
-            Object.entries(categories).forEach(([category, val]: [keyof CapitalGains, number]) => {
-              summary[account][currencyCode][type][category] += val;
-            });
-          }
-        );
+        Object.entries(types).forEach(([type, categories]: [string, CapitalGains]) => {
+          Object.entries(categories).forEach(([category, val]: [string, number]) => {
+            summary[account][currencyCode][type as keyof AccountsCapitalGains[string][string]][
+              category as keyof CapitalGains
+            ] += val;
+          });
+        });
       });
       return summary;
     }, cloneDeep(accountsCapitalGainsSkeleton));
@@ -372,14 +379,15 @@ const CapitalGains = () => {
       key1: keyof AccountsCapitalGains[string][string];
       key2?: keyof AccountsCapitalGains[string][string];
     },
-    className: string = undefined
+    className: string | undefined = undefined
   ) => {
     return Object.entries(hasGains).map(([account, currenciesCapitalGains]) =>
       Object.entries(currenciesCapitalGains).map(([currency, currencyCapitalGains]) =>
         Object.entries(currencyCapitalGains)
           .filter(([, value]) => value)
-          .map(([id]: [keyof typeof hasGains[string][string], true], index, source) => {
-            // console.log('id', id);
+          .map(([id]: [string, boolean], index, source) => {
+            const totalKey1 = total[account][currency][key1][id as keyof CapitalGains];
+            const totalKey2 = key2 ? total[account][currency][key2]?.[id as keyof CapitalGains] : 0;
             return (
               <td
                 className={cx(className, styles.total, styles.right, {
@@ -390,10 +398,7 @@ const CapitalGains = () => {
                 })}
                 key={`${account}-${currency}-${id}`}
               >
-                {thousands(
-                  (total[account][currency][key1][id] || 0) +
-                    (total[account][currency][key2]?.[id] || 0)
-                )}
+                {thousands(totalKey1 + totalKey2)}
               </td>
             );
           })
@@ -467,22 +472,29 @@ const CapitalGains = () => {
                 Object.entries(currenciesCapitalGains).map(([currency, currencyCapitalGains]) =>
                   Object.entries(currencyCapitalGains)
                     .filter(([, value]) => value)
-                    .map(([id]: [keyof CapitalGains, true], index, source) => (
-                      <td
-                        className={cx(styles.right, styles.columnWidthSm, {
-                          [styles.leftEdge]: index === 0,
-                          [styles.rightEdge]: index === source.length - 1,
-                          [styles.thick]: currency === 'BASE',
-                          [styles.italic]: !historicalForexRates,
-                        })}
-                        key={`${account}-${currency}-${id}`}
-                      >
-                        {thousands(
-                          (capitalGains[month]?.[account]?.[currency]?.gains[id] || 0) +
-                            (capitalGains[month]?.[account]?.[currency]?.losses[id] || 0)
-                        )}
-                      </td>
-                    ))
+                    .map(([id]: [string, boolean], index, source) => {
+                      const gains =
+                        capitalGains[month]?.[account]?.[currency]?.gains[
+                          id as keyof CapitalGains
+                        ] || 0;
+                      const losses =
+                        capitalGains[month]?.[account]?.[currency]?.losses[
+                          id as keyof CapitalGains
+                        ] || 0;
+                      return (
+                        <td
+                          className={cx(styles.right, styles.columnWidthSm, {
+                            [styles.leftEdge]: index === 0,
+                            [styles.rightEdge]: index === source.length - 1,
+                            [styles.thick]: currency === 'BASE',
+                            [styles.italic]: !historicalForexRates,
+                          })}
+                          key={`${account}-${currency}-${id}`}
+                        >
+                          {thousands(gains + losses)}
+                        </td>
+                      );
+                    })
                 )
               )}
             </tr>
