@@ -75,7 +75,7 @@ const Stocks = () => {
     { name: 'wheelingCallsActiveCount', section: 'summary' },
     { name: 'avgCost', section: 'summary', format: decimalTwo },
     { name: 'current', section: 'summary', format: decimalTwo },
-    { name: 'returnPct', section: 'summary', format: pctOne },
+    { name: 'returnPct', section: 'summary', format: (n: number) => (n < -1 ? '∞' : pctOne(n)) },
     { name: 'returnGBP', section: 'summary', format: thousands },
     { name: 'valueGBP', section: 'summary', format: thousands },
     { name: 'allocation', section: 'summary', format: pctOne },
