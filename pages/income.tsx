@@ -16,7 +16,7 @@ import accounts from '../data/accounts';
 import tradesData from '../data/options.csv';
 import tickers, { tickersMap } from '../data/tickers';
 import styles from '../styles/Table.module.css';
-import { Account, ForexRates, HistoricalForexRates, TradeData } from '../types';
+import { ForexRates, HistoricalForexRates, TradeData } from '../types';
 import { removeNullValues } from '../utils';
 import { dateMediumTerm, thousands } from '../utils/format';
 
@@ -62,8 +62,8 @@ const Income = () => {
     .filter(({ date }: { date: string }) => dayjs(date, INPUT_DATE_FORMAT).isSameOrAfter(start));
 
   const accountsWithCurrencies: {
-    [key: string]: Account;
-  } = { ...accounts };
+    [key: string]: { currencies: string[] };
+  } = { ...accounts, All: { currencies: [] } };
 
   type Income = {
     Put: number;
@@ -125,10 +125,32 @@ const Income = () => {
     income[tradeMonth][account].BASE.Total =
       income[tradeMonth][account].BASE.Total +
       gain / (historicalForexRates?.[date]?.[currency] || rates[currency]);
+
+    // Total of all accounts
+    income[tradeMonth].All = income[tradeMonth].All || {};
+    income[tradeMonth].All.BASE = income[tradeMonth].All.BASE || {
+      Put: 0,
+      Call: 0,
+      Total: 0,
+    };
+    income[tradeMonth].All.BASE[type] =
+      income[tradeMonth].All.BASE[type] +
+      gain / (historicalForexRates?.[date]?.[currency] || rates[currency]);
+
+    income[tradeMonth].All.BASE = income[tradeMonth].All.BASE || {
+      Put: 0,
+      Call: 0,
+      Total: 0,
+    };
+    income[tradeMonth].All.BASE.Total =
+      income[tradeMonth].All.BASE.Total +
+      gain / (historicalForexRates?.[date]?.[currency] || rates[currency]);
   }
 
   for (const account in accountsWithCurrencies) {
-    accountsWithCurrencies[account].currencies.push('BASE');
+    if (!accountsWithCurrencies[account].currencies.includes('BASE')) {
+      accountsWithCurrencies[account].currencies.push('BASE');
+    }
   }
 
   type IncomeBoolean = {
@@ -197,14 +219,16 @@ const Income = () => {
           <tr>
             <th rowSpan={3}>Month</th>
             {Object.entries(hasIncome)
-              .filter(([, accountIncome]) => Object.values(accountIncome).length > 1)
+              .filter(
+                ([name, accountIncome]) => name === 'All' || Object.values(accountIncome).length > 1
+              )
               .map(([account]) => {
                 const colSpan = Object.values(hasIncome[account]).reduce(
                   (columns, incomes) => (columns += Object.values(incomes).filter(Boolean).length),
                   0
                 );
                 return (
-                  <th colSpan={colSpan} className={accounts[account].colour} key={account}>
+                  <th colSpan={colSpan} className={accounts[account]?.colour} key={account}>
                     {account}
                   </th>
                 );
@@ -212,7 +236,9 @@ const Income = () => {
           </tr>
           <tr>
             {Object.entries(hasIncome)
-              .filter(([, accountIncome]) => Object.values(accountIncome).length > 1)
+              .filter(
+                ([name, accountIncome]) => name === 'All' || Object.values(accountIncome).length > 1
+              )
               .map(([name, currencies]) =>
                 Object.keys(currencies).map((currency) => {
                   const colSpan = Object.values(hasIncome[name][currency]).filter(Boolean).length;
@@ -257,7 +283,7 @@ const Income = () => {
                           [styles.contrast]: rowIndex % 2,
                           [styles.leftEdge]: index === 0,
                           [styles.rightEdge]: index === source.length - 1,
-                          [styles.thick]: currency === 'BASE',
+                          [styles.thick]: type === 'Total' && currency === 'BASE',
                           [styles.italic]: !historicalForexRates,
                         })}
                         key={`${month}-${account}-${currency}-${type}`}
@@ -279,17 +305,17 @@ const Income = () => {
               Object.entries(currencies).map(([currency, incomes]) =>
                 Object.entries(incomes)
                   .filter(([, value]) => value)
-                  .map(([id]: [string, boolean], index, source) => (
+                  .map(([type]: [string, boolean], index, source) => (
                     <td
                       className={cx(styles.total, styles.right, {
                         [styles.leftEdge]: index === 0,
                         [styles.rightEdge]: index === source.length - 1,
-                        [styles.thick]: currency === 'BASE',
+                        [styles.thick]: type === 'Total' && currency === 'BASE',
                         [styles.italic]: !historicalForexRates,
                       })}
-                      key={`${account}-${currency}-${id}`}
+                      key={`${account}-${currency}-${type}`}
                     >
-                      {thousands(total[account][currency][id as keyof Income] || 0)}
+                      {thousands(total[account][currency][type as keyof Income] || 0)}
                     </td>
                   ))
               )
