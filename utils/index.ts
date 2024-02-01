@@ -31,16 +31,25 @@ export const isCurrentPut = ({ closePrice, expiry, type }: TradeData, now: Dayjs
 export const removeNullValues = (obj: object) =>
   Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== null));
 
-export const formatDaysToEarnings = (n: number) => (Math.abs(n) < 15 ? n : '');
+export const formatDaysToEarnings = (n: number) => (Math.abs(n) < 30 ? n : '');
 
-export const daysToEarningsInfo = (daysToEarnings: number, confirmed: boolean) =>
-  daysToEarnings > 0 && daysToEarnings < 15 && !confirmed;
-
-export const daysToEarningsWarning = (daysToEarnings: number, confirmed: boolean) =>
-  daysToEarnings > -15 && daysToEarnings <= 0 && !confirmed;
-
-export const daysToEarningsDanger = (daysToEarnings: number, confirmed: boolean) =>
-  daysToEarnings > -15 && daysToEarnings < 0 && confirmed;
+export const categoriseEarnings = (
+  earningsDate: Dayjs,
+  expiry: Dayjs | undefined,
+  now: Dayjs,
+  confirmed: boolean
+): 'warning' | 'danger' | 'info' | 'transparent' | '' => {
+  if (!expiry) return '';
+  const daysToEarnings = earningsDate.diff(expiry, 'day');
+  if (earningsDate.isSameOrAfter(now)) {
+    if (daysToEarnings > -30 && daysToEarnings <= -15) return 'info';
+    if (daysToEarnings > -15 && daysToEarnings <= 0 && confirmed) return 'danger';
+    if (daysToEarnings > -15 && daysToEarnings <= 0 && !confirmed) return 'warning';
+    if (daysToEarnings > 0 && daysToEarnings <= 30) return 'info';
+  }
+  if (earningsDate.isBefore(now) && daysToEarnings > -30) return 'transparent';
+  return '';
+};
 
 export const getPositionsKeys = (accounts: Accounts) =>
   Object.values(accounts)

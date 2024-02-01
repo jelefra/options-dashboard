@@ -29,9 +29,7 @@ import {
   calcDteTotal,
   calcPriceIncrease,
   calcReturnPctForPeriod,
-  daysToEarningsDanger,
-  daysToEarningsInfo,
-  daysToEarningsWarning,
+  categoriseEarnings,
   formatDaysToEarnings,
   getPosition,
   getPositionsKeys,
@@ -325,48 +323,37 @@ const Call = () => {
 
                   const showZeroValues = showZeroValuesNames.includes(name);
 
-                  const earningsStatus = earnings[ticker]?.confirmed;
-                  const dayToEarningsClass = name === 'daysToEarnings' &&
-                    currentCallValues && {
-                      [styles.info]: daysToEarningsInfo(
-                        currentCallValues.daysToEarnings,
-                        earningsStatus
-                      ),
-                      [styles.warning]: daysToEarningsWarning(
-                        currentCallValues.daysToEarnings,
-                        earningsStatus
-                      ),
-                      [styles.danger]: daysToEarningsDanger(
-                        currentCallValues.daysToEarnings,
-                        earningsStatus
-                      ),
-                    };
+                  const earningsConfirmed = earnings[ticker]?.confirmed;
+                  const daysToEarningsClass = categoriseEarnings(
+                    earningsDate,
+                    currentCall?.expiry,
+                    NOW,
+                    earningsConfirmed
+                  );
 
                   return (
                     <td
-                      className={cx(
-                        {
-                          [styles[align]]: align === 'right',
-                          [colour]: name === 'batchCode',
-                          [accountColour]: name === 'account',
-                          [styles.contrast]: rowIndex % 2 && showContrast,
-                          [styles.freezeFirstTdColumn]: index === 0,
-                          [styles.freezeSecondTdColumn]: index === 1,
-                          [styles.warning]:
-                            currentCallValues &&
-                            currentCallValues.high &&
-                            current &&
-                            current > currentCallValues.high &&
-                            (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
-                          mute:
-                            name === 'return30DPctResidualEstimate' &&
-                            typeof row?.[name] !== undefined &&
-                            // Using the non-null assertion operator because
-                            // TypeScript infers that `row.return30DPctResidualEstimate` may be `undefined` otherwise
-                            row.return30DPctResidualEstimate! > MINIMUM_RETURN_THRESHOLD,
-                        },
-                        dayToEarningsClass
-                      )}
+                      className={cx({
+                        [styles[align]]: align === 'right',
+                        [colour]: name === 'batchCode',
+                        [accountColour]: name === 'account',
+                        [styles.contrast]: rowIndex % 2 && showContrast,
+                        [styles.freezeFirstTdColumn]: index === 0,
+                        [styles.freezeSecondTdColumn]: index === 1,
+                        [styles.warning]:
+                          currentCallValues &&
+                          currentCallValues.high &&
+                          current &&
+                          current > currentCallValues.high &&
+                          (name === 'returnGBP' || name === 'returnPct' || name === 'valueGBP'),
+                        mute:
+                          name === 'return30DPctResidualEstimate' &&
+                          typeof row?.[name] !== undefined &&
+                          // Using the non-null assertion operator because
+                          // TypeScript infers that `row.return30DPctResidualEstimate` may be `undefined` otherwise
+                          row.return30DPctResidualEstimate! > MINIMUM_RETURN_THRESHOLD,
+                        [styles[daysToEarningsClass]]: name === 'daysToEarnings',
+                      })}
                       key={index}
                     >
                       {(!!row[name] || showZeroValues) && format(row[name])}

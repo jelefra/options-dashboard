@@ -30,9 +30,7 @@ import {
   calcPriceIncrease,
   calcPutDifference,
   calcReturnPctForPeriod,
-  daysToEarningsDanger,
-  daysToEarningsInfo,
-  daysToEarningsWarning,
+  categoriseEarnings,
   formatDaysToEarnings,
   getPosition,
   getPositionsKeys,
@@ -293,32 +291,31 @@ const Put = () => {
                       name === 'daysToEarnings' ||
                       name === 'return30DPctResidualEstimate';
 
-                    const earningsStatus = earnings[ticker]?.confirmed;
-                    const dayToEarningsClass = name === 'daysToEarnings' && {
-                      [styles.info]: daysToEarningsInfo(daysToEarnings, earningsStatus),
-                      [styles.warning]: daysToEarningsWarning(daysToEarnings, earningsStatus),
-                      [styles.danger]: daysToEarningsDanger(daysToEarnings, earningsStatus),
-                    };
+                    const earningsConfirmed = earnings[ticker]?.confirmed;
+                    const daysToEarningsClass = categoriseEarnings(
+                      earningsDate,
+                      expiry,
+                      NOW,
+                      earningsConfirmed
+                    );
 
                     return (
                       <td
-                        className={cx(
-                          {
-                            [styles[align]]: align === 'right',
-                            [colour]: name === 'ticker',
-                            [accountColour]: name === 'account',
-                            [styles.contrast]: tradeIndex % 2 && index > 1,
-                            [styles.freezeFirstTdColumn]: index === 0,
-                            [styles.freezeSecondTdColumn]: index === 1,
-                            mute:
-                              name === 'return30DPctResidualEstimate' &&
-                              typeof row?.[name] !== undefined &&
-                              // Using the non-null assertion operator because
-                              // TypeScript infers that `row.return30DPctResidualEstimate` may be `undefined` otherwise
-                              row.return30DPctResidualEstimate! > MINIMUM_RETURN_THRESHOLD,
-                          },
-                          dayToEarningsClass
-                        )}
+                        className={cx({
+                          [styles[align]]: align === 'right',
+                          [colour]: name === 'ticker',
+                          [accountColour]: name === 'account',
+                          [styles.contrast]: tradeIndex % 2 && index > 1,
+                          [styles.freezeFirstTdColumn]: index === 0,
+                          [styles.freezeSecondTdColumn]: index === 1,
+                          mute:
+                            name === 'return30DPctResidualEstimate' &&
+                            typeof row?.[name] !== undefined &&
+                            // Using the non-null assertion operator because
+                            // TypeScript infers that `row.return30DPctResidualEstimate` may be `undefined` otherwise
+                            row.return30DPctResidualEstimate! > MINIMUM_RETURN_THRESHOLD,
+                          [styles[daysToEarningsClass]]: name === 'daysToEarnings',
+                        })}
                         key={index}
                       >
                         {(!!row[name] || showZeroValues) && format(row[name])}

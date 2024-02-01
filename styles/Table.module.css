@@ -72,6 +72,10 @@
   background-color: LemonChiffon;
 }
 
+.transparent {
+  color: transparent;
+}
+
 .closeTradePriceInput {
   width: 100%;
   text-align: right;
