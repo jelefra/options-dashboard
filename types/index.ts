@@ -453,6 +453,7 @@ type Summary = {
   };
   netliquidation: {
     amount: number;
+    timestamp: number;
   };
 };
 

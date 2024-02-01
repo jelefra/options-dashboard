@@ -1,6 +1,7 @@
 import cx from 'classnames';
 import dayjs from 'dayjs';
 
+import { ONE_DAY_IN_SECONDS } from '../constants';
 import accounts from '../data/accounts';
 import tickers from '../data/tickers';
 import styles from '../styles/Table.module.css';
@@ -9,6 +10,9 @@ import { isCurrentPut } from '../utils';
 import { thousands } from '../utils/format';
 
 const NOW = dayjs();
+
+const netLiquidationValueIsOutdated = (unixTimestamp: number) =>
+  new Date().getTime() - unixTimestamp > ONE_DAY_IN_SECONDS * 1000;
 
 const AccountsComponent = ({
   currencies,
@@ -83,42 +87,51 @@ const AccountsComponent = ({
         </tr>
       </thead>
       <tbody>
-        {Object.values(accountsToDisplay).map(({ name, id }, index) => (
-          <tr key={index}>
-            <td className={accounts[name].colour}>{name}</td>
-            <td className={styles.right}>
-              {thousands(summaries[`summary-${id}`]?.netliquidation?.amount)}
-            </td>
-            <td className={styles.right}>
-              {thousands(summaries[`summary-${id}`]?.excessliquidity?.amount)}
-            </td>
-            {currencies.map((currency, index) => {
-              const cashBalance = ledgers[`ledger-${id}`]?.[currency]?.cashbalance || 0;
-              const putCashEquivalent = currentPutsByAccount[name]?.[currency] || 0;
+        {Object.values(accountsToDisplay).map(({ name, id }, index) => {
+          const netLiquidationValueUnixTS = summaries[`summary-${id}`]?.netliquidation?.timestamp;
+          const netLiquidationValueAmount = summaries[`summary-${id}`]?.netliquidation?.amount;
 
-              // Workaround to avoid "Each child in a list should have a unique "key" prop."
-              const Cells = () => (
-                <>
-                  <td className={cx(styles.right, { [styles.contrast]: !(index % 2) })}>
-                    {thousands(cashBalance)}
-                  </td>
-                  {putCurrencies.includes(currency) && (
-                    <>
-                      <td className={cx(styles.right, { [styles.contrast]: !(index % 2) })}>
-                        {thousands(putCashEquivalent)}
-                      </td>
-                      <td className={cx(styles.right, { [styles.contrast]: !(index % 2) })}>
-                        {thousands(cashBalance - putCashEquivalent)}
-                      </td>
-                    </>
-                  )}
-                </>
-              );
+          return (
+            <tr key={index}>
+              <td className={accounts[name].colour}>{name}</td>
+              <td
+                className={cx(styles.right, {
+                  mute: netLiquidationValueIsOutdated(netLiquidationValueUnixTS),
+                })}
+              >
+                {thousands(netLiquidationValueAmount)}
+              </td>
+              <td className={styles.right}>
+                {thousands(summaries[`summary-${id}`]?.excessliquidity?.amount)}
+              </td>
+              {currencies.map((currency, index) => {
+                const cashBalance = ledgers[`ledger-${id}`]?.[currency]?.cashbalance || 0;
+                const putCashEquivalent = currentPutsByAccount[name]?.[currency] || 0;
 
-              return <Cells key={index} />;
-            })}
-          </tr>
-        ))}
+                // Workaround to avoid "Each child in a list should have a unique "key" prop."
+                const Cells = () => (
+                  <>
+                    <td className={cx(styles.right, { [styles.contrast]: !(index % 2) })}>
+                      {thousands(cashBalance)}
+                    </td>
+                    {putCurrencies.includes(currency) && (
+                      <>
+                        <td className={cx(styles.right, { [styles.contrast]: !(index % 2) })}>
+                          {thousands(putCashEquivalent)}
+                        </td>
+                        <td className={cx(styles.right, { [styles.contrast]: !(index % 2) })}>
+                          {thousands(cashBalance - putCashEquivalent)}
+                        </td>
+                      </>
+                    )}
+                  </>
+                );
+
+                return <Cells key={index} />;
+              })}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
