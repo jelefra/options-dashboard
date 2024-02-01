@@ -458,17 +458,15 @@ const Stocks = () => {
       ...stockData,
       allocation: stockData.valueGBP && stockData.valueGBP / totals.valueGBP.value,
       allocationWithActivePuts:
-        stockData.valueGBP &&
-        (stockData.valueGBP + (stockData.wheeling?.puts?.active?.valueGBP || 0)) /
-          (totals.valueGBP.value + totals.wheelingPutsActiveValueGBP.value),
+        ((stockData.valueGBP || 0) + (stockData.wheeling?.puts?.active?.valueGBP || 0)) /
+        (totals.valueGBP.value + totals.wheelingPutsActiveValueGBP.value),
       allocationNet:
-        stockData.valueGBP &&
-        (stockData.valueGBP +
+        ((stockData.valueGBP || 0) +
           (stockData.wheeling?.puts?.assignable?.valueGBP || 0) -
           (stockData.wheeling?.calls?.assignable?.valueGBP || 0)) /
-          (totals.valueGBP.value +
-            totals.wheelingPutsAssignableValueGBP.value -
-            totals.wheelingCallsAssignableValueGBP.value),
+        (totals.valueGBP.value +
+          totals.wheelingPutsAssignableValueGBP.value -
+          totals.wheelingCallsAssignableValueGBP.value),
     }))
     .sort((stockA, stockB) => (stockB.returnGBP || 0) - (stockA.returnGBP || 0))
     .sort((stockA, stockB) => (stockB.valueGBP || 0) - (stockA.valueGBP || 0));
