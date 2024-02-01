@@ -382,6 +382,21 @@ export type FinnhubQuote = {
   t: number; // Time
 };
 
+export type AlphaVantageQuote = {
+  'Global Quote': {
+    '01. symbol': string; // "TSCO.LON"
+    '02. open': string;
+    '03. high': string;
+    '04. low': string;
+    '05. price': string;
+    '06. volume': string;
+    '07. latest trading day': string; // "2024-01-30"
+    '08. previous close': string;
+    '09. change': string;
+    '10. change percent': string;
+  };
+};
+
 export type ExchangeRateResponse = { rates: ForexRates };
 
 export type CurrentTickerPrices = { [key: string]: number };

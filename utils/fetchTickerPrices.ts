@@ -2,14 +2,14 @@ import { createClient } from 'redis';
 
 import { ONE_HOUR_IN_SECONDS } from '../constants';
 import tickers from '../data/tickers';
-import { FinnhubQuote, MarketstackTickerEOD } from '../types';
+import { AlphaVantageQuote, FinnhubQuote, MarketstackTickerEOD } from '../types';
 import { fetchAndStore, getFromRedis } from './get';
-import { sanitiseFinnhubLogs, sanitiseMarketstackLogs } from './index';
+import { sanitiseAlphaVantageLogs, sanitiseFinnhubLogs, sanitiseMarketstackLogs } from './index';
 
 /* eslint-disable no-unused-vars */
 type ExchangeInfo = {
   constructURL: (ticker: string) => string;
-  extractPrice: (response: any) => number;
+  extractPrice: (response: any) => number | undefined;
   expiry?: number;
   logSanitiser: (URL: string) => string;
 };
@@ -21,21 +21,25 @@ const getExchangeInfo = (exchange: string): ExchangeInfo => {
       return {
         constructURL: (ticker) =>
           `http://api.marketstack.com/v1/tickers/${ticker}.${exchange}/eod/latest?access_key=${process.env.MARKETSTACK_KEY}`,
-        extractPrice: (response: MarketstackTickerEOD) => response?.close ?? null,
+        extractPrice: (response: MarketstackTickerEOD) => response?.close ?? undefined,
         logSanitiser: sanitiseMarketstackLogs,
+        expiry: 2 * ONE_HOUR_IN_SECONDS,
       };
     case 'XLON':
       return {
         constructURL: (ticker) =>
-          `http://api.marketstack.com/v1/tickers/${ticker}.${exchange}/eod/latest?access_key=${process.env.MARKETSTACK_KEY}`,
-        extractPrice: (response: MarketstackTickerEOD) => response?.close / 100 ?? null,
-        logSanitiser: sanitiseMarketstackLogs,
+          `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}.LON&apikey=${process.env.ALPHA_VANTAGE_KEY}`,
+        extractPrice: (response: AlphaVantageQuote) =>
+          response?.['Global Quote']?.['05. price']
+            ? Number(response['Global Quote']['05. price']) / 100
+            : undefined,
+        logSanitiser: sanitiseAlphaVantageLogs,
       };
     default:
       return {
         constructURL: (ticker) =>
           `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${process.env.FINNHUB_API_KEY}`,
-        extractPrice: (response: FinnhubQuote) => response?.c ?? null,
+        extractPrice: (response: FinnhubQuote) => response?.c ?? undefined,
         logSanitiser: sanitiseFinnhubLogs,
       };
   }
@@ -45,7 +49,7 @@ const fetchTickerPrices = async (
   tickersToQuery: string[],
   ignoreCurrentCache: boolean = false
 ): Promise<{
-  [key: string]: number;
+  [key: string]: number | undefined;
 }> => {
   let countOfTickersToQueryFromAPI = 0;
   const tickerPrices = await Promise.all(
@@ -81,11 +85,14 @@ const fetchTickerPrices = async (
     })
   );
 
-  return tickerPrices.reduce((tickerPriceMap: { [key: string]: number }, tickerWithPrice) => {
-    const { ticker, latestPrice } = tickerWithPrice;
-    tickerPriceMap[ticker] = latestPrice;
-    return tickerPriceMap;
-  }, {});
+  return tickerPrices.reduce(
+    (tickerPriceMap: { [key: string]: number | undefined }, tickerWithPrice) => {
+      const { ticker, latestPrice } = tickerWithPrice;
+      tickerPriceMap[ticker] = latestPrice;
+      return tickerPriceMap;
+    },
+    {}
+  );
 };
 
 export default fetchTickerPrices;

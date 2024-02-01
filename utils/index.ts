@@ -64,6 +64,7 @@ export const getPosition = (
 export const sanitiseFinnhubLogs = (URL: string) => URL.replace(/token=\w+/, 'token=***');
 export const sanitiseMarketstackLogs = (URL: string) =>
   URL.replace(/access_key=\w+/, 'access_key=***');
+export const sanitiseAlphaVantageLogs = (URL: string) => URL.replace(/apikey=\w+/, 'apikey=***');
 export const sanitiseOpenExchangeRatesLogs = (URL: string) =>
   URL.replace(/app_id=\w+/, 'app_id=***');
 
