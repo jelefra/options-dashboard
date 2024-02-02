@@ -9,9 +9,9 @@ import tradesData from '../../data/options.csv';
 import tickers, { tickersMap } from '../../data/tickers';
 // @ts-ignore
 import transactionsData from '../../data/transactions.csv';
-import { ExchangeRateResponse, TradeData, TransactionData } from '../../types';
+import { TradeData, TransactionData } from '../../types';
 import { removeNullValues, sanitiseOpenExchangeRatesLogs } from '../../utils';
-import get from '../../utils/get';
+import { fetchAndStore, getFromRedis } from '../../utils/get';
 
 const formatDateForAPI = (dateInBritishFormat: string): string => {
   const [dd, mm, yyyy] = dateInBritishFormat.split('/');
@@ -54,25 +54,37 @@ const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) =
     return dates;
   }, cloneDeep(datesFromTransactions));
 
+  const formatApiResponse = (response: any, currencies: string[], date: string) => {
+    const ratesBaseUSD = response.rates;
+    const ratesBaseGBP = Object.fromEntries(
+      currencies.map((currency) => [currency, ratesBaseUSD[currency] / ratesBaseUSD.GBP])
+    );
+    return { date, rates: ratesBaseGBP };
+  };
+
+  let countOfRatesToQueryFromAPI = 0;
+
   const historicalForexRates = await Promise.all(
-    Object.entries(dates).map(async ([date, currencies], index) => {
+    Object.entries(dates).map(async ([date, currencies]) => {
       const URL = constructURL(date);
       const client = createClient();
       await client.connect();
-      const response: ExchangeRateResponse = await get({
-        client,
-        URL,
-        keyName: `rates-${formatDateForAPI(date)}`,
-        expiry: TEN_YEARS_IN_SECONDS,
-        // Delay queries to avoid 'Too Many Requests' (429) statuses
-        initialFetchDelay: index * 100,
-        logSanitiser: sanitiseOpenExchangeRatesLogs,
-      });
-      const ratesBaseUSD = response?.rates;
-      const ratesBaseGBP = Object.fromEntries(
-        currencies.map((currency) => [currency, ratesBaseUSD[currency] / ratesBaseUSD.GBP])
-      );
-      return { date, rates: ratesBaseGBP };
+      const redisData = await getFromRedis(client, `rates-${formatDateForAPI(date)}`);
+      if (redisData) {
+        return formatApiResponse(redisData, currencies, date);
+      } else {
+        const response = await fetchAndStore({
+          client,
+          URL,
+          keyName: `rates-${formatDateForAPI(date)}`,
+          expiry: TEN_YEARS_IN_SECONDS,
+          logSanitiser: sanitiseOpenExchangeRatesLogs,
+          // Delay queries to avoid 'Too Many Requests' (429) statuses
+          initialFetchDelay: countOfRatesToQueryFromAPI * 100,
+        });
+        countOfRatesToQueryFromAPI++;
+        return formatApiResponse(response, currencies, date);
+      }
     })
   );
 
