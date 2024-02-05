@@ -41,7 +41,7 @@ export const categoriseEarnings = (
 ): 'warning' | 'danger' | 'info' | 'transparent' | '' => {
   if (!expiry) return '';
   const daysToEarnings = earningsDate.diff(expiry, 'day');
-  if (earningsDate.isSameOrAfter(now)) {
+  if (earningsDate.isSameOrAfter(now, 'day')) {
     if (daysToEarnings > -30 && daysToEarnings <= -15) return 'info';
     if (daysToEarnings > -15 && daysToEarnings <= 0 && confirmed) return 'danger';
     if (daysToEarnings > -15 && daysToEarnings <= 0 && !confirmed) return 'warning';
