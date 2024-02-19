@@ -286,7 +286,7 @@ export type BankData = {
   type: BankActivityTypes;
 };
 
-export type BankActivityTypes = 'Deposit' | 'Conversion';
+export type BankActivityTypes = 'Deposit' | 'Withdrawal' | 'Conversion';
 
 export type ForexRates = { [key: string]: number };
 

@@ -10,6 +10,7 @@ import Forex from '../components/Forex';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import ManageIBKRData from '../components/ManageIBKRData';
 import RefetchTickerPrices from '../components/RefetchTickerPrices';
+import Return from '../components/Return';
 import Tickers from '../components/Tickers';
 import Weight from '../components/Weight';
 import accounts from '../data/accounts';
@@ -176,6 +177,7 @@ const Home = () => {
           trades={trades}
         />
       )}
+      <Return />
       <Tickers earnings={earnings} now={NOW} trades={trades} transactions={transactions} />
       {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
     </Container>

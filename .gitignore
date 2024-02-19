@@ -38,6 +38,7 @@ yarn-error.log*
 data/options.csv
 data/transactions.csv
 data/bank.csv
+data/account-values.csv
 
 data/tickers.ts
 styles/tickers.css
