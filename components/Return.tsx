@@ -12,6 +12,8 @@ import { pctOne, thousands } from '../utils/format';
 
 type AccountValue = { month: string } & { [key: string]: number };
 
+type AccountData = { start: number; deposits: number; withdrawals: number; end: number };
+
 const findRow = (date: Dayjs, data: AccountValue[]) =>
   data.find((row) => row.month === date.format(INPUT_DATE_FORMAT));
 
@@ -31,6 +33,36 @@ const Return = () => {
       dayjs(operation.date, INPUT_DATE_FORMAT).isBefore(endDate)
   );
 
+  const accountDataDictionary = accountNames.map((account) => {
+    const start = startRow?.[account] || 0;
+    const end = endRow?.[account] || 0;
+
+    const { deposits, withdrawals } = operationsInTimeframe.reduce(
+      (summary, operation) => {
+        if (operation.account === account && operation.type === 'Deposit') {
+          summary.deposits += operation.amount;
+        }
+        if (operation.account === account && operation.type === 'Withdrawal') {
+          summary.withdrawals += operation.amount;
+        }
+        return summary;
+      },
+      { deposits: 0, withdrawals: 0 }
+    );
+
+    return { [account]: { start, deposits, withdrawals, end } };
+  });
+
+  const aggregateData = accountDataDictionary.reduce(
+    (summary: AccountData, cv) => {
+      Object.entries(Object.values(cv)[0]).forEach(([key, value]) => {
+        summary[key as keyof AccountData] += value;
+      });
+      return summary;
+    },
+    { start: 0, deposits: 0, withdrawals: 0, end: 0 }
+  );
+
   return (
     <table className={styles.table}>
       <thead>
@@ -44,23 +76,8 @@ const Return = () => {
         </tr>
       </thead>
       <tbody>
-        {accountNames.map((account, index) => {
-          const start = startRow?.[account] || 0;
-          const end = endRow?.[account] || 0;
-
-          const { deposits, withdrawals } = operationsInTimeframe.reduce(
-            (summary, operation) => {
-              if (operation.account === account && operation.type === 'Deposit') {
-                summary.deposits += operation.amount;
-              }
-              if (operation.account === account && operation.type === 'Withdrawal') {
-                summary.withdrawals += operation.amount;
-              }
-              return summary;
-            },
-            { deposits: 0, withdrawals: 0 }
-          );
-
+        {[...accountDataDictionary, { Total: aggregateData }].map((row, index) => {
+          const [account, { start, deposits, withdrawals, end }] = Object.entries(row)[0];
           // Rough estimates
           const returnEstimates = [
             (end + withdrawals) / (start + deposits) - 1, // deposits at start, withdrawals at end
@@ -77,7 +94,7 @@ const Return = () => {
 
           return (
             <tr key={index}>
-              <td className={accounts[account].colour}>{account}</td>
+              <td className={(accounts[account] || {}).colour}>{account}</td>
               <td className={styles.right}>{thousands(start)}</td>
               <td className={styles.right}>{thousands(deposits)}</td>
               <td className={styles.right}>{thousands(withdrawals)}</td>
