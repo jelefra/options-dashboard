@@ -1,4 +1,6 @@
+import cx from 'classnames';
 import dayjs, { Dayjs } from 'dayjs';
+import { useState } from 'react';
 
 import { INPUT_DATE_FORMAT } from '../constants';
 // @ts-ignore
@@ -6,7 +8,8 @@ import accountValuesData from '../data/account-values.csv';
 import accounts from '../data/accounts';
 // @ts-ignore
 import bankData from '../data/bank.csv';
-import styles from '../styles/Table.module.css';
+import buttonStyles from '../styles/Button.module.css';
+import tableStyles from '../styles/Table.module.css';
 import { BankData } from '../types';
 import { pctOne, thousands } from '../utils/format';
 
@@ -18,11 +21,11 @@ const findRow = (date: Dayjs, data: AccountValue[]) =>
   data.find((row) => row.month === date.format(INPUT_DATE_FORMAT));
 
 const Return = () => {
+  const [startDate, setStartDate] = useState<Dayjs>(dayjs('2023-01-01'));
   const accountNames = Object.keys(accounts);
   const accountsValues: AccountValue[] = accountValuesData;
 
-  const startDate = dayjs('2023-01-01');
-  const endDate = startDate.add(1, 'year');
+  const endDate = startDate.add(12, 'months');
   const startRow = findRow(startDate, accountsValues);
   const endRow = findRow(endDate, accountsValues);
 
@@ -63,48 +66,73 @@ const Return = () => {
     { start: 0, deposits: 0, withdrawals: 0, end: 0 }
   );
 
-  return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          <th>Account</th>
-          <th>Start value</th>
-          <th>Deposits</th>
-          <th>Withdrawals</th>
-          <th>End value</th>
-          <th>Return</th>
-        </tr>
-      </thead>
-      <tbody>
-        {[...accountDataDictionary, { Total: aggregateData }].map((row, index) => {
-          const [account, { start, deposits, withdrawals, end }] = Object.entries(row)[0];
-          // Rough estimates
-          const returnEstimates = [
-            (end + withdrawals) / (start + deposits) - 1, // deposits at start, withdrawals at end
-            (end - deposits) / (start - withdrawals) - 1, // deposits at end, withdrawals at start
-            (end - deposits + withdrawals) / start - 1, // deposits at end, withdrawals at end
-            end / (start + deposits - withdrawals) - 1, // deposits at start, withdrawals at start
-          ];
-          const returnMin = Math.min(...returnEstimates);
-          const returnMax = Math.max(...returnEstimates);
-          const returnDisplayed =
-            returnMin === returnMax
-              ? pctOne(end / start - 1)
-              : `${pctOne(returnMin)} to ${pctOne(returnMax)}`;
+  const years = accountsValues.reduce(
+    (years: { [key: number]: { year: number; count: number } }, cv) => {
+      const year = dayjs(cv.month, INPUT_DATE_FORMAT).year();
+      years[year] = { year, count: (years[year]?.count ?? 0) + 1 };
+      return years;
+    },
+    {}
+  );
 
-          return (
-            <tr key={index}>
-              <td className={(accounts[account] || {}).colour}>{account}</td>
-              <td className={styles.right}>{thousands(start)}</td>
-              <td className={styles.right}>{thousands(deposits)}</td>
-              <td className={styles.right}>{thousands(withdrawals)}</td>
-              <td className={styles.right}>{thousands(end)}</td>
-              <td className={styles.right}>{returnDisplayed}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+  return (
+    <div>
+      {Object.values(years).map(({ year, count }) => {
+        const currentYear = year === startDate.year();
+        return (
+          <button
+            className={cx(buttonStyles.button, buttonStyles.primary, {
+              [buttonStyles.disabled]: currentYear,
+            })}
+            onClick={!currentYear ? () => setStartDate(dayjs(`${year}-01-01`)) : undefined}
+            key={year}
+          >
+            {count === 12 ? year : `${year} (${count}m)`}
+          </button>
+        );
+      })}
+      <table className={tableStyles.table}>
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Start value</th>
+            <th>Deposits</th>
+            <th>Withdrawals</th>
+            <th>End value</th>
+            <th>Return</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...accountDataDictionary, { Total: aggregateData }].map((row, index) => {
+            const [account, { start, deposits, withdrawals, end }] = Object.entries(row)[0];
+            // Rough estimates
+            const returnEstimates = [
+              (end + withdrawals) / (start + deposits) - 1, // deposits at start, withdrawals at end
+              (end - deposits) / (start - withdrawals) - 1, // deposits at end, withdrawals at start
+              (end - deposits + withdrawals) / start - 1, // deposits at end, withdrawals at end
+              end / (start + deposits - withdrawals) - 1, // deposits at start, withdrawals at start
+            ];
+            const returnMin = Math.min(...returnEstimates);
+            const returnMax = Math.max(...returnEstimates);
+            const returnDisplayed =
+              returnMin === returnMax
+                ? pctOne(end / start - 1)
+                : `${pctOne(returnMin)} to ${pctOne(returnMax)}`;
+
+            return (
+              <tr key={index}>
+                <td className={(accounts[account] || {}).colour}>{account}</td>
+                <td className={tableStyles.right}>{thousands(start)}</td>
+                <td className={tableStyles.right}>{thousands(deposits)}</td>
+                <td className={tableStyles.right}>{thousands(withdrawals)}</td>
+                <td className={tableStyles.right}>{thousands(end)}</td>
+                <td className={tableStyles.right}>{returnDisplayed}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 };
 
