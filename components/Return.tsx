@@ -1,5 +1,7 @@
 import cx from 'classnames';
 import dayjs, { Dayjs } from 'dayjs';
+import minMax from 'dayjs/plugin/minMax';
+dayjs.extend(minMax);
 import { useState } from 'react';
 
 import { INPUT_DATE_FORMAT } from '../constants';
@@ -14,51 +16,16 @@ import { BankData } from '../types';
 import { pctOne, thousands } from '../utils/format';
 
 type AccountValue = { month: string } & { [key: string]: number };
-
 type AccountData = { start: number; deposits: number; withdrawals: number; end: number };
+type TimeFrame = { start: Dayjs; duration: number; id: string; count: number };
 
-const findRow = (date: Dayjs, data: AccountValue[]) =>
-  data.find((row) => row.month === date.format(INPUT_DATE_FORMAT));
+const ACCOUNT_VALUES: AccountValue[] = accountValuesData;
+const BANK: BankData[] = bankData;
 
-const Return = () => {
-  const [startDate, setStartDate] = useState<Dayjs>(dayjs('2023-01-01'));
-  const accountNames = Object.keys(accounts);
-  const accountsValues: AccountValue[] = accountValuesData;
-
-  const endDate = startDate.add(12, 'months');
-  const startRow = findRow(startDate, accountsValues);
-  const endRow = findRow(endDate, accountsValues);
-
-  const bank: BankData[] = bankData;
-  const operationsInTimeframe = bank.filter(
-    (operation) =>
-      dayjs(operation.date, INPUT_DATE_FORMAT).isSameOrAfter(startDate) &&
-      dayjs(operation.date, INPUT_DATE_FORMAT).isBefore(endDate)
-  );
-
-  const accountDataDictionary = accountNames.map((account) => {
-    const start = startRow?.[account] || 0;
-    const end = endRow?.[account] || 0;
-
-    const { deposits, withdrawals } = operationsInTimeframe.reduce(
-      (summary, operation) => {
-        if (operation.account === account && operation.type === 'Deposit') {
-          summary.deposits += operation.amount;
-        }
-        if (operation.account === account && operation.type === 'Withdrawal') {
-          summary.withdrawals += operation.amount;
-        }
-        return summary;
-      },
-      { deposits: 0, withdrawals: 0 }
-    );
-
-    return { [account]: { start, deposits, withdrawals, end } };
-  });
-
-  const aggregateData = accountDataDictionary.reduce(
-    (summary: AccountData, cv) => {
-      Object.entries(Object.values(cv)[0]).forEach(([key, value]) => {
+const getAggregateData = (accountDataDictionary: { [key: string]: AccountData }[]): AccountData =>
+  accountDataDictionary.reduce(
+    (summary: AccountData, accountDataObject) => {
+      Object.entries(Object.values(accountDataObject)[0]).forEach(([key, value]) => {
         summary[key as keyof AccountData] += value;
       });
       return summary;
@@ -66,7 +33,59 @@ const Return = () => {
     { start: 0, deposits: 0, withdrawals: 0, end: 0 }
   );
 
-  const years = accountsValues.reduce(
+const getOperationsInTimeFrame = (effectiveStartDate: Dayjs, effectiveEndDate: Dayjs) =>
+  BANK.filter(
+    (operation) =>
+      dayjs(operation.date, INPUT_DATE_FORMAT).isSameOrAfter(effectiveStartDate) &&
+      dayjs(operation.date, INPUT_DATE_FORMAT).isBefore(effectiveEndDate)
+  );
+
+const getEffectiveDates = (lastLoggedDate: Dayjs, timeFrame: TimeFrame) => {
+  const firstLoggedDate = dayjs(ACCOUNT_VALUES[0].month, INPUT_DATE_FORMAT);
+  const endDate = timeFrame.start.add(timeFrame.duration, 'months');
+
+  return {
+    effectiveStartDate: dayjs.max([firstLoggedDate, timeFrame.start]),
+    effectiveEndDate: dayjs.min([lastLoggedDate, endDate]),
+  };
+};
+
+const getAccountDataDictionary = (
+  lastLoggedDate: Dayjs,
+  timeFrame: TimeFrame
+): { [key: string]: AccountData }[] => {
+  const { effectiveStartDate, effectiveEndDate } = getEffectiveDates(lastLoggedDate, timeFrame);
+  const operationsInTimeFrame = getOperationsInTimeFrame(effectiveStartDate, effectiveEndDate);
+  const startRow = findRow(effectiveStartDate, ACCOUNT_VALUES);
+  const endRow = findRow(effectiveEndDate, ACCOUNT_VALUES);
+
+  if (!startRow || !endRow) {
+    throw new Error('Missing account values');
+  }
+
+  const accountDataDictionarySkeleton = Object.keys(accounts).map((account) => {
+    const start = startRow[account];
+    const end = endRow[account];
+    return { [account]: { start, end, deposits: 0, withdrawals: 0 } };
+  });
+
+  return operationsInTimeFrame.reduce((operations, { account, type, amount }) => {
+    const relevantAccount = operations.find((accAccount) => accAccount[account]);
+    if (!relevantAccount) {
+      throw new Error(`Account not found: ${account}`);
+    }
+    if (type === 'Deposit') {
+      relevantAccount[account].deposits += amount;
+    }
+    if (type === 'Withdrawal') {
+      relevantAccount[account].withdrawals += amount;
+    }
+    return operations;
+  }, accountDataDictionarySkeleton);
+};
+
+const getYearsTimeFrames = (): TimeFrame[] => {
+  const years = ACCOUNT_VALUES.reduce(
     (years: { [key: number]: { year: number; count: number } }, cv) => {
       const year = dayjs(cv.month, INPUT_DATE_FORMAT).year();
       years[year] = { year, count: (years[year]?.count ?? 0) + 1 };
@@ -75,19 +94,56 @@ const Return = () => {
     {}
   );
 
+  return Object.values(years).map(({ year, count }) => ({
+    start: dayjs(`${year}-01-01`),
+    duration: 12,
+    count,
+    id: String(year),
+  }));
+};
+
+const findRow = (date: Dayjs, data: AccountValue[]) =>
+  data.find((row) => row.month === date.format(INPUT_DATE_FORMAT));
+
+const getMonthsTimeFrames = (lastLoggedDate: Dayjs): TimeFrame[] =>
+  [12, 6, 3]
+    .map((months) => ({
+      start: lastLoggedDate.subtract(months, 'month'),
+      duration: months,
+      count: 12,
+      id: `${months}M`,
+    }))
+    .filter((monthTimeFrame) => findRow(monthTimeFrame.start, ACCOUNT_VALUES));
+
+const getTimeFrames = (lastLoggedDate: Dayjs): TimeFrame[] => {
+  const monthsTimeFrames = getMonthsTimeFrames(lastLoggedDate);
+  const yearsTimeFrames = getYearsTimeFrames();
+  return [...yearsTimeFrames, ...monthsTimeFrames];
+};
+
+const Return = () => {
+  const lastLoggedDate = dayjs(ACCOUNT_VALUES.slice(-1)[0].month, INPUT_DATE_FORMAT);
+  const timeFrames = getTimeFrames(lastLoggedDate);
+
+  const [timeFrame, setTimeFrame] = useState<TimeFrame>(timeFrames.slice(-1)[0]);
+
+  const accountDataDictionary = getAccountDataDictionary(lastLoggedDate, timeFrame);
+  const aggregateData = getAggregateData(accountDataDictionary);
+
   return (
     <div>
-      {Object.values(years).map(({ year, count }) => {
-        const currentYear = year === startDate.year();
+      {timeFrames.map(({ start, count, duration, id }, index) => {
+        const current = id === timeFrame.id;
+
         return (
           <button
             className={cx(buttonStyles.button, buttonStyles.primary, {
-              [buttonStyles.disabled]: currentYear,
+              [buttonStyles.disabled]: current,
             })}
-            onClick={!currentYear ? () => setStartDate(dayjs(`${year}-01-01`)) : undefined}
-            key={year}
+            onClick={!current ? () => setTimeFrame({ start, duration, id, count }) : undefined}
+            key={id}
           >
-            {count === 12 ? year : `${year} (${count}m)`}
+            {count === 12 ? id : `${id} (${count - (index === 0 ? 0 : 1)}m)`}
           </button>
         );
       })}
