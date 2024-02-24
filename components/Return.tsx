@@ -16,7 +16,13 @@ import { BankData } from '../types';
 import { pctOne, thousands } from '../utils/format';
 
 type AccountValue = { month: string } & { [key: string]: number };
-type AccountData = { start: number; deposits: number; withdrawals: number; end: number };
+type AccountData = {
+  start: number;
+  deposits: number;
+  withdrawals: number;
+  net: number;
+  end: number;
+};
 type TimeFrame = { start: Dayjs; duration: number; id: string; count: number };
 
 const ACCOUNT_VALUES: AccountValue[] = accountValuesData;
@@ -30,7 +36,7 @@ const getAggregateData = (accountDataDictionary: { [key: string]: AccountData }[
       });
       return summary;
     },
-    { start: 0, deposits: 0, withdrawals: 0, end: 0 }
+    { start: 0, deposits: 0, withdrawals: 0, net: 0, end: 0 }
   );
 
 const getOperationsInTimeFrame = (effectiveStartDate: Dayjs, effectiveEndDate: Dayjs) =>
@@ -63,11 +69,13 @@ const getAccountDataDictionary = (
     throw new Error('Missing account values');
   }
 
-  const accountDataDictionarySkeleton = Object.keys(accounts).map((account) => {
-    const start = startRow[account];
-    const end = endRow[account];
-    return { [account]: { start, end, deposits: 0, withdrawals: 0 } };
-  });
+  const accountDataDictionarySkeleton: { [key: string]: AccountData }[] = Object.keys(accounts).map(
+    (account) => {
+      const start = startRow[account];
+      const end = endRow[account];
+      return { [account]: { start, end, deposits: 0, withdrawals: 0, net: 0 } };
+    }
+  );
 
   return operationsInTimeFrame.reduce((operations, { account, type, amount }) => {
     const relevantAccount = operations.find((accAccount) => accAccount[account]);
@@ -76,9 +84,11 @@ const getAccountDataDictionary = (
     }
     if (type === 'Deposit') {
       relevantAccount[account].deposits += amount;
+      relevantAccount[account].net += amount;
     }
     if (type === 'Withdrawal') {
       relevantAccount[account].withdrawals += amount;
+      relevantAccount[account].net -= amount;
     }
     return operations;
   }, accountDataDictionarySkeleton);
@@ -154,13 +164,14 @@ const Return = () => {
             <th>Start value</th>
             <th>Deposits</th>
             <th>Withdrawals</th>
+            <th>Net</th>
             <th>End value</th>
             <th>Return</th>
           </tr>
         </thead>
         <tbody>
           {[...accountDataDictionary, { Total: aggregateData }].map((row, index) => {
-            const [account, { start, deposits, withdrawals, end }] = Object.entries(row)[0];
+            const [account, { start, deposits, withdrawals, net, end }] = Object.entries(row)[0];
             // Rough estimates
             const returnEstimates = [
               (end + withdrawals) / (start + deposits) - 1, // deposits at start, withdrawals at end
@@ -181,6 +192,7 @@ const Return = () => {
                 <td className={tableStyles.right}>{thousands(start)}</td>
                 <td className={tableStyles.right}>{thousands(deposits)}</td>
                 <td className={tableStyles.right}>{thousands(withdrawals)}</td>
+                <td className={tableStyles.right}>{thousands(net)}</td>
                 <td className={tableStyles.right}>{thousands(end)}</td>
                 <td className={tableStyles.right}>{returnDisplayed}</td>
               </tr>
