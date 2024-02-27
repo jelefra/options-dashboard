@@ -160,7 +160,7 @@ const Return = () => {
       <table className={tableStyles.table}>
         <thead>
           <tr>
-            <th>Account</th>
+            <th />
             <th>Start value</th>
             <th>Deposits</th>
             <th>Withdrawals</th>
