@@ -143,7 +143,9 @@ const AccountsComponent = ({
         </tr>
       </thead>
       <tbody>
-        {Object.values([...accountsData, aggregateData]).map(
+        {Object.values(
+          accountsToDisplay.length > 1 ? [...accountsData, aggregateData] : accountsData
+        ).map(
           (
             { name, liquidationValueAmount, liquidationValueTS, excessLiquidity, ...rest },
             index
