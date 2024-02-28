@@ -50,9 +50,10 @@ const getEffectiveDates = (lastLoggedDate: Dayjs, timeFrame: TimeFrame) => {
   const firstLoggedDate = dayjs(ACCOUNT_VALUES[0].month, INPUT_DATE_FORMAT);
   const endDate = timeFrame.start.add(timeFrame.duration, 'months');
 
+  // TODO Remove type casting (unexpectedly required after migrating from Yarn to npm)
   return {
-    effectiveStartDate: dayjs.max([firstLoggedDate, timeFrame.start]),
-    effectiveEndDate: dayjs.min([lastLoggedDate, endDate]),
+    effectiveStartDate: dayjs.max([firstLoggedDate, timeFrame.start]) as Dayjs,
+    effectiveEndDate: dayjs.min([lastLoggedDate, endDate]) as Dayjs,
   };
 };
 

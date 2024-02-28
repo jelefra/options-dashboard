@@ -22,10 +22,9 @@ const CloseTradePriceInput = ({
 
   const formatValue = (value: string) => value && decimalTwo(parseFloat(value) || 0);
 
-  type Event<T> = { target: T };
-
-  const act = async (e: Event<HTMLInputElement>) => {
-    const value = formatValue(e.target.value);
+  const act = async (e: ChangeEvent<HTMLInputElement> | KeyboardEvent<HTMLInputElement>) => {
+    // TODO Remove type casting (unexpectedly required after migrating from Yarn to npm)
+    const value = formatValue((e.target as HTMLInputElement).value);
     if (value === '0.00' || value === '') {
       setCloseTradePrices({ ...closeTradePrices, [batchId]: null });
       await deleteKey();
