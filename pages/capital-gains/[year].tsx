@@ -18,7 +18,14 @@ import tickers, { tickersMap } from '../../data/tickers';
 // @ts-ignore
 import transactionsData from '../../data/transactions.csv';
 import styles from '../../styles/Table.module.css';
-import { Account, ForexRates, HistoricalForexRates, TradeData, TransactionData } from '../../types';
+import {
+  Account,
+  AccountName,
+  ForexRates,
+  HistoricalForexRates,
+  TradeData,
+  TransactionData,
+} from '../../types';
 import { removeNullValues } from '../../utils';
 import { factorStockSplit } from '../../utils/factorStockSplit';
 import { dateMediumTerm, thousands } from '../../utils/format';
@@ -425,7 +432,11 @@ const CapitalGains = () => {
                   0
                 );
               return (
-                <th colSpan={colSpan} className={accounts[account].colour} key={account}>
+                <th
+                  colSpan={colSpan}
+                  className={accounts[account as AccountName].colour}
+                  key={account}
+                >
                   {account}
                 </th>
               );

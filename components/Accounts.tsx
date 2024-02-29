@@ -5,7 +5,7 @@ import { ONE_DAY_IN_SECONDS } from '../constants';
 import accounts from '../data/accounts';
 import tickers from '../data/tickers';
 import styles from '../styles/Table.module.css';
-import { Ledgers, PutData, Summaries, TradeData } from '../types';
+import { AccountName, Ledgers, PutData, Summaries, TradeData } from '../types';
 import { isCurrentPut } from '../utils';
 import { thousands } from '../utils/format';
 
@@ -22,7 +22,7 @@ type CurrencyData = {
 };
 
 type AccountData = {
-  name: string;
+  name: AccountName;
   liquidationValueAmount: number;
   liquidationValueTS: number;
   excessLiquidity: number;
@@ -151,7 +151,7 @@ const AccountsComponent = ({
             index
           ) => (
             <tr key={index}>
-              <td className={accounts[name]?.colour}>{name}</td>
+              <td className={accounts[name as AccountName]?.colour}>{name}</td>
               <td
                 className={cx(styles.right, {
                   mute: netLiquidationValueIsOutdated(liquidationValueTS),

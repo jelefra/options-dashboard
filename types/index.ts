@@ -1,6 +1,8 @@
 import { Dayjs } from 'dayjs';
 import { ReactElement } from 'react';
 
+import { accountNames } from '../data/accounts';
+
 export type Stock = {
   colour: string;
   currency: string;
@@ -103,7 +105,7 @@ export type StockEnriched = Stock & {
 };
 
 type Operation = {
-  account: string;
+  account: AccountName;
   commission: number;
   stockPrice: number;
   ticker: string;
@@ -179,12 +181,15 @@ export type Account = {
   tickers: string[];
 };
 
+export type AccountName = (typeof accountNames)[number];
+
 export type Accounts = {
-  [key: string]: Account;
+  // eslint-disable-next-line no-unused-vars
+  [key in AccountName]: Account;
 };
 
 type GenericRow = {
-  account: string;
+  account: AccountName;
   current?: number;
 };
 
@@ -259,7 +264,7 @@ export type CallRowWithCurrentCall = Row &
 
 export type Batch = {
   acquisitionCost: number;
-  account: string;
+  account: AccountName;
   acquisitionDate: Dayjs;
   batchCode: string;
   colour: string;
@@ -277,7 +282,7 @@ export type Batch = {
 };
 
 export type BankData = {
-  account: string;
+  account: AccountName;
   amount: number;
   commission: number;
   currencyPair: string;
@@ -293,7 +298,7 @@ export type ForexRates = { [key: string]: number };
 export type HistoricalForexRates = { [key: string]: ForexRates };
 
 export type ForexRow = {
-  account: string;
+  account: AccountName;
   amount: number;
   currencyPair: string;
   currentRate: number;

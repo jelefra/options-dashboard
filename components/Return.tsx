@@ -8,14 +8,16 @@ import { INPUT_DATE_FORMAT } from '../constants';
 // @ts-ignore
 import accountValuesData from '../data/account-values.csv';
 import accounts from '../data/accounts';
+import { accountNames } from '../data/accounts';
 // @ts-ignore
 import bankData from '../data/bank.csv';
 import buttonStyles from '../styles/Button.module.css';
 import tableStyles from '../styles/Table.module.css';
-import { BankData } from '../types';
+import { AccountName, BankData } from '../types';
 import { pctOne, thousands } from '../utils/format';
 
-type AccountValue = { month: string } & { [key: string]: number };
+// eslint-disable-next-line no-unused-vars
+type AccountValue = { month: string } & { [key in AccountName]: number };
 type AccountData = {
   start: number;
   deposits: number;
@@ -70,28 +72,32 @@ const getAccountDataDictionary = (
     throw new Error('Missing account values');
   }
 
-  const accountDataDictionarySkeleton: { [key: string]: AccountData }[] = Object.keys(accounts).map(
+  // eslint-disable-next-line no-unused-vars
+  const accountDataDictionarySkeleton: { [key in AccountName]: AccountData }[] = accountNames.map(
     (account) => {
       const start = startRow[account];
       const end = endRow[account];
-      return { [account]: { start, end, deposits: 0, withdrawals: 0, net: 0 } };
+      return { [account]: { start, end, deposits: 0, withdrawals: 0, net: 0 } } as {
+        // eslint-disable-next-line no-unused-vars
+        [key in AccountName]: AccountData;
+      };
     }
   );
 
-  return operationsInTimeFrame.reduce((operations, { account, type, amount }) => {
-    const relevantAccount = operations.find((accAccount) => accAccount[account]);
-    if (!relevantAccount) {
+  return operationsInTimeFrame.reduce((summary, { account, type, amount }) => {
+    const accountObject = summary.find((accountObject) => accountObject[account]);
+    if (!accountObject) {
       throw new Error(`Account not found: ${account}`);
     }
     if (type === 'Deposit') {
-      relevantAccount[account].deposits += amount;
-      relevantAccount[account].net += amount;
+      accountObject[account].deposits += amount;
+      accountObject[account].net += amount;
     }
     if (type === 'Withdrawal') {
-      relevantAccount[account].withdrawals += amount;
-      relevantAccount[account].net -= amount;
+      accountObject[account].withdrawals += amount;
+      accountObject[account].net -= amount;
     }
-    return operations;
+    return summary;
   }, accountDataDictionarySkeleton);
 };
 
@@ -189,7 +195,7 @@ const Return = () => {
 
             return (
               <tr key={index}>
-                <td className={(accounts[account] || {}).colour}>{account}</td>
+                <td className={(accounts[account as AccountName] || {}).colour}>{account}</td>
                 <td className={tableStyles.right}>{thousands(start)}</td>
                 <td className={tableStyles.right}>{thousands(deposits)}</td>
                 <td className={tableStyles.right}>{thousands(withdrawals)}</td>

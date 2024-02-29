@@ -16,7 +16,7 @@ import accounts from '../data/accounts';
 import tradesData from '../data/options.csv';
 import tickers, { tickersMap } from '../data/tickers';
 import styles from '../styles/Table.module.css';
-import { ForexRates, HistoricalForexRates, TradeData } from '../types';
+import { AccountName, ForexRates, HistoricalForexRates, TradeData } from '../types';
 import { removeNullValues } from '../utils';
 import { dateMediumTerm, thousands } from '../utils/format';
 
@@ -228,7 +228,11 @@ const Income = () => {
                   0
                 );
                 return (
-                  <th colSpan={colSpan} className={accounts[account]?.colour} key={account}>
+                  <th
+                    colSpan={colSpan}
+                    className={accounts[account as AccountName]?.colour}
+                    key={account}
+                  >
                     {account}
                   </th>
                 );
