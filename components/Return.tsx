@@ -22,7 +22,6 @@ type AccountData = {
   start: number;
   deposits: number;
   withdrawals: number;
-  net: number;
   end: number;
 };
 type TimeFrame = { start: Dayjs; duration: number; id: string; count: number };
@@ -38,7 +37,7 @@ const getAggregateData = (accountDataDictionary: { [key: string]: AccountData }[
       });
       return summary;
     },
-    { start: 0, deposits: 0, withdrawals: 0, net: 0, end: 0 }
+    { start: 0, deposits: 0, withdrawals: 0, end: 0 }
   );
 
 const getOperationsInTimeFrame = (effectiveStartDate: Dayjs, effectiveEndDate: Dayjs) =>
@@ -77,7 +76,7 @@ const getAccountDataDictionary = (
     (account) => {
       const start = startRow[account];
       const end = endRow[account];
-      return { [account]: { start, end, deposits: 0, withdrawals: 0, net: 0 } } as {
+      return { [account]: { start, end, deposits: 0, withdrawals: 0 } } as {
         // eslint-disable-next-line no-unused-vars
         [key in AccountName]: AccountData;
       };
@@ -91,11 +90,9 @@ const getAccountDataDictionary = (
     }
     if (type === 'Deposit') {
       accountObject[account].deposits += amount;
-      accountObject[account].net += amount;
     }
     if (type === 'Withdrawal') {
       accountObject[account].withdrawals += amount;
-      accountObject[account].net -= amount;
     }
     return summary;
   }, accountDataDictionarySkeleton);
@@ -123,7 +120,7 @@ const findRow = (date: Dayjs, data: AccountValue[]) =>
   data.find((row) => row.month === date.format(INPUT_DATE_FORMAT));
 
 const getMonthsTimeFrames = (lastLoggedDate: Dayjs): TimeFrame[] =>
-  [10, 6, 3]
+  [12, 10, 6, 3]
     .map((months) => ({
       start: lastLoggedDate.subtract(months, 'month'),
       duration: months,
@@ -168,17 +165,18 @@ const Return = () => {
         <thead>
           <tr>
             <th />
-            <th>Start value</th>
-            <th>Deposits</th>
-            <th>Withdrawals</th>
-            <th>Net</th>
-            <th>End value</th>
-            <th>Return</th>
+            {['Start value', 'Deposits', 'Withdrawals', 'Net', 'End value', 'Change', 'Return'].map(
+              (heading, index) => (
+                <th key={index} className={tableStyles.columnWidthLg}>
+                  {heading}
+                </th>
+              )
+            )}
           </tr>
         </thead>
         <tbody>
           {[...accountDataDictionary, { Total: aggregateData }].map((row, index) => {
-            const [account, { start, deposits, withdrawals, net, end }] = Object.entries(row)[0];
+            const [account, { start, deposits, withdrawals, end }] = Object.entries(row)[0];
             // Rough estimates
             const returnEstimates = [
               (end + withdrawals) / (start + deposits) - 1, // deposits at start, withdrawals at end
@@ -193,6 +191,9 @@ const Return = () => {
                 ? pctOne(end / start - 1)
                 : `${pctOne(returnMin)} to ${pctOne(returnMax)}`;
 
+            const net = deposits - withdrawals;
+            const change = end - start;
+
             return (
               <tr key={index}>
                 <td className={(accounts[account as AccountName] || {}).colour}>{account}</td>
@@ -201,6 +202,7 @@ const Return = () => {
                 <td className={tableStyles.right}>{thousands(withdrawals)}</td>
                 <td className={tableStyles.right}>{thousands(net)}</td>
                 <td className={tableStyles.right}>{thousands(end)}</td>
+                <td className={tableStyles.right}>{thousands(change)}</td>
                 <td className={tableStyles.right}>{returnDisplayed}</td>
               </tr>
             );
