@@ -60,6 +60,7 @@ export const DISPLAY: { [key: string]: string } = {
   put: 'Put',
   putOnly: 'Put only',
   putOnlyPremium: 'Premium',
+  quantity: 'Quantity',
   rate: 'Rate',
   return1YPctIfAssigned: 'Return 1Y % if assigned',
   return30DPctEffective: 'Return 30D % effective',

@@ -226,6 +226,7 @@ export type PutRowTotal = PutRowCommon & {
 
 export type PutRow = Row &
   PutRowCommon & {
+    quantity: number;
     closeTradePrice: ReactElement;
     low: number;
     lowPct: number;

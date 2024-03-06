@@ -23,10 +23,26 @@ export const calcPutDifference = (strike: number, currentStockPrice: number, opt
 export const calcReturnPctForPeriod = (returnPct: number, days: number, newPeriod: number) =>
   ((1 + returnPct) ** (1 / (days + 1))) ** newPeriod - 1;
 
-export const isCurrentPut = ({ closePrice, expiry, type }: TradeData, now: Dayjs): boolean =>
-  type === 'Put' &&
-  dayjs(expiry, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day') &&
-  (!closePrice || false);
+export const isCurrentPut = ({ closePrice, expiry, type }: TradeData, now: Dayjs) =>
+  type === 'Put' && dayjs(expiry, INPUT_DATE_FORMAT).isSameOrAfter(now, 'day') && !closePrice;
+
+export const areSamePut = (put1: TradeData | undefined, put2: TradeData | undefined) => {
+  if (!put1 || !put2) {
+    return false;
+  }
+  return (
+    put1.type === 'Put' &&
+    put2.type === 'Put' &&
+    put1.date === put2.date &&
+    put1.account === put2.account &&
+    put1.ticker === put2.ticker &&
+    put1.expiry === put2.expiry &&
+    put1.stockPrice === put2.stockPrice &&
+    put1.strike === put2.strike &&
+    put1.tradePrice === put2.tradePrice &&
+    put1.commission === put2.commission
+  );
+};
 
 export const removeNullValues = (obj: object) =>
   Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== null));

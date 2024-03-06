@@ -25,6 +25,7 @@ import {
   TradeData,
 } from '../types';
 import {
+  areSamePut,
   calcDteCurrent,
   calcDteTotal,
   calcPriceIncrease,
@@ -51,7 +52,20 @@ const Put = () => {
   const currentPutsSorted = sortPuts(
     trades.filter((trade) => isCurrentPut(trade, NOW)) as PutData[]
   );
-  const putIds = currentPutsSorted.map(({ ticker }, index) => `${index}-${ticker}`).join(',');
+  const putsGrouped = currentPutsSorted.reduce(
+    (grouped: (PutData & { quantity: number })[], putData) => {
+      const [last] = grouped.slice(-1);
+      if (areSamePut(last, putData)) {
+        grouped.pop();
+        grouped.push({ ...putData, quantity: last.quantity + 1 });
+      } else {
+        grouped.push({ ...putData, quantity: 1 });
+      }
+      return grouped;
+    },
+    []
+  );
+  const putIds = putsGrouped.map(({ ticker }, index) => `${index}-${ticker}`).join(',');
   const positionsKeys = getPositionsKeys(accounts);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -110,6 +124,7 @@ const Put = () => {
   }[] = [
     { name: 'account', align: 'default' },
     { name: 'ticker', align: 'default' },
+    { name: 'quantity' },
     { name: 'date', format: dateShortTerm, align: 'default' },
     { name: 'expiry', format: dateShortTerm, align: 'default' },
     { name: 'dteTotal' },
@@ -172,10 +187,11 @@ const Put = () => {
           </tr>
         </thead>
         <tbody>
-          {currentPutsSorted.map((trade, tradeIndex) => {
+          {putsGrouped.map((trade, tradeIndex) => {
             const orderedRowValues = headings.map((heading) => ({ ...heading }));
 
-            const { account, ticker, tradePrice, strike, commission, stockPrice, type } = trade;
+            const { account, ticker, tradePrice, strike, commission, stockPrice, type, quantity } =
+              trade;
             const accountColour = accounts[account].colour;
             const { optionSize, currency, colour } = tickers[ticker];
             if (!optionSize) {
@@ -191,11 +207,11 @@ const Put = () => {
             const daysToEarnings = earningsDate.diff(expiry, 'day');
             const low = strike - tradePrice + commission / optionSize;
             const high = stockPrice + tradePrice - commission / optionSize;
-            const cashEquivalent = optionSize * strike;
-            const netReturn = optionSize * tradePrice - commission;
+            const cashEquivalent = optionSize * strike * quantity;
+            const netReturn = (optionSize * tradePrice - commission) * quantity;
             const netReturnPct = netReturn / cashEquivalent;
-            const priceIncrease = calcPriceIncrease(current, high, optionSize);
-            const difference = calcPutDifference(strike, current, optionSize);
+            const priceIncrease = quantity * calcPriceIncrease(current, high, optionSize);
+            const difference = quantity * calcPutDifference(strike, current, optionSize);
             const effectiveNetReturn = netReturn + difference;
             const effectiveNetReturnPct = effectiveNetReturn / cashEquivalent;
             const return30DPctExpected = calcReturnPctForPeriod(netReturnPct, dteTotal, 30);
@@ -260,6 +276,7 @@ const Put = () => {
               marketPrice,
               optionReturnPct,
               priceIncreaseGBP,
+              quantity,
               return30DPctExpected,
               return30DPctEffective,
               return30DPctResidual,
@@ -276,7 +293,7 @@ const Put = () => {
             totals.returnGBP.value += returnGBP;
             totals.differenceGBP.value += differenceGBP;
             if (status === 'Assignable') {
-              totals.status.value += 1 / countOfTrades;
+              totals.status.value += quantity / countOfTrades;
             }
 
             return (
