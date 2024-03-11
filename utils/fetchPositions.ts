@@ -30,7 +30,7 @@ export const fetchPositions = async ({
         return { allData, timestamp };
       }
       const isFullResponse = data
-        .filter((position) => position.assetClass === 'OPT')
+        .filter((position) => position.assetClass === 'OPT' && position.position !== 0)
         .every((position) => position.fullName);
       // The response sometimes misses data
       if (!isFullResponse) {
