@@ -10,13 +10,34 @@ export const dateLongTerm = (day: Dayjs) => day.format(DATE_LONG_HORIZON);
 
 export const decimalTwo = (x: number) => x.toFixed(2);
 
-export const pctOne = (x: number) => !isNaN(x) && `${(100 * x).toFixed(1)}%`;
+export const pctN = (x: number, n: number) => {
+  if (isNaN(x)) return false;
 
-export const pctZero = (x: number) => !isNaN(x) && `${(100 * x).toFixed(0)}%`;
+  const percentage = (100 * x).toLocaleString('en-GB', {
+    minimumFractionDigits: n,
+    maximumFractionDigits: n,
+  });
 
-export const thousands = (x: number) => x && x.toLocaleString().split('.')[0];
+  return `${percentage}%`;
+};
 
-export const thousandsGBP = (x: number) => x && `£\u00A0${x.toLocaleString().split('.')[0]}`;
+export const pctZero = (x: number) => pctN(x, 0);
+
+export const pctOne = (x: number) => pctN(x, 1);
+
+export const thousands = (x: number) => {
+  if (!x) return false;
+  return x.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+};
+
+export const thousandsGBP = (x: number) => {
+  if (!x) return false;
+
+  return `£\u00A0${x.toLocaleString('en-GB', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+};
 
 export const roundDown = (x: number, multiple = 100) => Math.floor(x / multiple) * multiple;
 
