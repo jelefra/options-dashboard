@@ -245,7 +245,7 @@ const Put = () => {
             const marketPrice = position?.mktPrice;
             const optionReturnPct = marketPrice ? 1 - marketPrice / tradePrice : undefined;
             const returnPctResidualEstimate = marketPrice
-              ? Math.max(optionSize * marketPrice - commission, 0) / cashEquivalent
+              ? Math.max(quantity * (optionSize * marketPrice - commission), 0) / cashEquivalent
               : undefined;
             const return30DPctResidualEstimate = returnPctResidualEstimate
               ? calcReturnPctForPeriod(returnPctResidualEstimate, dteCurrent, 30)
