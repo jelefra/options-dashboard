@@ -6,7 +6,7 @@ dayjs.extend(customParseFormat);
 import cx from 'classnames';
 import cloneDeep from 'lodash.clonedeep';
 
-import { INPUT_DATE_FORMAT } from '../constants';
+import { DATE_LONG_HORIZON, INPUT_DATE_FORMAT } from '../constants';
 import tickers, { tickersMap } from '../data/tickers';
 import styles from '../styles/Table.module.css';
 import type { EarningsDates, TradeData, TransactionData } from '../types';
@@ -80,7 +80,7 @@ const Tickers = ({
               <tr key={ticker}>
                 <td className={tickers[tickersMap[ticker] ?? ticker].colour}>{ticker}</td>
                 <td>{batchCodes[ticker]?.batchCode}</td>
-                <td className={cx({ mute })}>{date}</td>
+                <td className={cx({ mute })}>{date.format(DATE_LONG_HORIZON)}</td>
                 <td className={cx(styles.right, { mute })}>{daysToEarnings}</td>
                 <td>{!mute ? timing : ''}</td>
               </tr>

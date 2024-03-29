@@ -1,6 +1,8 @@
 import dayjs, { Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 dayjs.extend(isSameOrAfter);
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 
 import { INPUT_DATE_FORMAT } from '../constants';
 import { tickersMap } from '../data/tickers';
@@ -95,3 +97,5 @@ export const sanitiseOpenExchangeRatesLogs = (URL: string) =>
 
 export const getTickerDisplayName = (ticker: string) =>
   (Object.entries(tickersMap).find(([, officialName]) => officialName === ticker) || [ticker])[0];
+
+export const setDate = (inputDate: string) => dayjs(inputDate, INPUT_DATE_FORMAT);

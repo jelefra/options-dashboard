@@ -408,8 +408,10 @@ export type ExchangeRateResponse = { rates: ForexRates };
 export type CurrentTickerPrices = { [key: string]: number };
 
 export type EarningsDates = {
-  [key: string]: { date: string; confirmed: boolean; timing?: 'Before' | 'After' };
+  [key: string]: { date: Dayjs; confirmed: boolean; timing?: 'Before' | 'After' };
 };
+
+export type StockSplits = { [key: string]: { date: Dayjs; ratio: number } };
 
 export type Ledgers = { [key: string]: Ledger };
 
