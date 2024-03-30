@@ -120,7 +120,7 @@ const findRow = (date: Dayjs, data: AccountValue[]) =>
   data.find((row) => row.month === date.format(INPUT_DATE_FORMAT));
 
 const getMonthsTimeFrames = (lastLoggedDate: Dayjs): TimeFrame[] =>
-  [12, 10, 6, 3]
+  [12, 10, 6, 3, 1]
     .map((months) => ({
       start: lastLoggedDate.subtract(months, 'month'),
       duration: months,
