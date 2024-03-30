@@ -135,6 +135,11 @@ const getTimeFrames = (lastLoggedDate: Dayjs): TimeFrame[] => {
   return [...yearsTimeFrames, ...monthsTimeFrames];
 };
 
+const formatReturn = (returnMin: number, returnMax: number, formatFn: Function = pctOne) =>
+  formatFn(returnMin) === formatFn(returnMax)
+    ? formatFn(returnMin)
+    : `${formatFn(returnMin)} to ${formatFn(returnMax)}`;
+
 const Return = () => {
   const lastLoggedDate = dayjs(ACCOUNT_VALUES.slice(-1)[0].month, INPUT_DATE_FORMAT);
   const timeFrames = getTimeFrames(lastLoggedDate);
@@ -186,10 +191,6 @@ const Return = () => {
             ];
             const returnMin = Math.min(...returnEstimates);
             const returnMax = Math.max(...returnEstimates);
-            const returnDisplayed =
-              returnMin === returnMax
-                ? pctOne(end / start - 1)
-                : `${pctOne(returnMin)} to ${pctOne(returnMax)}`;
 
             const net = deposits - withdrawals;
             const change = end - start;
@@ -203,7 +204,7 @@ const Return = () => {
                 <td className={tableStyles.right}>{thousands(net)}</td>
                 <td className={tableStyles.right}>{thousands(end)}</td>
                 <td className={tableStyles.right}>{thousands(change)}</td>
-                <td className={tableStyles.right}>{returnDisplayed}</td>
+                <td className={tableStyles.right}>{formatReturn(returnMin, returnMax)}</td>
               </tr>
             );
           })}
