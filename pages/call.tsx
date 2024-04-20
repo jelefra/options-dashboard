@@ -388,25 +388,27 @@ const Call = () => {
         <title>Calls</title>
         <link rel="icon" href="/call.ico" />
       </Head>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            {headings.map(({ name }, index) => (
-              <th
-                className={cx(styles.freezeFirstThRow, styles.white, styles.rotate, {
-                  [styles.freezeFirstThCell]: index === 0,
-                  [styles.freezeSecondThCell]: index === 1,
-                  [styles.columnWidthMd]: name === 'account' || name === 'return30DPctResidual',
-                })}
-                key={index}
-              >
-                {DISPLAY[name] || name}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        {renderTableBody(batchesWithCalls)}
-      </table>
+      {!!batchesWithCalls.length && (
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              {headings.map(({ name }, index) => (
+                <th
+                  className={cx(styles.freezeFirstThRow, styles.white, styles.rotate, {
+                    [styles.freezeFirstThCell]: index === 0,
+                    [styles.freezeSecondThCell]: index === 1,
+                    [styles.columnWidthMd]: name === 'account' || name === 'return30DPctResidual',
+                  })}
+                  key={index}
+                >
+                  {DISPLAY[name] || name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          {renderTableBody(batchesWithCalls)}
+        </table>
+      )}
 
       <table className={styles.table}>
         <thead>
