@@ -376,8 +376,6 @@ const CapitalGains = () => {
       return summary;
     }, cloneDeep(accountsCapitalGainsSkeleton));
 
-  console.log('total', total);
-
   const displayTotal = (
     {
       key1,
