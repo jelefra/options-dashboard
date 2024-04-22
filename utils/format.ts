@@ -30,8 +30,8 @@ export const thousands = (x: number) => {
   return x.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 };
 
-export const thousandsGBP = (x: number) => {
-  if (!x) return false;
+export const thousandsGBP = (x: number, { showZero = false } = {}) => {
+  if (!x && !showZero) return false;
 
   return `£\u00A0${x.toLocaleString('en-GB', {
     minimumFractionDigits: 0,

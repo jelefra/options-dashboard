@@ -93,45 +93,45 @@ const AllocationSummary = ({
         <tr>
           <td rowSpan={4}>Holdings</td>
           <td rowSpan={4} className={styles.right}>
-            {thousandsGBP(holdingsGBP)}
+            {thousandsGBP(holdingsGBP, { showZero: true })}
           </td>
           <td rowSpan={2} className={styles.right}>
-            {thousandsGBP(batchesGBP)}
+            {thousandsGBP(batchesGBP, { showZero: true })}
           </td>
           <td rowSpan={2}>Batches</td>
           <td>Wheeling</td>
-          <td className={styles.right}>{thousandsGBP(wheelingGBP)}</td>
+          <td className={styles.right}>{thousandsGBP(wheelingGBP, { showZero: true })}</td>
         </tr>
         <tr>
           <td>Not wheeling</td>
-          <td className={styles.right}>{thousandsGBP(notWheelingGBP)}</td>
+          <td className={styles.right}>{thousandsGBP(notWheelingGBP, { showZero: true })}</td>
         </tr>
         <tr>
-          <td className={styles.right}>{thousandsGBP(partialBatchesGBP)}</td>
+          <td className={styles.right}>{thousandsGBP(partialBatchesGBP, { showZero: true })}</td>
           <td>Partial batches</td>
         </tr>
         <tr>
-          <td className={styles.right}>{thousandsGBP(ITMPutsGBP)}</td>
+          <td className={styles.right}>{thousandsGBP(ITMPutsGBP, { showZero: true })}</td>
           <td>ITM puts</td>
           <td rowSpan={2}>Puts</td>
-          <td rowSpan={2}>{thousandsGBP(putsGBP)}</td>
+          <td rowSpan={2}>{thousandsGBP(putsGBP, { showZero: true })}</td>
         </tr>
         <tr>
           <td rowSpan={2}>Cash</td>
           <td rowSpan={2} className={styles.right}>
-            {thousandsGBP(cashTotalGBP)}
+            {thousandsGBP(cashTotalGBP, { showZero: true })}
           </td>
-          <td className={styles.right}>{thousandsGBP(OTMPutsGBP)}</td>
+          <td className={styles.right}>{thousandsGBP(OTMPutsGBP, { showZero: true })}</td>
           <td>OTM puts</td>
         </tr>
         <tr>
-          <td className={styles.right}>{thousandsGBP(roundDown(cash))}</td>
+          <td className={styles.right}>{thousandsGBP(roundDown(cash), { showZero: true })}</td>
           <td>Excess liquidity</td>
         </tr>
         <tr>
           <td>Total</td>
           <td className={styles.right}>
-            <strong>{thousandsGBP(totalGBP)}</strong>
+            <strong>{thousandsGBP(totalGBP, { showZero: true })}</strong>
           </td>
         </tr>
       </tbody>
