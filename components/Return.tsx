@@ -170,13 +170,20 @@ const Return = () => {
         <thead>
           <tr>
             <th />
-            {['Start value', 'Deposits', 'Withdrawals', 'Net', 'End value', 'Change', 'Return'].map(
-              (heading, index) => (
-                <th key={index} className={tableStyles.columnWidthLg}>
-                  {heading}
-                </th>
-              )
-            )}
+            {[
+              { heading: 'Start value' },
+              { heading: 'Deposits', backgroundColor: 'Moccasin' },
+              { heading: 'Withdrawals', backgroundColor: 'Moccasin' },
+              { heading: 'Net', backgroundColor: 'Moccasin' },
+              { heading: 'Growth' },
+              { heading: 'Change' },
+              { heading: 'End value' },
+              { heading: 'Return' },
+            ].map(({ heading, backgroundColor }, index) => (
+              <th key={index} className={tableStyles.columnWidthLg} style={{ backgroundColor }}>
+                {heading}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -194,6 +201,7 @@ const Return = () => {
 
             const net = deposits - withdrawals;
             const change = end - start;
+            const growth = change - net;
 
             return (
               <tr key={index}>
@@ -202,8 +210,9 @@ const Return = () => {
                 <td className={tableStyles.right}>{thousands(deposits)}</td>
                 <td className={tableStyles.right}>{thousands(withdrawals)}</td>
                 <td className={tableStyles.right}>{thousands(net)}</td>
-                <td className={tableStyles.right}>{thousands(end)}</td>
+                <td className={tableStyles.right}>{thousands(growth)}</td>
                 <td className={tableStyles.right}>{thousands(change)}</td>
+                <td className={tableStyles.right}>{thousands(end)}</td>
                 <td className={tableStyles.right}>{formatReturn(returnMin, returnMax)}</td>
               </tr>
             );
