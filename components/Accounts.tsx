@@ -1,5 +1,6 @@
 import cx from 'classnames';
 import dayjs from 'dayjs';
+import { Fragment } from 'react';
 
 import { ONE_DAY_IN_SECONDS } from '../constants';
 import accounts from '../data/accounts';
@@ -130,7 +131,7 @@ const AccountsComponent = ({
           <th>Liquidation value</th>
           <th>Excess liquidity</th>
           {currencies.map((currency, index) => (
-            <>
+            <Fragment key={index}>
               <th className={cx({ [styles.contrast]: !(index % 2) })}>Cash balance</th>
               {putCurrencies.includes(currency) && (
                 <>
@@ -138,7 +139,7 @@ const AccountsComponent = ({
                   <th className={cx({ [styles.contrast]: !(index % 2) })}>Net</th>
                 </>
               )}
-            </>
+            </Fragment>
           ))}
         </tr>
       </thead>
@@ -161,7 +162,7 @@ const AccountsComponent = ({
               </td>
               <td className={styles.right}>{thousands(excessLiquidity)}</td>
               {currencies.map((currency, index) => (
-                <>
+                <Fragment key={index}>
                   <td className={cx(styles.right, { [styles.contrast]: !(index % 2) })}>
                     {thousands(rest[currency]?.cashBalance || 0)}
                   </td>
@@ -175,7 +176,7 @@ const AccountsComponent = ({
                       </td>
                     </>
                   )}
-                </>
+                </Fragment>
               ))}
             </tr>
           )
