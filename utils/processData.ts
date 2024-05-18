@@ -127,6 +127,7 @@ const processData = ({
           netCumulativePremium,
           origin: 'Put',
           optionSize,
+          quantity: 1,
           ticker,
         };
       } else {

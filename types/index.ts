@@ -254,6 +254,7 @@ export type CallRowWithCurrentCall = Row &
     daysTotal: number;
     netCost: number;
     optionReturnPct: number;
+    quantity: number; // TODO Move to Row? Combine with PutRow?
     return1YPctIfAssigned: number;
     return30DPctIfAssigned: number;
     return30DPctLastCall: number;
@@ -279,6 +280,7 @@ export type Batch = {
   netCumulativePremium: number;
   optionSize: number;
   origin: 'Purchase' | 'Put';
+  quantity: number;
   ticker: string;
 };
 

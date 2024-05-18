@@ -84,9 +84,7 @@ const Home = () => {
         .map(({ id }) => `positions-${id}`)
         .join(',');
       const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
-      // console.log('response', response);
       const data = await response.json();
-      // console.log('data.values', data.values);
       setPositions(data.values);
     };
     fetchPositions().catch(console.error);

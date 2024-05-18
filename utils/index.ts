@@ -6,7 +6,7 @@ dayjs.extend(customParseFormat);
 
 import { INPUT_DATE_FORMAT } from '../constants';
 import { tickersMap } from '../data/tickers';
-import { Accounts, Position, TradeData, TradeType } from '../types';
+import { Accounts, Batch, Position, TradeData, TradeType } from '../types';
 
 export const calcDteCurrent = (expiryDate: Dayjs, now: Dayjs) =>
   expiryDate?.add(1, 'day').diff(now, 'day');
@@ -43,6 +43,24 @@ export const areSamePut = (put1: TradeData | undefined, put2: TradeData | undefi
     put1.strike === put2.strike &&
     put1.tradePrice === put2.tradePrice &&
     put1.commission === put2.commission
+  );
+};
+
+export const areSameCall = (call1: Batch | undefined, call2: Batch | undefined) => {
+  if (!call1 || !call2) {
+    return false;
+  }
+  return (
+    call1.account === call2.account &&
+    call1.ticker === call2.ticker &&
+    call1.netCumulativePremium === call2.netCumulativePremium &&
+    call1.currentCall?.strike === call2.currentCall?.strike &&
+    call1.currentCall?.commission === call2.currentCall?.commission &&
+    call1.currentCall?.stockPrice === call2.currentCall?.stockPrice &&
+    call1.currentCall?.strike === call2.currentCall?.strike &&
+    call1.currentCall?.tradePrice === call2.currentCall?.tradePrice &&
+    call1.currentCall?.date.format() === call2.currentCall?.date.format() &&
+    call1.currentCall?.expiry.format() === call2.currentCall?.expiry.format()
   );
 };
 

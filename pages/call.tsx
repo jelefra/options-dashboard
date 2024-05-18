@@ -25,6 +25,7 @@ import {
   TransactionData,
 } from '../types';
 import {
+  areSameCall,
   calcDteCurrent,
   calcDteTotal,
   calcPriceIncrease,
@@ -66,12 +67,25 @@ const Call = () => {
 
   const { batches } = processData({ transactions, trades, currentTickerPrices, now: NOW });
 
-  const batchesWithCalls = Object.entries(batches)
-    .filter(([, batch]) => batch.currentCall)
+  const batchesSorted = Object.entries(batches)
     .sort(([a], [b]) => a.localeCompare(b))
     .sort(([, a], [, b]) => a.account.localeCompare(b.account));
 
-  const callIds = batchesWithCalls.map(([batchCode]) => batchCode).join(',');
+  const batchesGrouped = batchesSorted.reduce((grouped: Batch[], [, current]) => {
+    const [last] = grouped.slice(-1);
+    if (areSameCall(last, current)) {
+      grouped.pop();
+      const newBatchCode = last.batchCode.match(/[^-]+/) + '-' + current.batchCode.match(/\d+/);
+      grouped.push({ ...current, batchCode: newBatchCode, quantity: last.quantity + 1 });
+    } else {
+      grouped.push({ ...current, quantity: 1 });
+    }
+    return grouped;
+  }, []);
+
+  const batchesWithCalls = batchesGrouped.filter((batch) => batch.currentCall);
+
+  const callIds = batchesWithCalls.map(({ batchCode }) => batchCode).join(',');
 
   useEffect(() => {
     const fetchCallCloseTradePrices = async () => {
@@ -105,10 +119,7 @@ const Call = () => {
   if (isLoading) return <Loading />;
   if (!rates || !currentTickerPrices) return <p>Data missing.</p>;
 
-  const batchesWithoutCalls = Object.entries(batches)
-    .filter(([, batch]) => !batch.currentCall && !batch.exit)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .sort(([, a], [, b]) => a.account.localeCompare(b.account));
+  const batchesWithoutCalls = batchesGrouped.filter((batch) => !batch.currentCall && !batch.exit);
 
   type Heading = {
     name: keyof CallRowWithCurrentCall;
@@ -120,6 +131,7 @@ const Call = () => {
   const headings: Heading[] = [
     { name: 'account', align: 'default', scope: 'all' },
     { name: 'batchCode', align: 'default', scope: 'all' },
+    { name: 'quantity', scope: 'all' },
     { name: 'unitAcquisitionCost', format: decimalTwo, scope: 'all' },
     { name: 'netCost', format: decimalTwo, scope: 'all' },
     { name: 'costBasisDrop', format: pctOne, scope: 'all' },
@@ -155,7 +167,7 @@ const Call = () => {
   ];
 
   const renderTableBody = (
-    batches: [string, Batch][],
+    batches: Batch[],
     // eslint-disable-next-line no-unused-vars
     headingFilterFunction: (heading: Heading) => boolean = () => true
   ) => {
@@ -170,7 +182,7 @@ const Call = () => {
 
     return (
       <tbody>
-        {batches.map(([, batchData], rowIndex) => {
+        {batches.map((batchData, rowIndex) => {
           const orderedRowValues = headings.filter(headingFilterFunction).map((heading) => ({
             ...heading,
           }));
@@ -186,6 +198,7 @@ const Call = () => {
             currentCall,
             netCumulativePremium,
             optionSize,
+            quantity,
             ticker,
           } = batchData;
 
@@ -223,9 +236,9 @@ const Call = () => {
             const return30DPctResidualEstimate =
               returnPctResidualEstimate &&
               calcReturnPctForPeriod(returnPctResidualEstimate, dteCurrent, 30);
-            const returnLastCall = optionSize * tradePrice - commission;
+            const returnLastCall = quantity * optionSize * tradePrice - commission;
             const returnGBPLastCall = returnLastCall / forexRate;
-            const returnIfAssigned = (strike - netCost) * optionSize;
+            const returnIfAssigned = quantity * (strike - netCost) * optionSize;
             const returnPctIfAssigned = strike / netCost - 1;
             const returnPctLastCall =
               (tradePrice * optionSize - commission) / (stockPrice * optionSize);
@@ -272,9 +285,11 @@ const Call = () => {
             currentCallValues && (currentCallValues.strike - netCost) * optionSize;
           const valueIfAssigned = currentCallValues && currentCallValues.strike * optionSize;
           const returnGBP =
-            returnCurrent && Math.min(returnCurrent, returnIfAssigned || Infinity) / forexRate;
+            returnCurrent &&
+            (quantity * Math.min(returnCurrent, returnIfAssigned || Infinity)) / forexRate;
           const valueGBP =
-            valueCurrent && Math.min(valueCurrent, valueIfAssigned || Infinity) / forexRate;
+            valueCurrent &&
+            (quantity * Math.min(valueCurrent, valueIfAssigned || Infinity)) / forexRate;
 
           // TODO set type based on which table is rendered: CallRowWithCurrentCall | GenericCallRow
           const row = {
@@ -283,6 +298,7 @@ const Call = () => {
             costBasisDrop: netCost / unitAcquisitionCost - 1,
             current,
             netCost,
+            quantity,
             returnGBP,
             returnPct:
               current &&
