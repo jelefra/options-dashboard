@@ -494,7 +494,7 @@ export type Position = {
   expiry: string;
   putOrCall: 'P' | 'C' | null;
   multiplier: number;
-  strike: number;
+  strike: string;
   ticker: string;
   fullName: string;
   assetClass: string;
