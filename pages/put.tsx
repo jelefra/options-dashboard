@@ -108,7 +108,9 @@ const Put = () => {
       const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
       const data: { values: Positions } = await response.json();
       setPositions(
-        Object.values(data.values).flatMap((positionsTimestamped) => positionsTimestamped?.allData)
+        Object.values(data.values)
+          .flatMap((positionsTimestamped) => positionsTimestamped?.allData)
+          .filter(Boolean)
       );
     };
     fetchPositions().catch(console.error);
