@@ -6,6 +6,7 @@ import AccountsComponent from '../components/Accounts';
 import AllocationSummary from '../components/AllocationSummary';
 import Container from '../components/Container';
 import Currencies from '../components/Currencies';
+import DataChecker from '../components/DataChecker';
 import Forex from '../components/Forex';
 import ForexAPIUsage from '../components/ForexAPIUsage';
 import ManageIBKRData from '../components/ManageIBKRData';
@@ -132,6 +133,7 @@ const Home = () => {
         <title>Options</title>
         <link rel="icon" href="/home.ico" />
       </Head>
+      <DataChecker />
       {showAllocationSummary && (
         <AllocationSummary
           cash={cash}

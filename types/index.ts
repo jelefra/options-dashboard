@@ -173,7 +173,7 @@ export type TransactionData = Operation & {
 export type TransactionType = 'Purchase' | 'Sale';
 
 export type Account = {
-  name: string;
+  name: AccountName;
   id: string;
   capitalGains: boolean;
   colour: string;
@@ -484,11 +484,12 @@ export type PositionsTimestamped = {
 };
 
 export type Position = {
+  acctId: string;
   assetClass: string;
   avgCost: number;
   avgPrice: number;
   currency: string;
-  expiry: string;
+  expiry: string; // See IBKR_DATE_FORMAT
   fullName: string;
   mktPrice: number;
   mktValue: number;

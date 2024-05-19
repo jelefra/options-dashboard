@@ -1,5 +1,7 @@
 export const INPUT_DATE_FORMAT = 'DD/MM/YYYY';
 
+export const IBKR_DATE_FORMAT = 'YYYYMMDD';
+
 export const DATE_SHORT_HORIZON = 'D MMM';
 export const DATE_MEDIUM_HORIZON = 'MMMM YY';
 export const DATE_LONG_HORIZON = 'D MMM YY';
