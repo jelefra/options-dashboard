@@ -65,12 +65,14 @@ const ManageIBKRData = ({
             key={id}
           >
             <button
+              type="button"
               className={cx(styles.button, styles.primary)}
               onClick={() => fetchAccountData(id)}
             >
               Fetch {name}
             </button>
             <button
+              type="button"
               className={cx(styles.button, styles.destructive, {
                 [styles.disabled]: !generalTS,
               })}

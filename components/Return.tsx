@@ -156,6 +156,7 @@ const Return = () => {
 
         return (
           <button
+            type="button"
             className={cx(buttonStyles.button, buttonStyles.primary, {
               [buttonStyles.disabled]: current,
             })}

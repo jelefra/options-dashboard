@@ -21,6 +21,7 @@ const RefetchTickerPrices = ({
 
   return (
     <button
+      type="button"
       style={{ margin: '2rem 1rem' }}
       className={cx(styles.button, styles.primary)}
       onClick={onClickHandler}
