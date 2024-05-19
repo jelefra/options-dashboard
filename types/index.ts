@@ -484,18 +484,18 @@ export type PositionsTimestamped = {
 };
 
 export type Position = {
-  position: number;
-  mktPrice: number;
-  mktValue: number;
-  currency: string;
+  assetClass: string;
   avgCost: number;
   avgPrice: number;
-  unrealizedPnl: number;
+  currency: string;
   expiry: string;
-  putOrCall: 'P' | 'C' | null;
+  fullName: string;
+  mktPrice: number;
+  mktValue: number;
   multiplier: number;
+  position: number;
+  putOrCall: 'P' | 'C' | null;
   strike: string;
   ticker: string;
-  fullName: string;
-  assetClass: string;
+  unrealizedPnl: number;
 };
