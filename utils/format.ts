@@ -8,7 +8,8 @@ export const dateMediumTerm = (day: Dayjs) => day.format(DATE_MEDIUM_HORIZON);
 
 export const dateLongTerm = (day: Dayjs) => day.format(DATE_LONG_HORIZON);
 
-export const decimalTwo = (x: number) => x.toFixed(2);
+export const decimalTwo = (x: number) =>
+  x.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const pctN = (x: number, n: number) => {
   if (isNaN(x)) return false;
