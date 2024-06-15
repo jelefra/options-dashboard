@@ -40,11 +40,10 @@ const ManageIBKRData = ({
     <div style={{ display: 'flex' }}>
       {Object.entries(accounts).map(([name, { id }]) => {
         const [ledgersState, , positionsState] = IBKRStates;
-        const ledger = ledgersState.value[`${ledgersState.endpoint}-${id}`];
 
-        const generalTS = ledger?.BASE.timestamp;
-        const generalExpiry = generalTS
-          ? `${dayjs(new Date((generalTS + IBKR_DEFAULT_EXPIRY) * 1000)).diff(now, 'day')}d`
+        const ledgerTS = ledgersState.value[`${ledgersState.endpoint}-${id}`]?.BASE.timestamp;
+        const ledgerExpiry = ledgerTS
+          ? `${dayjs(new Date((ledgerTS + IBKR_DEFAULT_EXPIRY) * 1000)).diff(now, 'day')}d`
           : 'Ø';
 
         const positionsTS = positionsState.value[`${positionsState.endpoint}-${id}`]?.timestamp;
@@ -52,7 +51,8 @@ const ManageIBKRData = ({
           ? `${dayjs(new Date((positionsTS + IBKR_POSITIONS_EXPIRY) * 1000)).diff(now, 'hours')}h`
           : 'Ø';
 
-        const message = ledger ? `${generalExpiry} / ${positionsExpiry}` : generalExpiry;
+        const message = `${ledgerExpiry} / ${positionsExpiry}`;
+        const hasTS = ledgerTS || positionsTS;
 
         return (
           <div
@@ -74,10 +74,10 @@ const ManageIBKRData = ({
             <button
               type="button"
               className={cx(styles.button, styles.destructive, {
-                [styles.disabled]: !generalTS,
+                [styles.disabled]: !hasTS,
               })}
               onClick={() => deleteAccountData(id)}
-              disabled={!generalTS}
+              disabled={!hasTS}
             >
               Clear
             </button>
