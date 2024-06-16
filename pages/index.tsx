@@ -99,6 +99,9 @@ const Home = () => {
 
     const interval = setInterval(() => {
       setNow(dayjs());
+      fetchPositions().catch(console.error);
+      fetchSummaries().catch(console.error);
+      fetchLedgers().catch(console.error);
     }, 1000 * ONE_MINUTE_IN_SECONDS);
 
     return () => clearInterval(interval);
