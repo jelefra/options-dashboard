@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 
@@ -14,6 +14,7 @@ import RefetchTickerPrices from '../components/RefetchTickerPrices';
 import Return from '../components/Return';
 import Tickers from '../components/Tickers';
 import Weight from '../components/Weight';
+import { ONE_MINUTE_IN_SECONDS } from '../constants';
 import accounts from '../data/accounts';
 import earnings from '../data/earnings';
 // @ts-ignore
@@ -32,8 +33,6 @@ import {
 } from '../types';
 import { removeNullValues } from '../utils';
 
-const NOW = dayjs();
-
 const Home = () => {
   const [rates, setRates] = useState<ForexRates | null>(null);
   const [currentTickerPrices, setCurrentTickerPrices] = useState<CurrentTickerPrices | null>(null);
@@ -41,6 +40,7 @@ const Home = () => {
   const [summaries, setSummaries] = useState<Summaries | null>(null);
   const [positions, setPositions] = useState<Positions | null>(null);
   const [forexAPIUsage, setForexAPIUsage] = useState<OpenExchangeRatesUsage | null>(null);
+  const [now, setNow] = useState<Dayjs>(dayjs());
 
   const trades: TradeData[] = tradesData.map(removeNullValues);
   const transactions: TransactionData[] = transactionsData.map(removeNullValues);
@@ -96,6 +96,12 @@ const Home = () => {
       setForexAPIUsage(data.usage);
     };
     fetchForexAPIUsage().catch(console.error);
+
+    const interval = setInterval(() => {
+      setNow(dayjs());
+    }, 1000 * ONE_MINUTE_IN_SECONDS);
+
+    return () => clearInterval(interval);
   }, []);
 
   const withAllLedgers = ledgers && Object.values(ledgers).every(Boolean);
@@ -150,7 +156,7 @@ const Home = () => {
             { endpoint: 'summary', value: summaries, setter: setSummaries },
             { endpoint: 'positions', value: positions, setter: setPositions },
           ]}
-          now={NOW}
+          now={now}
         />
       )}
       <RefetchTickerPrices setCurrentTickerPrices={setCurrentTickerPrices} />
@@ -178,7 +184,7 @@ const Home = () => {
         />
       )}
       <Return />
-      <Tickers earnings={earnings} now={NOW} trades={trades} transactions={transactions} />
+      <Tickers earnings={earnings} now={now} trades={trades} transactions={transactions} />
       {forexAPIUsage && <ForexAPIUsage usage={forexAPIUsage} />}
     </Container>
   );
