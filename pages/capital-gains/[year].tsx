@@ -27,7 +27,7 @@ import {
   TransactionData,
 } from '../../types';
 import { removeNullValues } from '../../utils';
-import { factorStockSplit } from '../../utils/factorStockSplit';
+import { getCurrentQuantity, getHistoricalQuantity } from '../../utils/factorStockSplit';
 import { dateMediumTerm, thousands } from '../../utils/format';
 
 const CapitalGains = () => {
@@ -185,7 +185,7 @@ const CapitalGains = () => {
       const { currency, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
       const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
       stocks[account][ticker].acquisitionCost += quantity * stockPrice + commission * forexRate;
-      stocks[account][ticker].quantity += factorStockSplit(
+      stocks[account][ticker].quantity += getCurrentQuantity(
         ticker,
         quantity,
         dayjs(date, INPUT_DATE_FORMAT)
@@ -227,7 +227,7 @@ const CapitalGains = () => {
 
       if (closePrice && closePrice < strike) {
         stocks[account][ticker].acquisitionCost += strike * optionSize + commission * forexRate;
-        stocks[account][ticker].quantity += factorStockSplit(
+        stocks[account][ticker].quantity += getCurrentQuantity(
           ticker,
           optionSize,
           dayjs(date, INPUT_DATE_FORMAT)
@@ -241,11 +241,13 @@ const CapitalGains = () => {
 
     if (type === 'Sale') {
       const { currency } = tickers[ticker];
-      const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
+      const tradeDate = dayjs(date, INPUT_DATE_FORMAT);
+      const tradeMonth = dateMediumTerm(tradeDate);
       const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
       const saleAmount = quantity * stockPrice - commission * forexRate;
       const stock = stocks[account][ticker];
-      const acquisitionCost = (stock.acquisitionCost / stock.quantity) * quantity;
+      const quantityAtTheTime = getHistoricalQuantity(ticker, stock.quantity, tradeDate);
+      const acquisitionCost = (stock.acquisitionCost / quantityAtTheTime) * quantity;
       const gain = saleAmount - acquisitionCost;
 
       if (gain > 0) {
@@ -259,7 +261,7 @@ const CapitalGains = () => {
       }
 
       stock.acquisitionCost -= stockPrice * quantity;
-      stock.quantity -= quantity;
+      stock.quantity -= getCurrentQuantity(ticker, quantity, tradeDate);
     }
   }
 
@@ -281,7 +283,8 @@ const CapitalGains = () => {
     if (!optionSize) {
       throw new Error(`Option size missing for ${ticker}`);
     }
-    const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
+    const tradeDate = dayjs(date, INPUT_DATE_FORMAT);
+    const tradeMonth = dateMediumTerm(tradeDate);
     const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
 
     const gain = tradePrice * optionSize - commission * forexRate;
@@ -298,8 +301,10 @@ const CapitalGains = () => {
     }
 
     if (type === 'Call' && closePrice && closePrice > strike) {
+      const stock = stocks[account][ticker];
+      const quantityAtTheTime = getHistoricalQuantity(ticker, stock.quantity, tradeDate);
       const acquisitionCost =
-        (stocks[account][ticker].acquisitionCost / stocks[account][ticker].quantity) * optionSize;
+        (stocks[account][ticker].acquisitionCost / quantityAtTheTime) * optionSize;
       if (acquisitionCost < strike * optionSize + commission * forexRate) {
         key[currency].gains.ITMCall += strike * optionSize - acquisitionCost;
         key[currency].gains.total += strike * optionSize - acquisitionCost;

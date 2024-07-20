@@ -7,7 +7,7 @@ dayjs.extend(customParseFormat);
 import { INPUT_DATE_FORMAT } from '../constants';
 import tickers, { tickersMap } from '../data/tickers';
 import { Batch, CurrentTickerPrices, Stock, TradeData, TransactionData } from '../types';
-import { factorStockSplit } from './factorStockSplit';
+import { getCurrentQuantity } from './factorStockSplit';
 
 const processData = ({
   transactions,
@@ -81,7 +81,11 @@ const processData = ({
         // TypeScript infers that `partialBatch` may be `undefined` otherwise
         const partialBatch = stocks[ticker].partialBatch!;
         partialBatch.acquisitionCost += stockPrice * quantity + commission;
-        partialBatch.quantity += factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
+        partialBatch.quantity += getCurrentQuantity(
+          ticker,
+          quantity,
+          dayjs(date, INPUT_DATE_FORMAT)
+        );
       }
     }
   }
@@ -198,7 +202,11 @@ const processData = ({
           throw new Error(`Partial batch missing for ${ticker}`);
         }
         partialBatch.acquisitionCost -= stockPrice * quantity - commission;
-        partialBatch.quantity -= factorStockSplit(ticker, quantity, dayjs(date, INPUT_DATE_FORMAT));
+        partialBatch.quantity -= getCurrentQuantity(
+          ticker,
+          quantity,
+          dayjs(date, INPUT_DATE_FORMAT)
+        );
       }
     }
   }
