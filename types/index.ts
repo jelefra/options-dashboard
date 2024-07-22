@@ -467,6 +467,27 @@ type Summary = {
   };
 };
 
+// As seen in IBKR activity statements
+export type TradeIBKR = {
+  Trades: string;
+  Header?: string;
+  DataDiscriminator?: string;
+  'Asset Category': string;
+  Currency?: string;
+  Symbol: string;
+  'Date/Time': string;
+  Quantity: number;
+  'T. Price': number;
+  'C. Price'?: number;
+  Proceeds?: number;
+  'Comm/Fee': number;
+  Basis?: number;
+  'Realized P/L'?: number;
+  'Realized P/L %'?: number;
+  'MTM P/'?: number;
+  Code?: string;
+};
+
 export type OpenExchangeRatesUsage = {
   requests: number;
   requests_quota: number;

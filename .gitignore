@@ -39,6 +39,7 @@ data/options.csv
 data/transactions.csv
 data/bank.csv
 data/account-values.csv
+data/statements
 
 data/tickers.ts
 styles/tickers.css
