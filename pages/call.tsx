@@ -212,7 +212,7 @@ const Call = () => {
 
           const getCurrentCallValues = (currentCall: CallType) => {
             const { commission, date, expiry, stockPrice, strike, tradePrice } = currentCall;
-            const high = current && strike + tradePrice - commission / optionSize;
+            const high = current && strike + tradePrice + commission / optionSize;
             const priceIncrease = current && high && calcPriceIncrease(current, high, optionSize);
             const priceIncreaseGBP = priceIncrease && priceIncrease / forexRate;
             const dteCurrent = calcDteCurrent(expiry, NOW);
@@ -225,7 +225,7 @@ const Call = () => {
             const closeTradePrice = closeTradePrices[batchCode];
             const effectiveCloseNetReturn =
               closeTradePrice && closeTradePrice > 0
-                ? optionSize * closeTradePrice - commission
+                ? optionSize * closeTradePrice + commission
                 : 0;
             const effectiveCloseNetReturnPct =
               valueCurrent && effectiveCloseNetReturn / valueCurrent;
@@ -234,16 +234,16 @@ const Call = () => {
               calcReturnPctForPeriod(effectiveCloseNetReturnPct, dteCurrent, 30);
             const returnPctResidualEstimate =
               marketPrice &&
-              Math.max(optionSize * marketPrice - commission, 0) / (optionSize * stockPrice);
+              Math.max(optionSize * marketPrice + commission, 0) / (optionSize * stockPrice);
             const return30DPctResidualEstimate =
               returnPctResidualEstimate &&
               calcReturnPctForPeriod(returnPctResidualEstimate, dteCurrent, 30);
-            const returnLastCall = quantity * optionSize * tradePrice - commission;
+            const returnLastCall = quantity * optionSize * tradePrice + commission;
             const returnGBPLastCall = returnLastCall / forexRate;
             const returnIfAssigned = quantity * (strike - netCost) * optionSize;
             const returnPctIfAssigned = strike / netCost - 1;
             const returnPctLastCall =
-              (tradePrice * optionSize - commission) / (stockPrice * optionSize);
+              (tradePrice * optionSize + commission) / (stockPrice * optionSize);
 
             return {
               assignmentPct: current ? strike / current - 1 : undefined,

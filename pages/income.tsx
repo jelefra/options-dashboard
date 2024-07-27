@@ -95,7 +95,7 @@ const Income = () => {
     if (!optionSize) {
       throw new Error(`Option size missing for ${ticker}`);
     }
-    const gain = tradePrice * optionSize - commission;
+    const gain = tradePrice * optionSize + commission;
     income[tradeMonth] = income[tradeMonth] || {};
     income[tradeMonth][account] = income[tradeMonth][account] || {};
     income[tradeMonth][account][currency] = income[tradeMonth][account][currency] || {

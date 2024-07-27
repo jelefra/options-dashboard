@@ -70,7 +70,7 @@ const processData = ({
           };
 
           const batch = batches[batchCode];
-          batch.acquisitionCost += (stockPrice * quantity + commission) / batchCodes.length;
+          batch.acquisitionCost += (stockPrice * quantity - commission) / batchCodes.length;
         }
       } else {
         stocks[ticker].partialBatch = stocks[ticker].partialBatch || {
@@ -80,7 +80,7 @@ const processData = ({
         // Using the non-null assertion operator because
         // TypeScript infers that `partialBatch` may be `undefined` otherwise
         const partialBatch = stocks[ticker].partialBatch!;
-        partialBatch.acquisitionCost += stockPrice * quantity + commission;
+        partialBatch.acquisitionCost += stockPrice * quantity - commission;
         partialBatch.quantity += getCurrentQuantity(
           ticker,
           quantity,
@@ -111,7 +111,7 @@ const processData = ({
     if (!optionSize) {
       throw new Error(`Option size missing for ${ticker}`);
     }
-    const netCumulativePremium = tradePrice * optionSize - commission;
+    const netCumulativePremium = tradePrice * optionSize + commission;
 
     if (type === 'Put') {
       if (quantity < 0) {
@@ -138,13 +138,13 @@ const processData = ({
           stocks[ticker].putOnly = stocks[ticker].putOnly || { premium: 0 };
           // Using the non-null assertion operator because
           // TypeScript infers that `stocks[ticker].putOnly` may be `undefined` otherwise
-          stocks[ticker].putOnly!.premium += tradePrice * optionSize - commission;
+          stocks[ticker].putOnly!.premium += netCumulativePremium;
         }
       } else {
         if (batchCode) {
           throw new Error("A put that has been assigned can't be bought back.");
         }
-        stocks[ticker].putOnly!.premium -= tradePrice * optionSize + commission;
+        stocks[ticker].putOnly!.premium -= tradePrice * optionSize - commission;
       }
     }
 
@@ -181,7 +181,7 @@ const processData = ({
         if (batchCode) {
           // Call was bought to close
           const batch = batches[batchCode];
-          batch.netCumulativePremium -= netCumulativePremium;
+          batch.netCumulativePremium -= tradePrice * optionSize - commission;
           // Clear current call
           if (batch.currentCall) {
             batch.currentCall = undefined;

@@ -73,7 +73,7 @@ const Forex = () => {
                 rate,
                 currencyPair,
                 currentRate,
-                profitGBP: profitAndLoss / rates[currencyBought] - commission,
+                profitGBP: profitAndLoss / rates[currencyBought] + commission,
                 differencePct: rate / currentRate - 1,
               };
               const accountColour = accounts[account].colour;

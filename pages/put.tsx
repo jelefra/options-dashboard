@@ -207,10 +207,10 @@ const Put = () => {
             const dteTotal = calcDteTotal(expiry, date);
             const earningsDate = dayjs(earnings[ticker]?.date, INPUT_DATE_FORMAT);
             const daysToEarnings = earningsDate.diff(expiry, 'day');
-            const low = strike - tradePrice + commission / optionSize;
-            const high = stockPrice + tradePrice - commission / optionSize;
+            const low = strike - tradePrice - commission / optionSize;
+            const high = stockPrice + tradePrice + commission / optionSize;
             const cashEquivalent = optionSize * strike * quantity;
-            const netReturn = (optionSize * tradePrice - commission) * quantity;
+            const netReturn = (optionSize * tradePrice + commission) * quantity;
             const netReturnPct = netReturn / cashEquivalent;
             const priceIncrease = quantity * calcPriceIncrease(current, high, optionSize);
             const difference = quantity * calcPutDifference(strike, current, optionSize);
@@ -225,7 +225,7 @@ const Put = () => {
 
             const effectiveCloseNetReturn = closeTradePrice
               ? closeTradePrice > 0
-                ? optionSize * closeTradePrice - commission
+                ? optionSize * closeTradePrice + commission
                 : 0
               : 0;
             const effectiveCloseNetReturnPct = effectiveCloseNetReturn / cashEquivalent;
@@ -247,7 +247,7 @@ const Put = () => {
             const marketPrice = position?.mktPrice;
             const optionReturnPct = marketPrice ? 1 - marketPrice / tradePrice : undefined;
             const returnPctResidualEstimate = marketPrice
-              ? Math.max(quantity * (optionSize * marketPrice - commission), 0) / cashEquivalent
+              ? Math.max(quantity * (optionSize * marketPrice + commission), 0) / cashEquivalent
               : undefined;
             const return30DPctResidualEstimate = returnPctResidualEstimate
               ? calcReturnPctForPeriod(returnPctResidualEstimate, dteCurrent, 30)
