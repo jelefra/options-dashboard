@@ -150,7 +150,10 @@ const processData = ({
 
     if (type === 'Call') {
       if (quantity < 0) {
-        const batch = batches[batchCode as string] || {};
+        if (!batchCode) {
+          throw new Error(`Batch code missing for ${ticker}`);
+        }
+        const batch = batches[batchCode] || {};
         batch.netCumulativePremium += netCumulativePremium;
 
         if (closePrice && closePrice > strike) {
@@ -162,7 +165,7 @@ const processData = ({
         if (now && expiry.isSameOrAfter(now, 'day')) {
           batch.currentCall = {
             account,
-            batchCode: batchCode as string,
+            batchCode,
             commission,
             date: dayjs(date, INPUT_DATE_FORMAT),
             expiry,
