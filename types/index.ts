@@ -107,27 +107,15 @@ export type StockEnriched = Stock & {
 type Operation = {
   account: AccountName;
   commission: number;
+  quantity: number;
   stockPrice: number;
   ticker: string;
   type: TransactionType | TradeType;
 };
 
-type TradeCloseDataPresent = {
-  closeCommission: number;
-  closeDate: string;
-  closePrice: number;
-  closeTradePrice: number;
-};
-
-type TradeCloseDataAbsent = {
-  closeCommission?: never;
-  closeDate?: never;
-  closePrice?: never;
-  closeTradePrice?: never;
-};
-
-type TradeCommon = (TradeCloseDataAbsent | TradeCloseDataPresent) & {
+type TradeCommon = {
   batchCode?: string;
+  closePrice?: number;
   // Trades filled long after being placed don't feature delta or IV
   delta?: number;
   IV?: number;

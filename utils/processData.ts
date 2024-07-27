@@ -94,11 +94,10 @@ const processData = ({
     const {
       account,
       batchCode,
-      closeCommission = 0,
       closePrice,
-      closeTradePrice = 0,
       commission,
       date,
+      quantity,
       stockPrice,
       strike,
       ticker: displayTicker,
@@ -112,60 +111,81 @@ const processData = ({
     if (!optionSize) {
       throw new Error(`Option size missing for ${ticker}`);
     }
-    const netCumulativePremium =
-      (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
+    const netCumulativePremium = tradePrice * optionSize - commission;
 
     if (type === 'Put') {
-      if (closePrice && closePrice < strike) {
-        if (!batchCode) {
-          throw new Error(`Batch code missing for ${ticker}`);
+      if (quantity < 0) {
+        if (closePrice && closePrice < strike) {
+          if (!batchCode) {
+            throw new Error(`Batch code missing for ${ticker}`);
+          }
+          batches[batchCode] = {
+            account,
+            acquisitionCost: strike * optionSize,
+            acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
+            batchCode,
+            colour,
+            currency,
+            current: currentTickerPrices[ticker],
+            netCumulativePremium,
+            origin: 'Put',
+            optionSize,
+            quantity: 1,
+            ticker,
+          };
+        } else {
+          // Put only (including current assignable puts)
+          stocks[ticker].putOnly = stocks[ticker].putOnly || { premium: 0 };
+          // Using the non-null assertion operator because
+          // TypeScript infers that `stocks[ticker].putOnly` may be `undefined` otherwise
+          stocks[ticker].putOnly!.premium += tradePrice * optionSize - commission;
         }
-        batches[batchCode] = {
-          account,
-          acquisitionCost: strike * optionSize,
-          acquisitionDate: dayjs(date, INPUT_DATE_FORMAT),
-          batchCode,
-          colour,
-          currency,
-          current: currentTickerPrices[ticker],
-          netCumulativePremium,
-          origin: 'Put',
-          optionSize,
-          quantity: 1,
-          ticker,
-        };
       } else {
-        // Put only (including current assignable puts)
-        stocks[ticker].putOnly = stocks[ticker].putOnly || { premium: 0 };
-        // Using the non-null assertion operator because
-        // TypeScript infers that `stocks[ticker].putOnly` may be `undefined` otherwise
-        stocks[ticker].putOnly!.premium +=
-          (tradePrice - closeTradePrice) * optionSize - commission - closeCommission;
+        if (batchCode) {
+          throw new Error("A put that has been assigned can't be bought back.");
+        }
+        stocks[ticker].putOnly!.premium -= tradePrice * optionSize + commission;
       }
     }
 
     if (type === 'Call') {
-      const batch = batches[batchCode as string];
-      batch.netCumulativePremium += netCumulativePremium;
+      if (quantity < 0) {
+        const batch = batches[batchCode as string] || {};
+        batch.netCumulativePremium += netCumulativePremium;
 
-      if (closePrice && closePrice > strike) {
-        batch.exit = { value: strike * optionSize, method: 'Call' };
-      }
+        if (closePrice && closePrice > strike) {
+          batch.exit = { value: strike * optionSize, method: 'Call' };
+        }
 
-      const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
-      if (now && expiry.isSameOrAfter(now, 'day') && !trade.closeTradePrice) {
-        batch.currentCall = {
-          account,
-          batchCode: batchCode as string,
-          commission,
-          date: dayjs(date, INPUT_DATE_FORMAT),
-          expiry,
-          stockPrice,
-          strike,
-          ticker,
-          tradePrice,
-          type: 'Call',
-        };
+        const expiry = dayjs(trade.expiry, INPUT_DATE_FORMAT);
+
+        if (now && expiry.isSameOrAfter(now, 'day')) {
+          batch.currentCall = {
+            account,
+            batchCode: batchCode as string,
+            commission,
+            date: dayjs(date, INPUT_DATE_FORMAT),
+            expiry,
+            quantity,
+            stockPrice,
+            strike,
+            ticker,
+            tradePrice,
+            type: 'Call',
+          };
+        }
+      } else {
+        if (batchCode) {
+          // Call was bought to close
+          const batch = batches[batchCode];
+          batch.netCumulativePremium -= netCumulativePremium;
+          // Clear current call
+          if (batch.currentCall) {
+            batch.currentCall = undefined;
+          }
+        } else {
+          // TODO
+        }
       }
     }
   }

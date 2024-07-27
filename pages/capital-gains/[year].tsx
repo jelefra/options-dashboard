@@ -196,18 +196,17 @@ const CapitalGains = () => {
   for (let trade of trades) {
     const {
       account,
-      closeCommission = 0,
       closePrice,
-      closeTradePrice = 0,
       commission,
       date,
+      quantity,
       strike,
       ticker: displayTicker,
       tradePrice,
       type,
     } = trade;
 
-    if (type === 'Put') {
+    if (type === 'Put' && quantity < 0) {
       const { currency, optionSize, ticker } = tickers[tickersMap[displayTicker] ?? displayTicker];
       if (!optionSize) {
         throw new Error(`Option size missing for ${ticker}`);
@@ -219,11 +218,6 @@ const CapitalGains = () => {
       capitalGains[tradeMonth][account][currency].gains.put += gain;
       capitalGains[tradeMonth][account][currency].gains.total += gain;
       capitalGains[tradeMonth][account].BASE.gains.total += gain / forexRate;
-
-      const costToClose = closeTradePrice * optionSize + closeCommission * forexRate;
-      capitalGains[tradeMonth][account][currency].losses.put -= costToClose;
-      capitalGains[tradeMonth][account][currency].losses.total -= costToClose;
-      capitalGains[tradeMonth][account].BASE.losses.total -= costToClose / forexRate;
 
       if (closePrice && closePrice < strike) {
         stocks[account][ticker].acquisitionCost += strike * optionSize + commission * forexRate;
@@ -268,11 +262,10 @@ const CapitalGains = () => {
   for (let trade of trades) {
     const {
       account,
-      closeCommission = 0,
       closePrice,
-      closeTradePrice = 0,
       commission,
       date,
+      quantity,
       strike,
       ticker: displayTicker,
       tradePrice,
@@ -288,35 +281,31 @@ const CapitalGains = () => {
     const forexRate = historicalForexRates?.[date]?.[currency] || rates[currency];
 
     const gain = tradePrice * optionSize - commission * forexRate;
-    const costToClose = closeTradePrice * optionSize + closeCommission * forexRate;
     const key = capitalGains[tradeMonth][account];
 
-    if (type === 'Call') {
+    if (type === 'Call' && quantity < 0) {
       key[currency].gains.call += gain;
       key[currency].gains.total += gain;
       key.BASE.gains.total += gain / forexRate;
-      key[currency].losses.call -= costToClose;
-      key[currency].losses.total -= costToClose;
-      key.BASE.losses.total -= costToClose / forexRate;
-    }
 
-    if (type === 'Call' && closePrice && closePrice > strike) {
-      const stock = stocks[account][ticker];
-      const quantityAtTheTime = getHistoricalQuantity(ticker, stock.quantity, tradeDate);
-      const acquisitionCost =
-        (stocks[account][ticker].acquisitionCost / quantityAtTheTime) * optionSize;
-      if (acquisitionCost < strike * optionSize + commission * forexRate) {
-        key[currency].gains.ITMCall += strike * optionSize - acquisitionCost;
-        key[currency].gains.total += strike * optionSize - acquisitionCost;
-        key.BASE.gains.total += (strike * optionSize - acquisitionCost) / forexRate;
-      } else {
-        key[currency].losses.ITMCall += strike * optionSize - acquisitionCost;
-        key[currency].losses.total += strike * optionSize - acquisitionCost;
-        key.BASE.losses.total += (strike * optionSize - acquisitionCost) / forexRate;
+      if (closePrice && closePrice > strike) {
+        const stock = stocks[account][ticker];
+        const quantityAtTheTime = getHistoricalQuantity(ticker, stock.quantity, tradeDate);
+        const acquisitionCost =
+          (stocks[account][ticker].acquisitionCost / quantityAtTheTime) * optionSize;
+        if (acquisitionCost < strike * optionSize + commission * forexRate) {
+          key[currency].gains.ITMCall += strike * optionSize - acquisitionCost;
+          key[currency].gains.total += strike * optionSize - acquisitionCost;
+          key.BASE.gains.total += (strike * optionSize - acquisitionCost) / forexRate;
+        } else {
+          key[currency].losses.ITMCall += strike * optionSize - acquisitionCost;
+          key[currency].losses.total += strike * optionSize - acquisitionCost;
+          key.BASE.losses.total += (strike * optionSize - acquisitionCost) / forexRate;
+        }
+
+        stocks[account][ticker].acquisitionCost -= strike * optionSize;
+        stocks[account][ticker].quantity -= optionSize;
       }
-
-      stocks[account][ticker].acquisitionCost -= strike * optionSize;
-      stocks[account][ticker].quantity -= optionSize;
     }
   }
 

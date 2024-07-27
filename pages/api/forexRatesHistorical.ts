@@ -45,12 +45,9 @@ const forexRatesHistorical = async (req: NextApiRequest, res: NextApiResponse) =
     return dates;
   }, {});
 
-  const dates: { [key: string]: string[] } = trades.reduce((dates, { date, closeDate, ticker }) => {
+  const dates: { [key: string]: string[] } = trades.reduce((dates, { date, ticker }) => {
     const { currency } = tickers[tickersMap[ticker] ?? ticker];
-    [date, closeDate].filter(Boolean).forEach((date) => {
-      // `filter(Boolean)` ensures `date` is defined
-      mutate(dates, date as NonNullable<typeof date>, currency);
-    });
+    mutate(dates, date as NonNullable<typeof date>, currency);
     return dates;
   }, cloneDeep(datesFromTransactions));
 

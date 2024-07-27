@@ -61,9 +61,6 @@ const CSVDownloader = ({ tradeData }: { tradeData: EnrichedTradeData[] }) => {
     'commission',
     'delta',
     'IV',
-    'closeDate',
-    'closeTradePrice',
-    'closeCommission',
   ];
 
   const sortedTradeData = tradeData.sort((a, b) => {

@@ -85,16 +85,7 @@ const Income = () => {
   } = {};
 
   for (let trade of trades) {
-    const {
-      account,
-      closeCommission = 0,
-      closeTradePrice = 0,
-      commission,
-      date,
-      ticker,
-      tradePrice,
-      type,
-    } = trade;
+    const { account, commission, date, ticker, tradePrice, type } = trade;
     const tradeMonth = dateMediumTerm(dayjs(date, INPUT_DATE_FORMAT));
     const { currency, optionSize } = tickers[tickersMap[ticker] ?? ticker];
     const { currencies } = accountsWithCurrencies[account];
@@ -104,7 +95,7 @@ const Income = () => {
     if (!optionSize) {
       throw new Error(`Option size missing for ${ticker}`);
     }
-    const gain = (tradePrice - closeTradePrice) * optionSize - (commission + closeCommission);
+    const gain = tradePrice * optionSize - commission;
     income[tradeMonth] = income[tradeMonth] || {};
     income[tradeMonth][account] = income[tradeMonth][account] || {};
     income[tradeMonth][account][currency] = income[tradeMonth][account][currency] || {
