@@ -282,7 +282,15 @@ export type ForexData = {
   rate: number;
 };
 
-export type BankActivityTypes = 'Deposit' | 'Withdrawal' | 'Conversion';
+export type BankData = {
+  date: string;
+  account: AccountName;
+  type: BankActivityTypes;
+  amount: number;
+  currency: string;
+};
+
+export type BankActivityTypes = 'Deposit' | 'Withdrawal';
 
 export type ForexRates = { [key: string]: number };
 
@@ -491,6 +499,16 @@ export type ForexIBKR = {
   'Comm in GBP': number;
   'MTM in GBP'?: number;
   Code?: string;
+};
+
+// As seen in IBKR activity statements
+export type BankIBKR = {
+  'Deposits & Withdrawals': 'Deposits & Withdrawals';
+  Header?: string;
+  Currency: string;
+  'Settle Date': string;
+  Description: string; // "Electronic Fund Transfer" (deposit) or "Disbursement" (withdrawal)
+  Amount: number;
 };
 
 export type OpenExchangeRatesUsage = {

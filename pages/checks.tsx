@@ -10,11 +10,21 @@ import React, { useRef } from 'react';
 import Container from '../components/Container';
 import accounts from '../data/accounts';
 // @ts-ignore
+import bankData from '../data/bank.csv';
+// @ts-ignore
 import forexData from '../data/forex.csv';
 // @ts-ignore
 import tradesData from '../data/options.csv';
 import styles from '../styles/Table.module.css';
-import { AccountName, ForexData, ForexIBKR, TradeData, TradeIBKR } from '../types';
+import {
+  AccountName,
+  BankData,
+  BankIBKR,
+  ForexData,
+  ForexIBKR,
+  TradeData,
+  TradeIBKR,
+} from '../types';
 import { removeNullValues } from '../utils';
 import { ParsedFile, prepareFiles, processFile } from '../utils/CSVHelper';
 import { thousands } from '../utils/format';
@@ -50,7 +60,7 @@ const CSVDownloaderTrades = ({ tradeData }: { tradeData: EnrichedTradeData[] }) 
 
   const fields = [
     'date',
-    'fullDate',
+    'dateTime',
     'account',
     'type',
     'ticker',
@@ -66,8 +76,8 @@ const CSVDownloaderTrades = ({ tradeData }: { tradeData: EnrichedTradeData[] }) 
   ];
 
   const sortedTradeData = tradeData.sort((a, b) => {
-    const dateA = dayjs(a.fullDate);
-    const dateB = dayjs(b.fullDate);
+    const dateA = dayjs(a.dateTime);
+    const dateB = dayjs(b.dateTime);
     return dateA.valueOf() - dateB.valueOf();
   });
 
@@ -93,11 +103,11 @@ const CSVDownloaderTrades = ({ tradeData }: { tradeData: EnrichedTradeData[] }) 
 const CSVDownloaderForex = ({ forexData }: { forexData: EnrichedForexData[] }) => {
   const linkRef = useRef<HTMLAnchorElement>(null);
 
-  const fields = ['date', 'fullDate', 'account', 'currencyPair', 'quantity', 'rate', 'commission'];
+  const fields = ['date', 'dateTime', 'account', 'currencyPair', 'quantity', 'rate', 'commission'];
 
   const sortedForexData = forexData.sort((a, b) => {
-    const dateA = dayjs(a.fullDate);
-    const dateB = dayjs(b.fullDate);
+    const dateA = dayjs(a.dateTime);
+    const dateB = dayjs(b.dateTime);
     return dateA.valueOf() - dateB.valueOf();
   });
 
@@ -120,20 +130,54 @@ const CSVDownloaderForex = ({ forexData }: { forexData: EnrichedForexData[] }) =
   );
 };
 
+const CSVDownloaderBank = ({ bankData }: { bankData: BankData[] }) => {
+  const linkRef = useRef<HTMLAnchorElement>(null);
+
+  const fields = ['date', 'account', 'type', 'amount', 'currency'];
+
+  const sortedBankData = bankData.sort((a, b) => {
+    const dateA = dayjs(a.date);
+    const dateB = dayjs(b.date);
+    return dateA.valueOf() - dateB.valueOf();
+  });
+
+  const handleDownload = () => {
+    const csv = Papa.unparse({ fields, data: sortedBankData });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    if (linkRef.current) {
+      linkRef.current.href = url;
+      linkRef.current.click();
+    }
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <>
+      <button onClick={handleDownload}>Download bank data</button>
+      <a ref={linkRef} style={{ display: 'none' }} download="bank.csv" />
+    </>
+  );
+};
+
 type EnrichedTradeIBKR = TradeIBKR & { account: AccountName };
 type EnrichedForexIBKR = ForexIBKR & { account: AccountName };
-type EnrichedTradeData = TradeData & { fullDate: string };
-type EnrichedForexData = ForexData & { fullDate: string };
+type EnrichedBankIBKR = BankIBKR & { account: AccountName };
+type EnrichedTradeData = TradeData & { dateTime: string };
+type EnrichedForexData = ForexData & { dateTime: string };
 type Summary = {
   trades: { notMatched: EnrichedTradeIBKR[]; complete: EnrichedTradeData[] };
   forex: { notMatched: EnrichedForexIBKR[]; complete: EnrichedForexData[] };
+  bank: { notMatched: EnrichedBankIBKR[]; complete: BankData[] };
 };
 const Checks = ({ statements }: { statements: ParsedFile[] }) => {
   const personalTradeRecords: TradeData[] = tradesData.map(removeNullValues);
   const personalForexRecords: ForexData[] = forexData.map(removeNullValues);
+  const personalBankRecords: BankData[] = bankData.map(removeNullValues);
 
   const countOfTradesInPersonalRecords = personalTradeRecords.length;
   const countOfForexInPersonalRecords = personalForexRecords.length;
+  const countOfBankInPersonalRecords = personalBankRecords.length;
 
   const preparedStatements = prepareFiles(statements);
   const countOfTradesInStatements = preparedStatements.reduce(
@@ -145,22 +189,32 @@ const Checks = ({ statements }: { statements: ParsedFile[] }) => {
     (total, { forex }) => (total += forex.length),
     0
   );
+  const countOfBankOperationsInStatements = preparedStatements.reduce(
+    (total, { bank }) => (total += bank.length),
+    0
+  );
 
-  const { trades, forex } = preparedStatements
-    .map((file) => processFile(file, personalTradeRecords, personalForexRecords))
+  const { trades, forex, bank } = preparedStatements
+    .map((file) =>
+      processFile(file, personalTradeRecords, personalForexRecords, personalBankRecords)
+    )
     .reduce(
-      (summary, { trades, forex }) => {
+      (summary, { trades, forex, bank }) => {
         summary.trades.notMatched.push(...trades.notMatched);
         summary.trades.complete.push(...trades.complete);
 
         summary.forex.notMatched.push(...forex.notMatched);
         summary.forex.complete.push(...forex.complete);
 
+        summary.bank.notMatched.push(...bank.notMatched);
+        summary.bank.complete.push(...bank.complete);
+
         return summary;
       },
       {
         trades: { notMatched: [], complete: [] },
         forex: { notMatched: [], complete: [] },
+        bank: { notMatched: [], complete: [] },
       } as Summary
     );
 
@@ -354,6 +408,93 @@ const Checks = ({ statements }: { statements: ParsedFile[] }) => {
     </>
   );
 
+  const BankActivityStatementsSummary = (
+    <>
+      <h3>IBKR activity statements</h3>
+      {bank.notMatched.length ? (
+        <>
+          <p>
+            {bank.notMatched.length} bank operations not matched out of{' '}
+            {countOfBankOperationsInStatements}:
+          </p>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Account</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Currency</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bank.notMatched
+                .sort((a, b) => {
+                  const dateA = dayjs(a['Settle Date']);
+                  const dateB = dayjs(b['Settle Date']);
+                  return dateA.valueOf() - dateB.valueOf();
+                })
+                .map(({ account, ...bank }, key) => {
+                  return (
+                    <tr key={key}>
+                      <td>{bank['Settle Date']}</td>
+                      <td className={accounts[account].colour}>{account}</td>
+                      <td>{bank.Description}</td>
+                      <td className={styles.right}>{thousands(bank.Amount)}</td>
+                      <td>{bank.Currency}</td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <p>All {countOfBankOperationsInStatements} bank operations successfully matched.</p>
+      )}
+    </>
+  );
+
+  const BankPersonalRecordsSummary = (
+    <>
+      <h3>Personal records</h3>
+      {personalBankRecords.length ? (
+        <>
+          <p>
+            {personalBankRecords.length} bank operations not matched out of{' '}
+            {countOfBankInPersonalRecords}:
+          </p>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Account</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Currency</th>
+              </tr>
+            </thead>
+            <tbody>
+              {personalBankRecords.map(({ date, account, type, amount, currency }, key) => {
+                const accountColour = accounts[account].colour;
+                return (
+                  <tr key={key}>
+                    <td>{date}</td>
+                    <td className={accountColour}>{account}</td>
+                    <td>{type}</td>
+                    <td className={styles.right}>{amount}</td>
+                    <td>{currency}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <p>All {countOfBankInPersonalRecords} bank operations successfully matched.</p>
+      )}
+    </>
+  );
+
   return (
     <Container>
       <Head>
@@ -369,6 +510,10 @@ const Checks = ({ statements }: { statements: ParsedFile[] }) => {
       {ForexActivityStatementsSummary}
       <CSVDownloaderForex forexData={forex.complete} />
       {ForexPersonalRecordsSummary}
+      <h2>Bank</h2>
+      {BankActivityStatementsSummary}
+      <CSVDownloaderBank bankData={bank.complete} />
+      {BankPersonalRecordsSummary}
     </Container>
   );
 };

@@ -4,7 +4,15 @@ import Papa from 'papaparse';
 import { INPUT_DATE_FORMAT } from '../constants';
 import accounts from '../data/accounts';
 import { reversedTickersMap } from '../data/tickers';
-import { ForexData, ForexIBKR, TradeData, TradeIBKR } from '../types';
+import {
+  BankActivityTypes,
+  BankData,
+  BankIBKR,
+  ForexData,
+  ForexIBKR,
+  TradeData,
+  TradeIBKR,
+} from '../types';
 
 export const parseSymbol = (symbol: string) => symbol.match(/^(\w+) (\w+) ([\d.]+) (\w)$/);
 
@@ -13,6 +21,16 @@ const convertArrayToObject = (data: ParsedFile) => {
   const csv = Papa.unparse({ fields: headers, data: rows });
   const result = Papa.parse(csv, { header: true, dynamicTyping: true, skipEmptyLines: true });
   return result.data;
+};
+
+const validateBankRow = (row: any[]): boolean => {
+  return (
+    row[0] === 'Deposits & Withdrawals' &&
+    !!row[2] && // Currency
+    !!row[3] && // Settle Date
+    !!row[4] && // Description
+    !!row[5] // Amount
+  );
 };
 
 const validateForexRow = (row: any[], nextRow: any[]): boolean => {
@@ -50,18 +68,23 @@ export const prepareFiles = (files: ParsedFile[]) => {
     )?.[3];
     if (!accountId) throw 'Account id not found';
 
-    const tradesUnparsed = file.filter((row: string[], index: number) => {
+    const tradesUnparsed = file.filter((row: any[], index: number) => {
       return validateTradeRow(row, file[index + 1]);
     });
 
-    const forexUnparsed = file.filter((row: string[], index: number) => {
+    const forexUnparsed = file.filter((row: any[], index: number) => {
       return validateForexRow(row, file[index + 1]);
+    });
+
+    const bankUnparsed = file.filter((row: any[]) => {
+      return validateBankRow(row);
     });
 
     return {
       accountId,
       trades: convertArrayToObject(tradesUnparsed) as TradeIBKR[],
       forex: convertArrayToObject(forexUnparsed) as ForexIBKR[],
+      bank: convertArrayToObject(bankUnparsed) as BankIBKR[],
     };
   });
 };
@@ -81,13 +104,18 @@ const formatQuantity = (n: number) => Number(String(n).replace(',', ''));
 const within = (numA: number, numB: number, buffer: number) => Math.abs(numA - numB) < buffer;
 
 export const processFile = (
-  { accountId, trades, forex }: { accountId: string; trades: TradeIBKR[]; forex: ForexIBKR[] },
+  {
+    accountId,
+    trades,
+    forex,
+    bank,
+  }: { accountId: string; trades: TradeIBKR[]; forex: ForexIBKR[]; bank: BankIBKR[] },
   loggedTrades: TradeData[],
-  loggedForex: ForexData[]
+  loggedForex: ForexData[],
+  loggedBank: BankData[]
 ) => {
   const tradesNotMatched = [];
   const allEnrichedTradeData = [];
-
   for (let trade of trades) {
     const account = Object.values(accounts).find((account) => account.id === accountId)?.name;
     if (!account) throw 'Account name not found';
@@ -131,7 +159,7 @@ export const processFile = (
         allEnrichedTradeData.push({
           ...loggedTrades[tradeIndex],
           commission: unitCommission,
-          fullDate: trade['Date/Time'],
+          dateTime: trade['Date/Time'],
         });
         // Mutate the array to eventually confirm that no unexpected trades have been recorded
         loggedTrades.splice(tradeIndex, 1);
@@ -164,7 +192,7 @@ export const processFile = (
 
     const enrichedForexData = {
       date: dayjs(dateTime).format(INPUT_DATE_FORMAT),
-      fullDate: dateTime,
+      dateTime,
       account,
       quantity: formatQuantity(forexOperation.Quantity),
       rate,
@@ -181,8 +209,52 @@ export const processFile = (
     }
   }
 
+  const mapDescriptionToType = (description: string): BankActivityTypes => {
+    if (description.includes('Electronic Fund Transfer')) return 'Deposit';
+    if (description.includes('Disbursement')) return 'Withdrawal';
+    throw new Error('Bank type not identified:');
+  };
+
+  const allBankData = [];
+  const bankNotMatched = [];
+  for (let bankOperation of bank) {
+    const account = Object.values(accounts).find((account) => account.id === accountId)?.name;
+    if (!account) throw 'Account name not found';
+
+    const date = bankOperation['Settle Date'];
+    const amount = bankOperation.Amount;
+    const description = bankOperation.Description;
+    const type = mapDescriptionToType(description);
+    const currency = bankOperation.Currency;
+
+    const bankIndex = loggedBank.findIndex((loggedBankOperation) => {
+      return (
+        loggedBankOperation.date === dayjs(date).format(INPUT_DATE_FORMAT) &&
+        loggedBankOperation.account === account &&
+        loggedBankOperation.type === type &&
+        loggedBankOperation.amount === amount &&
+        loggedBankOperation.currency === currency
+      );
+    });
+
+    allBankData.push({
+      date: dayjs(bankOperation['Settle Date']).format(INPUT_DATE_FORMAT),
+      account,
+      type,
+      amount,
+      currency,
+    });
+
+    if (bankIndex === -1) {
+      bankNotMatched.push({ ...bankOperation, account });
+    } else {
+      loggedBank.splice(bankIndex, 1);
+    }
+  }
+
   return {
     trades: { notMatched: tradesNotMatched, complete: allEnrichedTradeData },
     forex: { notMatched: forexNotMatched, complete: allEnrichedForexData },
+    bank: { notMatched: bankNotMatched, complete: allBankData },
   };
 };
