@@ -272,14 +272,14 @@ export type Batch = {
   ticker: string;
 };
 
-export type BankData = {
+export type ForexData = {
   account: AccountName;
-  amount: number;
   commission: number;
   currencyPair: string;
   date: string;
+  dateTime?: string;
+  quantity: number;
   rate: number;
-  type: BankActivityTypes;
 };
 
 export type BankActivityTypes = 'Deposit' | 'Withdrawal' | 'Conversion';
@@ -290,12 +290,12 @@ export type HistoricalForexRates = { [key: string]: ForexRates };
 
 export type ForexRow = {
   account: AccountName;
-  amount: number;
   currencyPair: string;
   currentRate: number;
   date: Dayjs;
   differencePct: number;
   profitGBP: number;
+  quantity: number;
   rate: number;
 };
 
@@ -457,10 +457,10 @@ type Summary = {
 
 // As seen in IBKR activity statements
 export type TradeIBKR = {
-  Trades: string;
+  Trades: 'Trades';
   Header?: string;
   DataDiscriminator?: string;
-  'Asset Category': string;
+  'Asset Category': string; // Includes "Equity and Index Options"
   Currency?: string;
   Symbol: string;
   'Date/Time': string;
@@ -473,6 +473,23 @@ export type TradeIBKR = {
   'Realized P/L'?: number;
   'Realized P/L %'?: number;
   'MTM P/'?: number;
+  Code?: string;
+};
+
+// As seen in IBKR activity statements
+export type ForexIBKR = {
+  Trades: 'Trades';
+  Header?: string;
+  DataDiscriminator?: string;
+  'Asset Category': string; // Includes "Forex"
+  Currency: string;
+  Symbol: string;
+  'Date/Time': string;
+  Quantity: number;
+  'T. Price': number;
+  Proceeds?: number;
+  'Comm in GBP': number;
+  'MTM in GBP'?: number;
   Code?: string;
 };
 

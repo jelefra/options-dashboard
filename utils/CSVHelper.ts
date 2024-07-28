@@ -4,7 +4,7 @@ import Papa from 'papaparse';
 import { INPUT_DATE_FORMAT } from '../constants';
 import accounts from '../data/accounts';
 import { reversedTickersMap } from '../data/tickers';
-import { TradeData, TradeIBKR } from '../types';
+import { ForexData, ForexIBKR, TradeData, TradeIBKR } from '../types';
 
 export const parseSymbol = (symbol: string) => symbol.match(/^(\w+) (\w+) ([\d.]+) (\w)$/);
 
@@ -15,11 +15,25 @@ const convertArrayToObject = (data: ParsedFile) => {
   return result.data;
 };
 
-const validateRow = (row: string[], nextRow: string[]) => {
-  const relevantAssetCategory = 'Equity and Index Options';
+const validateForexRow = (row: any[], nextRow: any[]): boolean => {
+  const assetCategory = 'Forex';
   return (
     row[0] === 'Trades' &&
-    (row[3].includes(relevantAssetCategory) || nextRow[3].includes(relevantAssetCategory)) &&
+    (row[3].includes(assetCategory) || nextRow[3].includes(assetCategory)) &&
+    !!row[4] && // Currency
+    !!row[5] && // Symbol
+    !!row[6] && // Date/Time
+    !!row[7] && // Quantity
+    row[8] !== '0' // T. Price
+    // Comm in GBP (may be 0)
+  );
+};
+
+const validateTradeRow = (row: any[], nextRow: any[]): boolean => {
+  const assetCategory = 'Equity and Index Options';
+  return (
+    row[0] === 'Trades' &&
+    (row[3].includes(assetCategory) || nextRow[3].includes(assetCategory)) &&
     !!row[5] && // Symbol
     !!row[6] && // Date/Time
     !!row[7] && // Quantity
@@ -37,12 +51,17 @@ export const prepareFiles = (files: ParsedFile[]) => {
     if (!accountId) throw 'Account id not found';
 
     const tradesUnparsed = file.filter((row: string[], index: number) => {
-      return validateRow(row, file[index + 1]);
+      return validateTradeRow(row, file[index + 1]);
+    });
+
+    const forexUnparsed = file.filter((row: string[], index: number) => {
+      return validateForexRow(row, file[index + 1]);
     });
 
     return {
       accountId,
       trades: convertArrayToObject(tradesUnparsed) as TradeIBKR[],
+      forex: convertArrayToObject(forexUnparsed) as ForexIBKR[],
     };
   });
 };
@@ -57,12 +76,17 @@ const formatDateString = (input: string) => {
   return day + formattedMonth + year;
 };
 
+const formatQuantity = (n: number) => Number(String(n).replace(',', ''));
+
+const within = (numA: number, numB: number, buffer: number) => Math.abs(numA - numB) < buffer;
+
 export const processFile = (
-  { accountId, trades }: { accountId: string; trades: TradeIBKR[] },
-  loggedTrades: TradeData[]
+  { accountId, trades, forex }: { accountId: string; trades: TradeIBKR[]; forex: ForexIBKR[] },
+  loggedTrades: TradeData[],
+  loggedForex: ForexData[]
 ) => {
-  const unmatchedTrades = [];
-  const matchedTrades = [];
+  const tradesNotMatched = [];
+  const allEnrichedTradeData = [];
 
   for (let trade of trades) {
     const account = Object.values(accounts).find((account) => account.id === accountId)?.name;
@@ -90,12 +114,12 @@ export const processFile = (
           trade.expiry === expiry.format(INPUT_DATE_FORMAT) &&
           trade.strike === strike &&
           trade.tradePrice === tradePrice &&
-          Math.abs(trade.commission - unitCommission) < 0.5
+          within(trade.commission, unitCommission, 0.5)
         );
       });
 
       if (tradeIndex === -1) {
-        unmatchedTrades.push({
+        tradesNotMatched.push({
           ...trade,
           Quantity: trade.Quantity > 0 ? 1 : -1,
           'Comm/Fee': unitCommission,
@@ -104,7 +128,7 @@ export const processFile = (
       } else {
         // Prepare data for a new CSV
         // Store the exact commission (still per unit) and exact trade date with time
-        matchedTrades.push({
+        allEnrichedTradeData.push({
           ...loggedTrades[tradeIndex],
           commission: unitCommission,
           fullDate: trade['Date/Time'],
@@ -114,5 +138,51 @@ export const processFile = (
       }
     }
   }
-  return { unmatchedTrades, matchedTrades };
+
+  const allEnrichedForexData = [];
+  const forexNotMatched = [];
+  for (let forexOperation of forex) {
+    const account = Object.values(accounts).find((account) => account.id === accountId)?.name;
+    if (!account) throw 'Account name not found';
+
+    const dateTime = forexOperation['Date/Time'];
+    const quantity = forexOperation.Quantity;
+    const rate = forexOperation['T. Price'];
+    const currencyPair = forexOperation.Symbol;
+    const commission = forexOperation['Comm in GBP'];
+
+    const forexIndex = loggedForex.findIndex((loggedForexOperation) => {
+      return (
+        loggedForexOperation.date === dayjs(dateTime).format(INPUT_DATE_FORMAT) &&
+        loggedForexOperation.account === account &&
+        within(loggedForexOperation.quantity, formatQuantity(quantity), 0.05) &&
+        within(loggedForexOperation.rate, rate, 0.01) &&
+        within(loggedForexOperation.commission, commission, 0.05) &&
+        loggedForexOperation.currencyPair === currencyPair
+      );
+    });
+
+    const enrichedForexData = {
+      date: dayjs(dateTime).format(INPUT_DATE_FORMAT),
+      fullDate: dateTime,
+      account,
+      quantity: formatQuantity(forexOperation.Quantity),
+      rate,
+      commission,
+      currencyPair,
+    };
+
+    allEnrichedForexData.push(enrichedForexData);
+
+    if (forexIndex === -1) {
+      forexNotMatched.push({ ...forexOperation, account });
+    } else {
+      loggedForex.splice(forexIndex, 1);
+    }
+  }
+
+  return {
+    trades: { notMatched: tradesNotMatched, complete: allEnrichedTradeData },
+    forex: { notMatched: forexNotMatched, complete: allEnrichedForexData },
+  };
 };
