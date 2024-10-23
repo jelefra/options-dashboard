@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
 
 import { DATE_SHORT_HORIZON, IBKR_DATE_FORMAT, INPUT_DATE_FORMAT } from '../constants';
 import accounts from '../data/accounts';
@@ -8,7 +7,7 @@ import tradesData from '../data/options.csv';
 import tickers from '../data/tickers';
 import styles from '../styles/Table.module.css';
 import { Position, Positions, TradeData, TradeType } from '../types';
-import { getPositionsKeys, removeNullValues } from '../utils';
+import { removeNullValues } from '../utils';
 
 const mapPutOrCallToType = (putOrCall: Position['putOrCall']): TradeType | undefined => {
   if (putOrCall === 'P') return 'Put';
@@ -32,30 +31,22 @@ const positionFound = (
   );
 };
 
-const DataChecker = () => {
-  const [positions, setPositions] = useState<Position[]>([]);
+const DataChecker = ({ positions }: { positions: Positions | null }) => {
+  if (!positions) {
+    return null;
+  }
 
-  const positionsKeys = getPositionsKeys(accounts);
-  useEffect(() => {
-    const fetchPositions = async () => {
-      const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
-      const data: { values: Positions } = await response.json();
-      setPositions(
-        Object.values(data.values)
-          .flatMap((positionsTimestamped) => positionsTimestamped?.allData)
-          .filter(Boolean)
-      );
-    };
-    fetchPositions().catch(console.error);
-  }, [positionsKeys]);
+  const positionsData = Object.values(positions)
+    .flatMap((positionTimestamped) => positionTimestamped?.allData)
+    .filter(Boolean);
 
-  if (positions.length === 0) {
+  if (positionsData.length === 0) {
     return null;
   }
 
   const trades: TradeData[] = tradesData.map(removeNullValues);
 
-  const notFound = positions
+  const notFound = positionsData
     .filter((position) => position.position !== 0) // Ignore expired positions
     .filter((position) => !(position.putOrCall === 'C' && position.position > 0)) // TODO remove once bought calls or puts are considered
     .filter((position) => position.assetClass === 'OPT' && !positionFound(position, trades));

@@ -31,7 +31,7 @@ import {
   TradeData,
   TransactionData,
 } from '../types';
-import { removeNullValues } from '../utils';
+import { getPositionsKeys, removeNullValues } from '../utils';
 
 const Home = () => {
   const [rates, setRates] = useState<ForexRates | null>(null);
@@ -81,9 +81,7 @@ const Home = () => {
     fetchSummaries().catch(console.error);
 
     const fetchPositions = async () => {
-      const positionsKeys = Object.values(accounts)
-        .map(({ id }) => `positions-${id}`)
-        .join(',');
+      const positionsKeys = getPositionsKeys(accounts);
       const response = await fetch(`/api/getRedisKeys?keys=${positionsKeys}`);
       const data = await response.json();
       setPositions(data.values);
@@ -142,7 +140,7 @@ const Home = () => {
         <title>Options</title>
         <link rel="icon" href="/home.ico" />
       </Head>
-      <DataChecker />
+      <DataChecker positions={positions} />
       {showAllocationSummary && (
         <AllocationSummary
           cash={cash}
